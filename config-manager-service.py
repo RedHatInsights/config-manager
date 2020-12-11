@@ -14,7 +14,7 @@ kafka_producer = None
 INVENTORY_EVENT_TOPIC = "platform.inventory.events"
 OUTPUT_RECEIVED_EVENT_TOPIC = "platform.playbook_dispatcher.events"
 
-def getAccountFromRequest(request):
+def _get_account_from_request(request):
     return request.args[b'account'][0].decode()
 
 
@@ -34,20 +34,19 @@ class State(resource.Resource):
         self.config_storage = config_storage
 
     def render_GET(self, request):
-        account = getAccountFromRequest(request)
-        json_doc = self.getLatestState(account)
+        account = _get_account_from_request(request)
+        json_doc = self._get_latest_state(account)
         return json_doc.encode()
 
-
-    def getDefaultState(self):
+    def _get_default_state(self):
         return self.default_state
 
-    def getLatestState(self, account):
+    def _get_latest_state(self, account):
         print("Looking up latest requested state for account ", account)
 
-        # What is the default state?
+        # FIXME: What is the default state?
 
-        latest_state = self.getDefaultState()
+        latest_state = self._get_default_state()
 
         if account not in self.config_storage:
             self.config_storage[account] = latest_state
@@ -56,7 +55,7 @@ class State(resource.Resource):
 
         return json.dumps(latest_state)
 
-    def updateLatestState(self, account, new_requested_state):
+    def _update_latest_state(self, account, new_requested_state):
         print("Updating latest requested state for account ", account)
         # Store the state
         # FIXME: Is this a merge or a full replace?  POST is full replace??
@@ -66,11 +65,11 @@ class State(resource.Resource):
         # Does this trigger a push?
         # I don't think so.  We probably need a way to update 
         # the latest requested state and then push
-        account = getAccountFromRequest(request)
+        account = _get_account_from_request(request)
         newdata = request.content.getvalue()
         new_requested_state = json.loads(newdata)
 
-        self.updateLatestState(account, new_requested_state)
+        self._update_latest_state(account, new_requested_state)
 
         return "".encode()
 
@@ -82,8 +81,8 @@ class SyncResults(resource.Resource):
         self.output_storage = output_storage
 
     def render_GET(self, request):
-        account = getAccountFromRequest(request)
-        run_id = self.getRunIdFromRequest(request)
+        account = _get_account_from_request(request)
+        run_id = self._get_run_id_from_request(request)
         json_doc = self.getHighLevelOutput(account, run_id)
         return json_doc.encode()
 
@@ -91,7 +90,7 @@ class SyncResults(resource.Resource):
         print("Looking up sync results for account ", account, " run id ", run_id)
         return json.dumps(self.output_storage[account][run_id])
 
-    def getRunIdFromRequest(self, request):
+    def _get_run_id_from_request(self, request):
         return request.args[b'run_id'][0].decode()
 
 
@@ -106,11 +105,11 @@ class PerformSync(resource.Resource):
         self.output_storage = output_storage
 
     def render_POST(self, request):
-        account = getAccountFromRequest(request)
+        account = _get_account_from_request(request)
         print("Starting sync job for account ", account)
-        run_id = self.generateRunId()
+        run_id = self._generate_run_id()
         requested_state = self.config_storage[account]
-        connected_hosts = self.getConnectedHostsPerAccount(account)
+        connected_hosts = self._get_connected_hosts_per_account(account)
 
         if account not in self.sync_storage:
             self.sync_storage[account] = {}
@@ -125,9 +124,9 @@ class PerformSync(resource.Resource):
         # FIXME:  Store the inventory host id or connected client id here??
         self.output_storage[account][run_id] = inventory_host_id_list
 
-        playbook = self.generatePlaybook(requested_state)
+        playbook = self._generate_playbook(requested_state)
 
-        connector_message_ids = self.sendJobsToConnectorService(playbook, connected_client_id_list)
+        connector_message_ids = self._send_jobs_to_connector_service(playbook, connected_client_id_list)
 
         # ------------------------------- 
         # TESTING HACK!!
@@ -146,20 +145,20 @@ class PerformSync(resource.Resource):
         json_doc = json.dumps({'id': run_id})
         return json_doc.encode()
 
-    def generateRunId(self):
+    def _generate_run_id(self):
         self.runId += 1
         return str(self.runId)
 
-    def getConnectedHostsPerAccount(self, account):
+    def _get_connected_hosts_per_account(self, account):
         return [ ("inv_id_host_1", "client_id_1"),
                  ("inv_id_host_2", "client_id_2") ]
 
-    def generatePlaybook(self, requested_state):
+    def _generate_playbook(self, requested_state):
         print("Building playbook...")
         # FIXME: build playbook
         return "ima playbook"
 
-    def sendJobsToConnectorService(self, playbook, connected_client_id_list):
+    def _send_jobs_to_connector_service(self, playbook, connected_client_id_list):
         print("Sending job message for each connected client to the connector-service...")
         # FIXME: 
         connector_message_ids = ["123", "456", "789"]
@@ -196,11 +195,7 @@ class OutputReceivedEventProcessor:
             print("FIXME:  WHAT NOW??")
 
 
-def start_kafka_consumer(kafka_client=None,
-                         topic=None,
-                         consumer_group=None,
-                         processor=None,
-                         ):
+def start_kafka_consumer(kafka_client=None, topic=None, consumer_group=None, processor=None):
     partition = 0
     kafka_consumer = KafkaConsumer(kafka_client,
                               topic,
