@@ -25,6 +25,11 @@ class ConfigManager(resource.Resource):
 class State(resource.Resource):
     isLeaf = True
 
+    # FIXME: How do we add new apps?
+    #          We'll need a new playbook
+    #        What about existing clients?
+    #        Does adding a new app trigger a sync across all connected clients?
+    #        Or default new app to off and let customers enable it??
     default_state = { "insights": "enabled",
                       "compliance": "enabled",
                       "vulnerability": "disabled",
@@ -83,10 +88,10 @@ class SyncResults(resource.Resource):
     def render_GET(self, request):
         account = _get_account_from_request(request)
         run_id = self._get_run_id_from_request(request)
-        json_doc = self.getHighLevelOutput(account, run_id)
+        json_doc = self._get_high_level_output(account, run_id)
         return json_doc.encode()
 
-    def getHighLevelOutput(self, account, run_id):
+    def _get_high_level_output(self, account, run_id):
         print("Looking up sync results for account ", account, " run id ", run_id)
         return json.dumps(self.output_storage[account][run_id])
 
@@ -99,10 +104,11 @@ class PerformSync(resource.Resource):
 
     runId = 0
 
-    def __init__(self, config_storage, sync_storage, output_storage):
+    def __init__(self, config_storage, sync_storage, output_storage, message_id_to_run_id_map):
         self.config_storage = config_storage
         self.sync_storage = sync_storage
         self.output_storage = output_storage
+        self.message_id_to_run_id_map = message_id_to_run_id_map
 
     def render_POST(self, request):
         account = _get_account_from_request(request)
@@ -128,16 +134,28 @@ class PerformSync(resource.Resource):
 
         connector_message_ids = self._send_jobs_to_connector_service(playbook, connected_client_id_list)
 
+        for i, msg_id in enumerate(connector_message_ids):
+            self.message_id_to_run_id_map[msg_id]=(account, run_id, connected_hosts[i][0])
+
         # ------------------------------- 
         # TESTING HACK!!
-        def send_output_received_events(account, connected_hosts):
+        #
+        # Trigger some output events in the future
+        def send_output_received_events(account, connector_message_id):
             print("send_output_received_events was called:", account, connected_hosts)
+            msg = { "account": account,
+                    "message_id": connector_message_id,
+                    "ansible_output": { "insights": "success",
+                                        "compliance": "success",
+                                        "drift": "success" }
+            }
+            json_msg = json.dumps(msg)
             kafka_producer.send_messages(
                     OUTPUT_RECEIVED_EVENT_TOPIC,
-                    key=connector_message_ids[0].encode(),
-                    msgs=[b"compliance finished"])
+                    key=connector_message_id.encode(),
+                    msgs=[json_msg.encode()])
 
-        reactor.callLater(2.5, send_output_received_events, account, connected_hosts)
+        reactor.callLater(2, send_output_received_events, account, connector_message_ids[0])
         # ------------------------------- 
 
         request.setResponseCode(201)
@@ -155,13 +173,15 @@ class PerformSync(resource.Resource):
 
     def _generate_playbook(self, requested_state):
         print("Building playbook...")
-        # FIXME: build playbook
+        # FIXME: Retrieve the playbooks
+        #        Need a playbook for enabling and disabling each service
+        #        Are the playbooks specific to the rhel version?
         return "ima playbook"
 
     def _send_jobs_to_connector_service(self, playbook, connected_client_id_list):
         print("Sending job message for each connected client to the connector-service...")
         # FIXME: 
-        connector_message_ids = ["123", "456", "789"]
+        connector_message_ids = ["123", "456"]
         return connector_message_ids
 
 
@@ -184,15 +204,31 @@ class InventoryEventProcessor:
 
 class OutputReceivedEventProcessor:
 
+    def __init__(self, output_storage, message_id_to_run_id_map):
+        self.output_storage = output_storage
+        self.message_id_to_run_id_map = message_id_to_run_id_map
+
     def __call__(self, consumer, message_list):
         print("Got output received message...")
         for outter_message in message_list:
-            key = outter_message.message.key
-            msg = outter_message.message.value
-            print("key:", key)
-            print("msg:", msg)
-            # FIXME:  WHAT NOW??
-            print("FIXME:  WHAT NOW??")
+            key = outter_message.message.key.decode()
+            msg = json.loads(outter_message.message.value)
+
+            (account, run_id, host_id) = self._get_message_id_details(key)
+
+            if account != msg["account"]:
+                print("Error ...invalid data")
+                return
+
+            try:
+                self.output_storage[account][run_id][host_id] = msg["ansible_output"]
+            except KeyError as ke:
+                print("KeyError while processing output response:", ke)
+
+    def _get_message_id_details(self, key):
+        print("message_id_to_run_id_map:", self.message_id_to_run_id_map)
+        print("key:", key)
+        return self.message_id_to_run_id_map[key]
 
 
 def start_kafka_consumer(kafka_client=None, topic=None, consumer_group=None, processor=None):
@@ -240,11 +276,12 @@ output_storage = { "010101":
     }
 }
 sync_storage = {}
+message_id_to_run_id_map = {}
 
 root = ConfigManager()
 root.putChild('state'.encode(), State(config_storage))
 root.putChild('sync_results'.encode(), SyncResults(output_storage))
-root.putChild('sync'.encode(), PerformSync(config_storage, sync_storage, output_storage))
+root.putChild('sync'.encode(), PerformSync(config_storage, sync_storage, output_storage, message_id_to_run_id_map))
 
 site = server.Site(root)
 endpoint = endpoints.TCP4ServerEndpoint(reactor, 8080)
@@ -262,13 +299,13 @@ start_kafka_consumer(kafka_client=kafka_client,
 start_kafka_consumer(kafka_client=kafka_client,
                      topic=OUTPUT_RECEIVED_EVENT_TOPIC,
                      consumer_group="config-manager-output-received-consumer",
-                     processor = OutputReceivedEventProcessor())
+                     processor = OutputReceivedEventProcessor(output_storage, message_id_to_run_id_map))
 
 kakfa_producer = start_kafka_producer(kafka_client=kafka_client)
 
 # FIXME: Send some inventory events from outta the 
 # blue...these might need to be connector-service events
 host_updated_event = {"account": "010101", "id": "6785", "insights_id": "3234", "connected_client_id": "2352"}
-reactor.callLater(10, send_inventory_events, host_updated_event)
+#reactor.callLater(10, send_inventory_events, host_updated_event)
 
 reactor.run()
