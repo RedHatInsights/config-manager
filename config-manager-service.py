@@ -12,6 +12,7 @@ import json
 
 kafka_producer = None
 INVENTORY_EVENT_TOPIC = "platform.inventory.events"
+OUTPUT_RECEIVED_EVENT_TOPIC = "platform.playbook_dispatcher.events"
 
 def getAccountFromRequest(request):
     return request.args[b'account'][0].decode()
@@ -128,17 +129,17 @@ class PerformSync(resource.Resource):
 
         connector_message_ids = self.sendJobsToConnectorService(playbook, connected_client_id_list)
 
-        # -------- 
+        # ------------------------------- 
         # TESTING HACK!!
-        def send_inventory_events(account, connected_hosts):
-            print("send_inventory_events was called:", account, connected_hosts)
+        def send_output_received_events(account, connected_hosts):
+            print("send_output_received_events was called:", account, connected_hosts)
             kafka_producer.send_messages(
-                    INVENTORY_EVENT_TOPIC,
+                    OUTPUT_RECEIVED_EVENT_TOPIC,
                     key=connector_message_ids[0].encode(),
                     msgs=[b"compliance finished"])
 
-        reactor.callLater(2.5, send_inventory_events, account, connected_hosts)
-        # -------- 
+        reactor.callLater(2.5, send_output_received_events, account, connected_hosts)
+        # ------------------------------- 
 
         request.setResponseCode(201)
 
@@ -178,18 +179,47 @@ class InventoryEventProcessor:
             msg = outter_message.message.value
             print("key:", key)
             print("msg:", msg)
+            # FIXME:  WHAT NOW??
+            print("FIXME:  WHAT NOW??")
 
 
-def start_inventory_event_processor(kafka_client=None):
-    kafka_inventory_partition = 0
-    kafka_inventory_consumer_group = "config-manager-inventory-consumer"
-    kafka_inventory_processor = InventoryEventProcessor()
+class OutputReceivedEventProcessor:
+
+    def __call__(self, consumer, message_list):
+        print("Got output received message...")
+        for outter_message in message_list:
+            key = outter_message.message.key
+            msg = outter_message.message.value
+            print("key:", key)
+            print("msg:", msg)
+            # FIXME:  WHAT NOW??
+            print("FIXME:  WHAT NOW??")
+
+
+def start_kafka_consumer(kafka_client=None,
+                         topic=None,
+                         consumer_group=None,
+                         processor=None,
+                         ):
+    partition = 0
     kafka_consumer = KafkaConsumer(kafka_client,
-                              INVENTORY_EVENT_TOPIC,
-                              kafka_inventory_partition,
-                              kafka_inventory_processor,
-                              consumer_group=kafka_inventory_consumer_group)
+                              topic,
+                              partition,
+                              processor,
+                              consumer_group=consumer_group)
     kafka_consumer.start(afkak.OFFSET_LATEST)
+
+
+def send_inventory_events(host_updated_event):
+    print("send_inventory_events was called...")
+    host_id = host_updated_event["id"]
+    print("inventory host id: ", host_id)
+    print("host update event: ", host_updated_event)
+    json_doc = json.dumps(host_updated_event)
+    kafka_producer.send_messages(
+            INVENTORY_EVENT_TOPIC,
+            key=host_id.encode(),
+            msgs=[json_doc.encode()])
 
 
 def start_kafka_producer(kafka_client=None):
@@ -228,7 +258,22 @@ endpoint.listen(site)
 kafka_client = KafkaClient("localhost:29092", reactor=reactor)
 
 # FIXME: Move this into its own pod
-start_inventory_event_processor(kafka_client=kafka_client)
+start_kafka_consumer(kafka_client=kafka_client,
+                     topic=INVENTORY_EVENT_TOPIC,
+                     consumer_group="config-manager-inventory-consumer",
+                     processor = InventoryEventProcessor())
+
+# FIXME: Move this into its own pod
+start_kafka_consumer(kafka_client=kafka_client,
+                     topic=OUTPUT_RECEIVED_EVENT_TOPIC,
+                     consumer_group="config-manager-output-received-consumer",
+                     processor = OutputReceivedEventProcessor())
+
 kakfa_producer = start_kafka_producer(kafka_client=kafka_client)
+
+# FIXME: Send some inventory events from outta the 
+# blue...these might need to be connector-service events
+host_updated_event = {"account": "010101", "id": "6785", "insights_id": "3234", "connected_client_id": "2352"}
+reactor.callLater(10, send_inventory_events, host_updated_event)
 
 reactor.run()
