@@ -9,28 +9,34 @@ PAYLOAD='{"insights": "enabled","compliance": "enabled","drift": "enabled"}'
 echo "ACCOUNT: $ACCOUNT"
 
 function getState {
+    echo "----------------------------------------"
     echo "Get State"
     echo "Account: $ACCOUNT"
     curl -s "http://$JOB_RECEIVER_HOST/state?account=$ACCOUNT" | jq
+    echo "----------------------------------------"
 }
 
 function postState {
+    echo "----------------------------------------"
     echo "Post State"
     echo "Account: $ACCOUNT"
     curl -s -X POST -d "$PAYLOAD" http://$JOB_RECEIVER_HOST/state?account=$ACCOUNT | jq
+    echo "----------------------------------------"
 }
 
 function getSyncResults {
-    RUN_ID=1234
+    echo "----------------------------------------"
+    RUN_ID=$1
     echo "Get Sync Results - $RUN_ID"
     echo "Account: $ACCOUNT"
     curl -s "http://$JOB_RECEIVER_HOST/sync_results?account=$ACCOUNT&run_id=$RUN_ID" | jq
+    echo "----------------------------------------"
 }
 
 function startSync {
-    echo "Get Sync Results - $RUN_ID"
-    echo "Account: $ACCOUNT"
-    curl -v -s -X POST "http://$JOB_RECEIVER_HOST/sync?account=$ACCOUNT"
+    #echo "Get Sync Results - $RUN_ID"
+    #echo "Account: $ACCOUNT"
+    curl -s -X POST "http://$JOB_RECEIVER_HOST/sync?account=$ACCOUNT"
 }
 
 
@@ -38,5 +44,7 @@ function startSync {
 postState
 #getState
 
-#getSyncResults
-startSync
+getSyncResults "1234"
+id=$(startSync | jq .id | sed 's/"//g')
+echo "sync run id=$id"
+getSyncResults $id
