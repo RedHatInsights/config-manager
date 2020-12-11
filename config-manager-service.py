@@ -134,6 +134,7 @@ class PerformSync(resource.Resource):
 
         connector_message_ids = self._send_jobs_to_connector_service(playbook, connected_client_id_list)
 
+        # FIXME: Got to be able to go from a connector messageid, to the account, run_id, host_id
         for i, msg_id in enumerate(connector_message_ids):
             self.message_id_to_run_id_map[msg_id]=(account, run_id, connected_hosts[i][0])
 
@@ -155,7 +156,8 @@ class PerformSync(resource.Resource):
                     key=connector_message_id.encode(),
                     msgs=[json_msg.encode()])
 
-        reactor.callLater(2, send_output_received_events, account, connector_message_ids[0])
+        reactor.callLater(5, send_output_received_events, account, connector_message_ids[0])
+        reactor.callLater(10, send_output_received_events, account, connector_message_ids[1])
         # ------------------------------- 
 
         request.setResponseCode(201)
@@ -214,6 +216,7 @@ class OutputReceivedEventProcessor:
             key = outter_message.message.key.decode()
             msg = json.loads(outter_message.message.value)
 
+            # FIXME: Got to be able to go from a connector messageid, to the account, run_id, host_id
             (account, run_id, host_id) = self._get_message_id_details(key)
 
             if account != msg["account"]:
