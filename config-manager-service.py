@@ -8,21 +8,27 @@ import afkak
 
 import html
 import json
+import requests
 
 
 kafka_producer = None
 INVENTORY_EVENT_TOPIC = "platform.inventory.events"
 OUTPUT_RECEIVED_EVENT_TOPIC = "platform.playbook_dispatcher.events"
+MY_HOST_AND_PORT="localhost:8080"
+CONNECTOR_SERVICE_URL="http://localhost:8081/job"
+AUTH_HEADER_MAP = { "x-rh-identity":
+    "eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" 
+}
 
 def _get_account_from_request(request):
     return request.args[b'account'][0].decode()
 
 
-class ConfigManager(resource.Resource):
+class ConfigManagerResource(resource.Resource):
     pass
 
 
-class State(resource.Resource):
+class StateResource(resource.Resource):
     isLeaf = True
 
     # FIXME: How do we add new apps?
@@ -79,7 +85,7 @@ class State(resource.Resource):
         return "".encode()
 
 
-class SyncResults(resource.Resource):
+class SyncResultsResource(resource.Resource):
     isLeaf = True
 
     def __init__(self, output_storage):
@@ -99,7 +105,7 @@ class SyncResults(resource.Resource):
         return request.args[b'run_id'][0].decode()
 
 
-class PerformSync(resource.Resource):
+class PerformSyncResource(resource.Resource):
     isLeaf = True
 
     runId = 0
@@ -130,9 +136,9 @@ class PerformSync(resource.Resource):
         # FIXME:  Store the inventory host id or connected client id here??
         self.output_storage[account][run_id] = inventory_host_id_list
 
-        playbook = self._generate_playbook(requested_state)
+        job_message = self._generate_job_request(account)
 
-        connector_message_ids = self._send_jobs_to_connector_service(playbook, connected_client_id_list)
+        connector_message_ids = self._send_jobs_to_connector_service(account, job_message, connected_client_id_list)
 
         # FIXME: Got to be able to go from a connector messageid, to the account, run_id, host_id
         for i, msg_id in enumerate(connector_message_ids):
@@ -142,22 +148,11 @@ class PerformSync(resource.Resource):
         # TESTING HACK!!
         #
         # Trigger some output events in the future
-        def send_output_received_events(account, connector_message_id):
-            print("send_output_received_events was called:", account, connected_hosts)
-            msg = { "account": account,
-                    "message_id": connector_message_id,
-                    "ansible_output": { "insights": "success",
-                                        "compliance": "success",
-                                        "drift": "success" }
-            }
-            json_msg = json.dumps(msg)
-            kafka_producer.send_messages(
-                    OUTPUT_RECEIVED_EVENT_TOPIC,
-                    key=connector_message_id.encode(),
-                    msgs=[json_msg.encode()])
-
-        reactor.callLater(5, send_output_received_events, account, connector_message_ids[0])
-        reactor.callLater(10, send_output_received_events, account, connector_message_ids[1])
+        ansible_output = { "insights": "success",
+                           "compliance": "success",
+                           "drift": "success" }
+        #reactor.callLater(5, send_output_received_events, account, connector_message_ids[0], ansible_output)
+        #reactor.callLater(10, send_output_received_events, account, connector_message_ids[1], ansible_output)
         # ------------------------------- 
 
         request.setResponseCode(201)
@@ -169,22 +164,91 @@ class PerformSync(resource.Resource):
         self.runId += 1
         return str(self.runId)
 
+    def _generate_job_request(self, account):
+        # FIXME:  These urls do not really need to include the account
+        job_request = { "payload_url": f"http://{MY_HOST_AND_PORT}/job?account={account}",
+                        "return_url": f"http://{MY_HOST_AND_PORT}/playbook_dispatcher?account={account}",
+                        "handler": "playbook_runner"}
+        return json.dumps(job_request)
+
     def _get_connected_hosts_per_account(self, account):
-        return [ ("inv_id_host_1", "client_id_1"),
-                 ("inv_id_host_2", "client_id_2") ]
+        return [ ("inv_id_host_1", "client-0"),
+                 ("inv_id_host_2", "client-1") ]
+
+    def _send_jobs_to_connector_service(self, account, job_message, connected_client_id_list):
+        print("Sending job message for each connected client to the connector-service...")
+        print("job_message: ", job_message)
+
+        connector_message_ids = []
+        for connected_client_id in connected_client_id_list:
+            connector_message = {"account": account,
+                                 "recipient": connected_client_id,
+                                 "directive": "NOT_USED",
+                                 "payload": job_message }
+            print("Calling connector service...")
+            # FIXME:  This is bad for twisted
+            response = requests.post(CONNECTOR_SERVICE_URL, headers=AUTH_HEADER_MAP, json=connector_message)
+            print("connector service response: ", response)
+            if response.status_code == 201:
+                print("type(response.json()):", type(response.json()))
+                connector_message_ids.append(response.json()["id"])
+            else:
+                # FIXME:
+                connector_message_ids.append("BAD NODE!")
+
+        # FIXME: 
+        #connector_message_ids = ["123", "456"]
+        return connector_message_ids
+
+
+class JobResource(resource.Resource):
+    isLeaf = True
+
+    def __init__(self, config_storage):
+        self.config_storage = config_storage
+
+    def render_GET(self, request):
+        # FIXME:  Do we only ever return the latest requested state?
+        #         For example, user1 kicks off a sync, then user2 changes the state??
+        account = _get_account_from_request(request)
+        latest_state = self._lookup_latest_state(account)
+        json_doc = self._generate_playbook(latest_state)
+        return json_doc.encode()
+
+    def _get_run_id_from_request(self, request):
+        return request.args[b'run_id'][0].decode()
+
+    def _lookup_latest_state(self, account):
+        latest_state = self.config_storage[account]
+        return latest_state
 
     def _generate_playbook(self, requested_state):
         print("Building playbook...")
+        print("\there is the requested state:", requested_state)
         # FIXME: Retrieve the playbooks
         #        Need a playbook for enabling and disabling each service
         #        Are the playbooks specific to the rhel version?
+        # 
+        # GET THE LATEST PLAYBOOK?  or is the playbook specific to a particular run??
         return "ima playbook"
 
-    def _send_jobs_to_connector_service(self, playbook, connected_client_id_list):
-        print("Sending job message for each connected client to the connector-service...")
-        # FIXME: 
-        connector_message_ids = ["123", "456"]
-        return connector_message_ids
+class PlaybookDispatcherResource(resource.Resource):
+    isLeaf = True
+
+    def render_POST(self, request):
+        print("Recieved playbook run output...")
+        account = _get_account_from_request(request)
+        connector_message_id = self._get_message_id_from_request(request)
+        output = request.content.getvalue().decode()
+        print(f"\toutput for message id {connector_message_id} {output}")
+
+        send_output_received_events(account, connector_message_id, output)
+
+        # new_requested_state = json.loads(output)
+        return "".encode()
+
+    def _get_message_id_from_request(self, request):
+        return request.getHeader("message_id")
 
 
 # FIXME: If we consume inventory events, then we have to 
@@ -201,7 +265,7 @@ class InventoryEventProcessor:
             print("key:", key)
             print("msg:", msg)
             # FIXME:  WHAT NOW??
-            print("FIXME:  WHAT NOW??")
+            print("FIXME:  WHAT NOW??  How do I know if this is a new connectin?")
 
 
 class OutputReceivedEventProcessor:
@@ -215,9 +279,11 @@ class OutputReceivedEventProcessor:
         for outter_message in message_list:
             key = outter_message.message.key.decode()
             msg = json.loads(outter_message.message.value)
+            print("\tmsg:", msg)
 
             # FIXME: Got to be able to go from a connector messageid, to the account, run_id, host_id
             (account, run_id, host_id) = self._get_message_id_details(key)
+            print("account:", account)
 
             if account != msg["account"]:
                 print("Error ...invalid data")
@@ -232,6 +298,21 @@ class OutputReceivedEventProcessor:
         print("message_id_to_run_id_map:", self.message_id_to_run_id_map)
         print("key:", key)
         return self.message_id_to_run_id_map[key]
+
+
+def send_output_received_events(account, connector_message_id, output):
+    print("send_output_received_events was called:", account, connector_message_id)
+    print("\ttype(output):", type(output))
+    msg = { "account": account,
+            "message_id": connector_message_id,
+            "ansible_output": output,
+    }
+    json_msg = json.dumps(msg)
+    #json_msg = '{"compliance": "success", "drift": "failure", "insights": "success"}'
+    kafka_producer.send_messages(
+            OUTPUT_RECEIVED_EVENT_TOPIC,
+            key=connector_message_id.encode(),
+            msgs=[json_msg.encode()])
 
 
 def start_kafka_consumer(kafka_client=None, topic=None, consumer_group=None, processor=None):
@@ -281,10 +362,12 @@ output_storage = { "010101":
 sync_storage = {}
 message_id_to_run_id_map = {}
 
-root = ConfigManager()
-root.putChild('state'.encode(), State(config_storage))
-root.putChild('sync_results'.encode(), SyncResults(output_storage))
-root.putChild('sync'.encode(), PerformSync(config_storage, sync_storage, output_storage, message_id_to_run_id_map))
+root = ConfigManagerResource()
+root.putChild('state'.encode(), StateResource(config_storage))
+root.putChild('sync_results'.encode(), SyncResultsResource(output_storage))
+root.putChild('sync'.encode(), PerformSyncResource(config_storage, sync_storage, output_storage, message_id_to_run_id_map))
+root.putChild('job'.encode(), JobResource(config_storage))
+root.putChild('playbook_dispatcher'.encode(), PlaybookDispatcherResource())
 
 site = server.Site(root)
 endpoint = endpoints.TCP4ServerEndpoint(reactor, 8080)
