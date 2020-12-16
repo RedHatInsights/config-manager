@@ -3,7 +3,7 @@ JOB_RECEIVER_HOST=localhost:8080
 ACCOUNT="010101"
 NODE_ID="client-1"
 
-PAYLOAD='{"insights": "enabled","compliance": "enabled","drift": "enabled"}'
+PAYLOAD='{"insights": "enabled","compliance": "enabled","drift": "enabled", "vulnerability": "enabled"}'
 
 
 echo "ACCOUNT: $ACCOUNT"
@@ -44,7 +44,18 @@ function startSync {
 postState
 #getState
 
-getSyncResults "1234"
+#getSyncResults "1234"
+
 id=$(startSync | jq .id | sed 's/"//g')
+#id=1
 echo "sync run id=$id"
 getSyncResults $id
+
+sleep 2
+
+echo "sync run id=$id"
+getSyncResults $id
+
+
+
+
