@@ -1,14 +1,21 @@
 package main
 
 import (
+	"config-manager/api"
+	"config-manager/application"
 	"config-manager/config"
-	"config-manager/kafka"
+	"config-manager/infrastructure/kafka"
+	"config-manager/infrastructure/persistence"
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -19,9 +26,26 @@ func main() {
 
 	config := config.Get()
 
-	cm := ConfigManager{Config: config}
-	cm.Init()
-	go cm.Run(*cmAddr)
+	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		config.GetString("DBUser"),
+		config.GetString("DBPass"),
+		config.GetString("DBName"))
+
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	accountRepo := persistence.AccountRepository{DB: db}
+
+	//cm := ConfigManager{Config: config}
+	cmService := application.ConfigManagerService{AccountRepo: &accountRepo}
+	cmController := api.ConfigManagerController{
+		ConfigManagerService: cmService,
+	}
+
+	cmController.Init()
+	go cmController.Run(*cmAddr)
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)
