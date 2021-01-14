@@ -38,10 +38,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mux := mux.NewRouter()
+	apiMux := mux.NewRouter()
 
 	apiSpec := api.ApiSpecServer{
-		Router:       mux,
+		Router:       apiMux,
 		SpecFileName: config.GetString("ApiSpecFile"),
 	}
 
@@ -50,12 +50,12 @@ func main() {
 	cmService := application.ConfigManagerService{AccountRepo: &accountRepo}
 	cmController := api.ConfigManagerController{
 		ConfigManagerService: cmService,
-		Router:               mux,
+		Router:               apiMux,
 	}
 
 	cmController.Routes()
 	apiSpec.Routes()
-	go utils.StartHTTPServer(*cmAddr, "config-manager", mux)
+	go utils.StartHTTPServer(*cmAddr, "config-manager", apiMux)
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)
