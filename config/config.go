@@ -7,6 +7,8 @@ import (
 func Get() *viper.Viper {
 	options := viper.New()
 
+	options.SetDefault("ApiSpecFile", "api/openapi.json")
+
 	options.SetDefault("DBUser", "postgres")
 	options.SetDefault("DBPass", "")
 	options.SetDefault("DBName", "postgres")

@@ -16,21 +16,16 @@ type ConfigManagerController struct {
 	Router               *mux.Router
 }
 
-func (cmc *ConfigManagerController) Init() {
-	cmc.Router = mux.NewRouter()
-	cmc.routes()
-}
-
 func (cmc *ConfigManagerController) Run(addr string) {
 	utils.StartHTTPServer(addr, "config-manager", cmc.Router)
 }
 
-func (cmc *ConfigManagerController) routes() {
-	s := cmc.Router.PathPrefix("/configmanager").Subrouter()
+func (cmc *ConfigManagerController) Routes() {
+	s := cmc.Router.PathPrefix("/config").Subrouter()
 	s.Use(identity.EnforceIdentity)
 	s.HandleFunc("/state", cmc.getAccountState).Methods("GET")
 	s.HandleFunc("/state", cmc.updateAccountState).Methods("POST")
-	s.HandleFunc("/sync", cmc.applyAccountState).Methods("POST")
+	s.HandleFunc("/state/apply", cmc.applyAccountState).Methods("POST")
 }
 
 func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -75,6 +70,9 @@ func (cmc *ConfigManagerController) updateAccountState(w http.ResponseWriter, r 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
+
+	//TODO get number of connected clients (inventory repository?) and build response object that contains
+	//both acc and number of clients for 'pre flight check' purposes
 
 	respondWithJSON(w, http.StatusOK, acc)
 }
