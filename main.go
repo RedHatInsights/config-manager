@@ -6,6 +6,7 @@ import (
 	"config-manager/config"
 	"config-manager/infrastructure/kafka"
 	"config-manager/infrastructure/persistence"
+	"config-manager/utils"
 	"context"
 	"database/sql"
 	"flag"
@@ -15,6 +16,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
@@ -36,16 +38,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+	apiMux := mux.NewRouter()
+
+	apiSpec := api.ApiSpecServer{
+		Router:       apiMux,
+		SpecFileName: config.GetString("ApiSpecFile"),
+	}
+
 	accountRepo := persistence.AccountRepository{DB: db}
 
-	//cm := ConfigManager{Config: config}
 	cmService := application.ConfigManagerService{AccountRepo: &accountRepo}
 	cmController := api.ConfigManagerController{
 		ConfigManagerService: cmService,
+		Router:               apiMux,
 	}
 
-	cmController.Init()
-	go cmController.Run(*cmAddr)
+	cmController.Routes()
+	apiSpec.Routes()
+	go utils.StartHTTPServer(*cmAddr, "config-manager", apiMux)
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)

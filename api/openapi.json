@@ -1,0 +1,207 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+      "title": "Config manager",
+      "description": "Config manager service",
+      "contact": {
+        "email": "jassteph@redhat.com"
+      },
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "https://cloud.redhat.com/api/config-manager/v1",
+        "description": "production"
+      },
+      {
+        "url": "/api/config-manager/v1",
+        "description": "relative path"
+      }
+    ],
+    "paths": {
+      "/config/state": {
+        "get": {
+          "summary": "Get configuration state for requesting account",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Account"
+                  }
+                }
+              }
+            },
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Account"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {}
+            },
+            "401": {
+              "description": "Authentication missing from request",
+              "content": {}
+            },
+            "500": {
+              "description": "Internal Server Error",
+              "content": {}
+            }
+          }
+        },
+        "post": {
+          "summary": "Update configuration state for requesting account",
+          "requestBody": {
+            "description": "State map that needs to be added to account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountState"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Account"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {}
+            },
+            "500": {
+              "description": "Internal Server Error",
+              "content": {}
+            }
+          }
+        }
+      },
+      "/config/state/apply": {
+        "post": {
+          "summary": "Apply configuration state to account's connected clients",
+          "requestBody": {
+            "content": {}
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Run"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {}
+            }
+          }
+        }
+      },
+      "/config/logs": {
+        "get": {
+          "summary": "Get logs for config manager executions",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Runs"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {}
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Account": {
+          "type": "object",
+          "properties": {
+            "AccountID": {
+              "type": "string",
+              "example": 1
+            },
+            "State": {
+              "$ref": "#/components/schemas/AccountState"
+            }
+          }
+        },
+        "AccountState": {
+          "type": "object",
+          "properties": {
+            "insights": {
+              "type": "string",
+              "example": "enabled"
+            },
+            "advisor": {
+              "type": "string",
+              "example": "disabled"
+            },
+            "compliance": {
+              "type": "string",
+              "example": "enabled"
+            },
+            "vulnerability": {
+              "type": "string",
+              "example": "disabled"
+            }
+          }
+        },
+        "Run": {
+          "type": "object",
+          "properties": {
+            "runID": {
+              "type": "string"
+            },
+            "AccountID": {
+              "type": "string"
+            },
+            "Initiator": {
+              "type": "string"
+            },
+            "Label": {
+              "type": "string"
+            },
+            "Status": {
+              "type": "string"
+            },
+            "Timestamp": {
+              "type": "string"
+            }
+          }
+        },
+        "Runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Run"
+          }
+        }
+      }
+    }
+  }
