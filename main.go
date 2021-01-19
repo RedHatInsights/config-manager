@@ -46,8 +46,14 @@ func main() {
 	}
 
 	accountRepo := persistence.AccountRepository{DB: db}
+	runRepo := persistence.RunRepository{DB: db}
+	playRepo := persistence.PlaybookArchiveRepository{DB: db}
 
-	cmService := application.ConfigManagerService{AccountRepo: &accountRepo}
+	cmService := application.ConfigManagerService{
+		AccountRepo:  &accountRepo,
+		RunRepo:      &runRepo,
+		PlaybookRepo: &playRepo,
+	}
 	cmController := api.ConfigManagerController{
 		ConfigManagerService: cmService,
 		Router:               apiMux,

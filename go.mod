@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/RedHatInsights/platform-receptor-controller v0.0.1
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/lib/pq v1.9.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0

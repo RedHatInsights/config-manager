@@ -82,5 +82,12 @@ func (cmc *ConfigManagerController) applyAccountState(w http.ResponseWriter, r *
 	id = identity.Get(r.Context())
 	fmt.Println("Applying state for account: ", id.Identity.AccountNumber)
 
-	// TODO: Add handler for sending work / creating run entry
+	clients := cmc.ConfigManagerService.GetClients(id.Identity.AccountNumber)
+
+	run, err := cmc.ConfigManagerService.ApplyState(id.Identity.AccountNumber, "demo-user", clients)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+
+	respondWithJSON(w, http.StatusOK, run)
 }

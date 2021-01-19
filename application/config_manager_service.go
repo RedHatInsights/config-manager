@@ -4,15 +4,20 @@ import (
 	"config-manager/domain"
 	"database/sql"
 	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type ConfigManagerService struct {
-	AccountRepo domain.AccountRepository
-	RunRepo     domain.RunRepository
+	AccountRepo  domain.AccountRepository
+	RunRepo      domain.RunRepository
+	PlaybookRepo domain.PlaybookArchiveRepository
 }
 
 func (s *ConfigManagerService) GetAccount(id string) (*domain.Account, error) {
-	acc, err := s.AccountRepo.GetAccount(id)
+	acc := &domain.Account{AccountID: id}
+	acc, err := s.AccountRepo.GetAccount(acc)
 
 	if err != nil {
 		switch err {
@@ -62,4 +67,55 @@ func (s *ConfigManagerService) createAccount(id string) (*domain.Account, error)
 	}
 
 	return acc, err
+}
+
+func (s *ConfigManagerService) GetClients(id string) []string {
+	// placeholder - request clients from external service (inventory)
+	var clients []string
+	clients = append(clients, "1234")
+	return clients
+}
+
+func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*domain.Run, error) {
+	// generate run ID and label
+	// create entry in run table
+	// create entry in playbook archive
+	// for each client: send work request to dispatcher w/ label
+
+	acc, _ := s.GetAccount(id)
+
+	runID := uuid.New()
+	label := runID.String() + "-demo-label"
+
+	newRun := &domain.Run{
+		AccountID: id,
+		RunID:     runID,
+		Initiator: user,
+		Label:     label,
+		Status:    "in progress",
+		CreatedAt: time.Now(),
+	}
+
+	err := s.RunRepo.CreateRun(newRun)
+	if err != nil {
+		return nil, err
+	}
+
+	playbookArchive := &domain.PlaybookArchive{
+		PlaybookID: "test",
+		RunID:      runID.String(),
+		AccountID:  id,
+		Filename:   "test",
+		CreatedAt:  time.Now(),
+		State:      acc.State,
+	}
+
+	err = s.PlaybookRepo.CreatePlaybookArchive(playbookArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	// construct and send work request to playbook dispatcher
+
+	return newRun, err
 }

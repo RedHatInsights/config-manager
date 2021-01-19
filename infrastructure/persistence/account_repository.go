@@ -9,8 +9,7 @@ type AccountRepository struct {
 	DB *sql.DB
 }
 
-func (r *AccountRepository) GetAccount(id string) (*domain.Account, error) {
-	acc := &domain.Account{AccountID: id}
+func (r *AccountRepository) GetAccount(acc *domain.Account) (*domain.Account, error) {
 	err := r.DB.QueryRow("SELECT state FROM accounts WHERE account_id=$1",
 		acc.AccountID).Scan(&acc.State)
 
