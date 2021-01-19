@@ -12,7 +12,7 @@ import (
 )
 
 type ConfigManagerController struct {
-	ConfigManagerService application.ConfigManagerService
+	ConfigManagerService *application.ConfigManagerService
 	Router               *mux.Router
 }
 

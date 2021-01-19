@@ -1,22 +1,17 @@
 package main
 
 import (
-	"config-manager/api"
-	"config-manager/application"
 	"config-manager/config"
+	"config-manager/infrastructure"
 	"config-manager/infrastructure/kafka"
-	"config-manager/infrastructure/persistence"
 	"config-manager/utils"
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
@@ -28,39 +23,15 @@ func main() {
 
 	config := config.Get()
 
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-		config.GetString("DBUser"),
-		config.GetString("DBPass"),
-		config.GetString("DBName"))
+	container := infrastructure.Container{Config: config}
 
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
+	apiMux := container.Mux()
+	apiSpec := container.ApiSpec()
+	configManager := container.CMController()
 
-	apiMux := mux.NewRouter()
-
-	apiSpec := api.ApiSpecServer{
-		Router:       apiMux,
-		SpecFileName: config.GetString("ApiSpecFile"),
-	}
-
-	accountRepo := persistence.AccountRepository{DB: db}
-	runRepo := persistence.RunRepository{DB: db}
-	playRepo := persistence.PlaybookArchiveRepository{DB: db}
-
-	cmService := application.ConfigManagerService{
-		AccountRepo:  &accountRepo,
-		RunRepo:      &runRepo,
-		PlaybookRepo: &playRepo,
-	}
-	cmController := api.ConfigManagerController{
-		ConfigManagerService: cmService,
-		Router:               apiMux,
-	}
-
-	cmController.Routes()
+	configManager.Routes()
 	apiSpec.Routes()
+
 	go utils.StartHTTPServer(*cmAddr, "config-manager", apiMux)
 
 	resultsConsumer := kafka.NewResultsConsumer(config)

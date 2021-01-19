@@ -101,8 +101,10 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*d
 		return nil, err
 	}
 
+	playbookID := uuid.New()
+
 	playbookArchive := &domain.PlaybookArchive{
-		PlaybookID: "test",
+		PlaybookID: playbookID.String(),
 		RunID:      runID.String(),
 		AccountID:  id,
 		Filename:   "test",
