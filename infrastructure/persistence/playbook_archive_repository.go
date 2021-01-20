@@ -3,13 +3,15 @@ package persistence
 import (
 	"config-manager/domain"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type PlaybookArchiveRepository struct {
 	DB *sql.DB
 }
 
-func (r *PlaybookArchiveRepository) GetPlaybookArchiveByRunID(runID string) (*domain.PlaybookArchive, error) {
+func (r *PlaybookArchiveRepository) GetPlaybookArchiveByRunID(runID uuid.UUID) (*domain.PlaybookArchive, error) {
 	p := &domain.PlaybookArchive{RunID: runID}
 	err := r.DB.QueryRow("SELECT playbook_id, account_id, filename, created_at, state FROM playbook_archive WHERE run_id=$1",
 		p.RunID).Scan(&p.PlaybookID, &p.AccountID, &p.Filename, &p.CreatedAt, &p.State)

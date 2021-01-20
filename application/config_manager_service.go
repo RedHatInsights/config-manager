@@ -82,7 +82,7 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*d
 	// create entry in playbook archive
 	// for each client: send work request to dispatcher w/ label
 
-	acc, _ := s.GetAccount(id)
+	acc, _ := s.GetAccount(id) // GetAccount or just have state passed in via the api call?
 
 	runID := uuid.New()
 	label := runID.String() + "-demo-label"
@@ -104,8 +104,8 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*d
 	playbookID := uuid.New()
 
 	playbookArchive := &domain.PlaybookArchive{
-		PlaybookID: playbookID.String(),
-		RunID:      runID.String(),
+		PlaybookID: playbookID,
+		RunID:      runID,
 		AccountID:  id,
 		Filename:   "test",
 		CreatedAt:  time.Now(),
@@ -118,6 +118,7 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*d
 	}
 
 	// construct and send work request to playbook dispatcher
+	// includes url to retrieve the playbook, url to upload results, and which client to send work to
 
 	return newRun, err
 }
