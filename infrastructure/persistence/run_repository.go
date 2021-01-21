@@ -14,15 +14,15 @@ type RunRepository struct {
 
 func (r *RunRepository) GetRun(id uuid.UUID) (*domain.Run, error) {
 	run := &domain.Run{RunID: id}
-	err := r.DB.QueryRow("SELECT account_id, initiator, label, status, created_at FROM playbook_archive WHERE run_id=$1",
+	err := r.DB.QueryRow("SELECT account_id, initiator, label, status, created_at FROM runs WHERE run_id=$1",
 		run.RunID).Scan(&run.AccountID, &run.Initiator, &run.Label, &run.Status, &run.CreatedAt)
 
 	return run, err
 }
 
-func (r *RunRepository) GetRuns(id string, limit, offset int) ([]domain.Run, error) {
-	rows, err := r.DB.Query("SELECT run_id, acount_id, initiator, label, status, created_at FROM run_systems LIMIT $1 OFFSET $2 WHERE run_id=$3",
-		limit, offset, id)
+func (r *RunRepository) GetRuns(accountID string, limit, offset int) ([]domain.Run, error) {
+	rows, err := r.DB.Query("SELECT run_id, account_id, initiator, label, status, created_at FROM runs LIMIT $1 OFFSET $2 WHERE account_id=$3",
+		limit, offset, accountID)
 
 	if err != nil {
 		return nil, err
