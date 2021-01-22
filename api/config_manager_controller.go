@@ -26,6 +26,11 @@ func (cmc *ConfigManagerController) Routes() {
 	s.HandleFunc("/state", cmc.getAccountState).Methods("GET")
 	s.HandleFunc("/state", cmc.updateAccountState).Methods("POST")
 	s.HandleFunc("/state/apply", cmc.applyAccountState).Methods("POST")
+
+	l := cmc.Router.PathPrefix("/logs").Subrouter()
+	l.Use(identity.EnforceIdentity)
+	l.HandleFunc("/", cmc.getRuns).Methods("GET") // Add sorting/limit/pagination/etc
+	l.HandleFunc("/{runID}", cmc.getRunStatus).Methods("GET")
 }
 
 func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -82,7 +87,10 @@ func (cmc *ConfigManagerController) applyAccountState(w http.ResponseWriter, r *
 	id = identity.Get(r.Context())
 	fmt.Println("Applying state for account: ", id.Identity.AccountNumber)
 
-	clients := cmc.ConfigManagerService.GetClients(id.Identity.AccountNumber)
+	clients, err := cmc.ConfigManagerService.GetClients(id.Identity.AccountNumber)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
 
 	run, err := cmc.ConfigManagerService.ApplyState(id.Identity.AccountNumber, "demo-user", clients)
 	if err != nil {
@@ -90,4 +98,38 @@ func (cmc *ConfigManagerController) applyAccountState(w http.ResponseWriter, r *
 	}
 
 	respondWithJSON(w, http.StatusOK, run)
+}
+
+func (cmc *ConfigManagerController) getRuns(w http.ResponseWriter, r *http.Request) {
+	var id identity.XRHID
+	id = identity.Get(r.Context())
+	fmt.Println("Getting runs for account: ", id.Identity.AccountNumber)
+
+	runs, err := cmc.ConfigManagerService.GetRuns(id.Identity.AccountNumber, 3, 0)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+
+	respondWithJSON(w, http.StatusOK, runs)
+}
+
+func (cmc *ConfigManagerController) getRunStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	runID := vars["runID"]
+
+	// var id identity.XRHID
+	// id = identity.Get(r.Context())
+	fmt.Println("Getting status for run: ", runID)
+
+	run, err := cmc.ConfigManagerService.GetSingleRun(runID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+
+	status, err := cmc.ConfigManagerService.GetRunStatus(run.Label)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+
+	respondWithJSON(w, http.StatusOK, status)
 }

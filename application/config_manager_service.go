@@ -10,9 +10,11 @@ import (
 )
 
 type ConfigManagerService struct {
-	AccountRepo  domain.AccountRepository
-	RunRepo      domain.RunRepository
-	PlaybookRepo domain.PlaybookArchiveRepository
+	AccountRepo    domain.AccountRepository
+	RunRepo        domain.RunRepository
+	PlaybookRepo   domain.PlaybookArchiveRepository
+	ClientListRepo domain.ClientListRepository
+	DispatcherRepo domain.DispatcherRepository
 }
 
 func (s *ConfigManagerService) GetAccount(id string) (*domain.Account, error) {
@@ -69,11 +71,12 @@ func (s *ConfigManagerService) createAccount(id string) (*domain.Account, error)
 	return acc, err
 }
 
-func (s *ConfigManagerService) GetClients(id string) []string {
-	// placeholder - request clients from external service (inventory)
-	var clients []string
-	clients = append(clients, "1234")
-	return clients
+func (s *ConfigManagerService) GetClients(id string) ([]string, error) {
+	clients, err := s.ClientListRepo.GetConnectedClients(id)
+	if err != nil {
+		return nil, err
+	}
+	return clients.Clients, nil
 }
 
 func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*domain.Run, error) {
@@ -119,6 +122,44 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*d
 
 	// construct and send work request to playbook dispatcher
 	// includes url to retrieve the playbook, url to upload results, and which client to send work to
+	for _, client := range clients {
+		res, err := s.DispatcherRepo.Dispatch(client)
+		if err != nil {
+			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+		}
+		fmt.Println(res.Code)
+	}
 
 	return newRun, err
+}
+
+func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
+	id, err := uuid.Parse(runID)
+	if err != nil {
+		return nil, err
+	}
+	run, err := s.RunRepo.GetRun(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return run, err
+}
+
+func (s *ConfigManagerService) GetRuns(accountID string, limit, offset int) ([]domain.Run, error) {
+	runs, err := s.RunRepo.GetRuns(accountID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return runs, err
+}
+
+func (s *ConfigManagerService) GetRunStatus(label string) ([]domain.DispatcherRun, error) {
+	statusList, err := s.DispatcherRepo.GetStatus(label)
+	if err != nil {
+		return nil, err
+	}
+
+	return statusList, err
 }

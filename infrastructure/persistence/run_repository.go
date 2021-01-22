@@ -21,8 +21,8 @@ func (r *RunRepository) GetRun(id uuid.UUID) (*domain.Run, error) {
 }
 
 func (r *RunRepository) GetRuns(accountID string, limit, offset int) ([]domain.Run, error) {
-	rows, err := r.DB.Query("SELECT run_id, account_id, initiator, label, status, created_at FROM runs LIMIT $1 OFFSET $2 WHERE account_id=$3",
-		limit, offset, accountID)
+	rows, err := r.DB.Query("SELECT run_id, account_id, initiator, label, status, created_at FROM runs WHERE account_id=$1 LIMIT $2 OFFSET $3",
+		accountID, limit, offset)
 
 	if err != nil {
 		return nil, err

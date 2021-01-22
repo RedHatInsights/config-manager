@@ -25,9 +25,11 @@ type Container struct {
 	apiSpec      *api.ApiSpecServer
 
 	// Repositories
-	accountRepo   *persistence.AccountRepository
-	runRepo       *persistence.RunRepository
-	pbArchiveRepo *persistence.PlaybookArchiveRepository
+	accountRepo    *persistence.AccountRepository
+	runRepo        *persistence.RunRepository
+	pbArchiveRepo  *persistence.PlaybookArchiveRepository
+	clientListRepo *persistence.ClientListRepository
+	dispatcherRepo *persistence.DispatcherRepository
 }
 
 func (c *Container) Database() *sql.DB {
@@ -59,9 +61,11 @@ func (c *Container) Mux() *mux.Router {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			AccountRepo:  c.AccountRepo(),
-			RunRepo:      c.RunRepo(),
-			PlaybookRepo: c.PBArchiveRepo(),
+			AccountRepo:    c.AccountRepo(),
+			RunRepo:        c.RunRepo(),
+			PlaybookRepo:   c.PBArchiveRepo(),
+			ClientListRepo: c.ClientListRepo(),
+			DispatcherRepo: c.DispatcherRepo(),
 		}
 	}
 
@@ -118,4 +122,26 @@ func (c *Container) PBArchiveRepo() *persistence.PlaybookArchiveRepository {
 	}
 
 	return c.pbArchiveRepo
+}
+
+func (c *Container) ClientListRepo() *persistence.ClientListRepository {
+	if c.clientListRepo == nil {
+		c.clientListRepo = &persistence.ClientListRepository{
+			InventoryURL: "",
+		}
+	}
+
+	return c.clientListRepo
+}
+
+func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
+	if c.dispatcherRepo == nil {
+		c.dispatcherRepo = &persistence.DispatcherRepository{
+			DispatcherURL: "",
+			PlaybookURL:   "",
+			RunStatusURL:  "",
+		}
+	}
+
+	return c.dispatcherRepo
 }
