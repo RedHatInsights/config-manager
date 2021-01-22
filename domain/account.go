@@ -12,7 +12,7 @@ type Account struct {
 }
 
 type AccountRepository interface {
-	GetAccount(id string) (*Account, error)
+	GetAccount(acc *Account) (*Account, error)
 	UpdateAccount(acc *Account) error
 	DeleteAccount(acc *Account) error
 	CreateAccount(acc *Account) error
