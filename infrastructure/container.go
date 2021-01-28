@@ -25,11 +25,11 @@ type Container struct {
 	apiSpec      *api.ApiSpecServer
 
 	// Repositories
-	accountRepo    *persistence.AccountRepository
-	runRepo        *persistence.RunRepository
-	pbArchiveRepo  *persistence.PlaybookArchiveRepository
-	clientListRepo *persistence.ClientListRepository
-	dispatcherRepo *persistence.DispatcherRepository
+	accountStateRepo *persistence.AccountStateRepository
+	runRepo          *persistence.RunRepository
+	stateArchiveRepo *persistence.StateArchiveRepository
+	clientListRepo   *persistence.ClientListRepository
+	dispatcherRepo   *persistence.DispatcherRepository
 }
 
 func (c *Container) Database() *sql.DB {
@@ -61,11 +61,11 @@ func (c *Container) Mux() *mux.Router {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			AccountRepo:    c.AccountRepo(),
-			RunRepo:        c.RunRepo(),
-			PlaybookRepo:   c.PBArchiveRepo(),
-			ClientListRepo: c.ClientListRepo(),
-			DispatcherRepo: c.DispatcherRepo(),
+			AccountStateRepo: c.AccountStateRepo(),
+			RunRepo:          c.RunRepo(),
+			StateArchiveRepo: c.StateArchiveRepo(),
+			ClientListRepo:   c.ClientListRepo(),
+			DispatcherRepo:   c.DispatcherRepo(),
 		}
 	}
 
@@ -94,14 +94,14 @@ func (c *Container) CMController() *api.ConfigManagerController {
 	return c.cmController
 }
 
-func (c *Container) AccountRepo() *persistence.AccountRepository {
-	if c.accountRepo == nil {
-		c.accountRepo = &persistence.AccountRepository{
+func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
+	if c.accountStateRepo == nil {
+		c.accountStateRepo = &persistence.AccountStateRepository{
 			DB: c.Database(),
 		}
 	}
 
-	return c.accountRepo
+	return c.accountStateRepo
 }
 
 func (c *Container) RunRepo() *persistence.RunRepository {
@@ -114,14 +114,14 @@ func (c *Container) RunRepo() *persistence.RunRepository {
 	return c.runRepo
 }
 
-func (c *Container) PBArchiveRepo() *persistence.PlaybookArchiveRepository {
-	if c.pbArchiveRepo == nil {
-		c.pbArchiveRepo = &persistence.PlaybookArchiveRepository{
+func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
+	if c.stateArchiveRepo == nil {
+		c.stateArchiveRepo = &persistence.StateArchiveRepository{
 			DB: c.Database(),
 		}
 	}
 
-	return c.pbArchiveRepo
+	return c.stateArchiveRepo
 }
 
 func (c *Container) ClientListRepo() *persistence.ClientListRepository {

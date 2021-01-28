@@ -2,7 +2,12 @@ package domain
 
 type ClientList struct {
 	AccountID string
-	Clients   []string
+	Clients   []Client
+}
+
+type Client struct {
+	Hostname string
+	ClientID string
 }
 
 type ClientListRepository interface {

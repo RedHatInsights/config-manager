@@ -4,18 +4,22 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
-type Account struct {
-	AccountID string   `db:"account_id"`
-	State     StateMap `db:"state"`
+type AccountState struct {
+	AccountID string    `db:"account_id"`
+	State     StateMap  `db:"state"`
+	StateID   uuid.UUID `db:"state_id"`
+	Label     string    `db:"label"`
 }
 
-type AccountRepository interface {
-	GetAccount(acc *Account) (*Account, error)
-	UpdateAccount(acc *Account) error
-	DeleteAccount(acc *Account) error
-	CreateAccount(acc *Account) error
+type AccountStateRepository interface {
+	GetAccountState(acc *AccountState) (*AccountState, error)
+	UpdateAccountState(acc *AccountState) error
+	DeleteAccountState(acc *AccountState) error
+	CreateAccountState(acc *AccountState) error
 }
 
 type StateMap map[string]interface{}
