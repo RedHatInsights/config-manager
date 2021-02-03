@@ -10,22 +10,22 @@ import (
 )
 
 type ConfigManagerService struct {
-	AccountRepo    domain.AccountRepository
-	RunRepo        domain.RunRepository
-	PlaybookRepo   domain.PlaybookArchiveRepository
-	ClientListRepo domain.ClientListRepository
-	DispatcherRepo domain.DispatcherRepository
+	AccountStateRepo domain.AccountStateRepository
+	RunRepo          domain.RunRepository
+	StateArchiveRepo domain.StateArchiveRepository
+	ClientListRepo   domain.ClientListRepository
+	DispatcherRepo   domain.DispatcherRepository
 }
 
-func (s *ConfigManagerService) GetAccount(id string) (*domain.Account, error) {
-	acc := &domain.Account{AccountID: id}
-	acc, err := s.AccountRepo.GetAccount(acc)
+func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState, error) {
+	acc := &domain.AccountState{AccountID: id}
+	acc, err := s.AccountStateRepo.GetAccountState(acc)
 
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
 			fmt.Println("Creating new account entry")
-			acc, err = s.createAccount(id)
+			acc, err = s.createAccountState(id)
 		default:
 			return nil, err
 		}
@@ -34,13 +34,31 @@ func (s *ConfigManagerService) GetAccount(id string) (*domain.Account, error) {
 	return acc, err
 }
 
-func (s *ConfigManagerService) UpdateAccount(id string, payload map[string]interface{}) (*domain.Account, error) {
-	acc := &domain.Account{
+func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[string]interface{}) (*domain.AccountState, error) {
+	newStateID := uuid.New()
+	newLabel := id + "-" + uuid.New().String()
+	acc := &domain.AccountState{
 		AccountID: id,
 		State:     payload,
+		StateID:   newStateID,
+		Label:     newLabel,
 	}
 
-	err := s.AccountRepo.UpdateAccount(acc)
+	err := s.AccountStateRepo.UpdateAccountState(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	archive := &domain.StateArchive{
+		AccountID: acc.AccountID,
+		StateID:   acc.StateID,
+		Label:     acc.Label,
+		Initiator: user,
+		CreatedAt: time.Now(),
+		State:     acc.State,
+	}
+
+	err = s.StateArchiveRepo.CreateStateArchive(archive)
 	if err != nil {
 		return nil, err
 	}
@@ -53,17 +71,35 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 
 }
 
-func (s *ConfigManagerService) createAccount(id string) (*domain.Account, error) {
-	acc := &domain.Account{
+func (s *ConfigManagerService) createAccountState(id string) (*domain.AccountState, error) {
+	stateID := uuid.New()
+	label := id + "-default"
+	acc := &domain.AccountState{
 		AccountID: id,
 		State: domain.StateMap{
 			"insights":   "enabled",
 			"advisor":    "enabled",
 			"compliance": "enabled",
 		},
+		StateID: stateID,
+		Label:   label,
 	}
 
-	err := s.AccountRepo.CreateAccount(acc)
+	err := s.AccountStateRepo.CreateAccountState(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	archive := &domain.StateArchive{
+		AccountID: acc.AccountID,
+		StateID:   acc.StateID,
+		Label:     acc.Label,
+		Initiator: "redhat",
+		CreatedAt: time.Now(),
+		State:     acc.State,
+	}
+
+	err = s.StateArchiveRepo.CreateStateArchive(archive)
 	if err != nil {
 		return nil, err
 	}
@@ -71,66 +107,58 @@ func (s *ConfigManagerService) createAccount(id string) (*domain.Account, error)
 	return acc, err
 }
 
-func (s *ConfigManagerService) GetClients(id string) ([]string, error) {
+func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error) {
 	clients, err := s.ClientListRepo.GetConnectedClients(id)
 	if err != nil {
 		return nil, err
 	}
-	return clients.Clients, nil
+	return clients, nil
 }
 
-func (s *ConfigManagerService) ApplyState(id, user string, clients []string) (*domain.Run, error) {
-	// generate run ID and label
-	// create entry in run table
-	// create entry in playbook archive
-	// for each client: send work request to dispatcher w/ label
+func (s *ConfigManagerService) ApplyState(id, user string, clients []domain.Client) (*domain.AccountState, error) {
 
-	acc, _ := s.GetAccount(id) // GetAccount or just have state passed in via the api call?
-
-	runID := uuid.New()
-	label := runID.String() + "-demo-label"
-
-	newRun := &domain.Run{
-		AccountID: id,
-		RunID:     runID,
-		Initiator: user,
-		Label:     label,
-		Status:    "in progress",
-		CreatedAt: time.Now(),
-	}
-
-	err := s.RunRepo.CreateRun(newRun)
-	if err != nil {
-		return nil, err
-	}
-
-	playbookID := uuid.New()
-
-	playbookArchive := &domain.PlaybookArchive{
-		PlaybookID: playbookID,
-		RunID:      runID,
-		AccountID:  id,
-		Filename:   "test",
-		CreatedAt:  time.Now(),
-		State:      acc.State,
-	}
-
-	err = s.PlaybookRepo.CreatePlaybookArchive(playbookArchive)
-	if err != nil {
-		return nil, err
-	}
+	acc, _ := s.GetAccountState(id) // GetAccount or just have state passed in via the api call?
 
 	// construct and send work request to playbook dispatcher
 	// includes url to retrieve the playbook, url to upload results, and which client to send work to
+	var err error
 	for _, client := range clients {
-		res, err := s.DispatcherRepo.Dispatch(client)
+		res, err := s.DispatcherRepo.Dispatch(client.ClientID)
 		if err != nil {
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 		}
 		fmt.Println(res.Code)
+
+		runID := uuid.New()
+		initialTime := time.Now()
+
+		newRun := &domain.Run{
+			RunID:     runID,
+			AccountID: acc.AccountID, // Could runID come from dispatcher response?
+			Hostname:  client.Hostname,
+			Initiator: user,
+			Label:     acc.Label,
+			Status:    "in progress",
+			CreatedAt: initialTime,
+			UpdatedAt: initialTime,
+		}
+
+		err = s.RunRepo.CreateRun(newRun)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return newRun, err
+	return acc, err
+}
+
+func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset int) ([]domain.StateArchive, error) {
+	states, err := s.StateArchiveRepo.GetAllStateArchives(accountID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return states, err
 }
 
 func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
@@ -146,8 +174,8 @@ func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
 	return run, err
 }
 
-func (s *ConfigManagerService) GetRuns(accountID string, limit, offset int) ([]domain.Run, error) {
-	runs, err := s.RunRepo.GetRuns(accountID, limit, offset)
+func (s *ConfigManagerService) GetRunsByLabel(label string, limit, offset int) ([]domain.Run, error) {
+	runs, err := s.RunRepo.GetRunsByLabel(label, limit, offset)
 	if err != nil {
 		return nil, err
 	}

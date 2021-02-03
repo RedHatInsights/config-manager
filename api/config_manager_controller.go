@@ -26,11 +26,8 @@ func (cmc *ConfigManagerController) Routes() {
 	s.HandleFunc("/state", cmc.getAccountState).Methods("GET")
 	s.HandleFunc("/state", cmc.updateAccountState).Methods("POST")
 	s.HandleFunc("/state/apply", cmc.applyAccountState).Methods("POST")
-
-	l := cmc.Router.PathPrefix("/logs").Subrouter()
-	l.Use(identity.EnforceIdentity)
-	l.HandleFunc("/", cmc.getRuns).Methods("GET") // Add sorting/limit/pagination/etc
-	l.HandleFunc("/{runID}", cmc.getRunStatus).Methods("GET")
+	s.HandleFunc("/state/changes", cmc.getStateChanges).Methods("GET") // Add sorting/limit/pagination
+	s.HandleFunc("/runs/{label}", cmc.getRuns).Methods("GET")          // Add sorting/limit/pagination
 }
 
 func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -50,7 +47,7 @@ func (cmc *ConfigManagerController) getAccountState(w http.ResponseWriter, r *ht
 	id = identity.Get(r.Context())
 	fmt.Println("Getting state for account: ", id.Identity.AccountNumber)
 
-	acc, err := cmc.ConfigManagerService.GetAccount(id.Identity.AccountNumber)
+	acc, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -71,7 +68,7 @@ func (cmc *ConfigManagerController) updateAccountState(w http.ResponseWriter, r 
 	}
 	defer r.Body.Close()
 
-	acc, err := cmc.ConfigManagerService.UpdateAccount(id.Identity.AccountNumber, payload)
+	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", payload)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -92,7 +89,7 @@ func (cmc *ConfigManagerController) applyAccountState(w http.ResponseWriter, r *
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 
-	run, err := cmc.ConfigManagerService.ApplyState(id.Identity.AccountNumber, "demo-user", clients)
+	run, err := cmc.ConfigManagerService.ApplyState(id.Identity.AccountNumber, "demo-user", clients.Clients)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -100,12 +97,28 @@ func (cmc *ConfigManagerController) applyAccountState(w http.ResponseWriter, r *
 	respondWithJSON(w, http.StatusOK, run)
 }
 
-func (cmc *ConfigManagerController) getRuns(w http.ResponseWriter, r *http.Request) {
+func (cmc *ConfigManagerController) getStateChanges(w http.ResponseWriter, r *http.Request) {
 	var id identity.XRHID
 	id = identity.Get(r.Context())
-	fmt.Println("Getting runs for account: ", id.Identity.AccountNumber)
+	fmt.Println("Getting state changes for account: ", id.Identity.AccountNumber)
 
-	runs, err := cmc.ConfigManagerService.GetRuns(id.Identity.AccountNumber, 3, 0)
+	states, err := cmc.ConfigManagerService.GetStateChanges(id.Identity.AccountNumber, 3, 0) // Add limit, offset, and sort-by to query params
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+
+	respondWithJSON(w, http.StatusOK, states)
+}
+
+func (cmc *ConfigManagerController) getRuns(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	label := vars["label"]
+
+	var id identity.XRHID
+	id = identity.Get(r.Context())
+	fmt.Printf("Getting runs for account %s with label %s", id.Identity.AccountNumber, label)
+
+	runs, err := cmc.ConfigManagerService.GetRunsByLabel(label, 3, 0) // Add limit, offset, and sort-by to query params
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
