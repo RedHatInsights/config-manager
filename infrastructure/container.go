@@ -1,28 +1,29 @@
 package infrastructure
 
 import (
-	"config-manager/api"
+	"config-manager/api/controllers"
 	"config-manager/application"
 	"config-manager/infrastructure/persistence"
 	"database/sql"
 	"fmt"
 	"log"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
+
 	"github.com/spf13/viper"
 )
 
+// Container holds application resources
 type Container struct {
 	Config *viper.Viper
 	db     *sql.DB
-	apiMux *mux.Router
+	server *echo.Echo
 
 	// Config Manager Services
 	cmService *application.ConfigManagerService
 
-	// Config Manager Controllers
-	cmController *api.ConfigManagerController
-	apiSpec      *api.ApiSpecServer
+	// API Controllers
+	cmController *controllers.ConfigManagerController
 
 	// Repositories
 	accountStateRepo *persistence.AccountStateRepository
@@ -32,6 +33,7 @@ type Container struct {
 	dispatcherRepo   *persistence.DispatcherRepository
 }
 
+// Database configures and opens a db connection
 func (c *Container) Database() *sql.DB {
 	if c.db == nil {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
@@ -50,14 +52,16 @@ func (c *Container) Database() *sql.DB {
 	return c.db
 }
 
-func (c *Container) Mux() *mux.Router {
-	if c.apiMux == nil {
-		c.apiMux = mux.NewRouter()
+// Server initializes a new echo server
+func (c *Container) Server() *echo.Echo {
+	if c.server == nil {
+		c.server = echo.New()
 	}
 
-	return c.apiMux
+	return c.server
 }
 
+// CMService provides access to various application resources
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
@@ -72,28 +76,19 @@ func (c *Container) CMService() *application.ConfigManagerService {
 	return c.cmService
 }
 
-func (c *Container) ApiSpec() *api.ApiSpecServer {
-	if c.apiSpec == nil {
-		c.apiSpec = &api.ApiSpecServer{
-			Router:       c.Mux(),
-			SpecFileName: c.Config.GetString("ApiSpecFile"),
-		}
-	}
-
-	return c.apiSpec
-}
-
-func (c *Container) CMController() *api.ConfigManagerController {
+// CMController sets up handlers for api routes
+func (c *Container) CMController() *controllers.ConfigManagerController {
 	if c.cmController == nil {
-		c.cmController = &api.ConfigManagerController{
+		c.cmController = &controllers.ConfigManagerController{
 			ConfigManagerService: c.CMService(),
-			Router:               c.Mux(),
+			Server:               c.Server(),
 		}
 	}
 
 	return c.cmController
 }
 
+// AccountStateRepo enables interaction with the account_states db table
 func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	if c.accountStateRepo == nil {
 		c.accountStateRepo = &persistence.AccountStateRepository{
@@ -104,6 +99,7 @@ func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	return c.accountStateRepo
 }
 
+// RunRepo enables interaction with the runs db table
 func (c *Container) RunRepo() *persistence.RunRepository {
 	if c.runRepo == nil {
 		c.runRepo = &persistence.RunRepository{
@@ -114,6 +110,7 @@ func (c *Container) RunRepo() *persistence.RunRepository {
 	return c.runRepo
 }
 
+// StateArchiveRepo enables interaction with the state_archives db table
 func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	if c.stateArchiveRepo == nil {
 		c.stateArchiveRepo = &persistence.StateArchiveRepository{
@@ -124,6 +121,7 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	return c.stateArchiveRepo
 }
 
+// ClientListRepo enables interaction with inventory (needs a different name)
 func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 	if c.clientListRepo == nil {
 		c.clientListRepo = &persistence.ClientListRepository{
@@ -134,6 +132,7 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 	return c.clientListRepo
 }
 
+// DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
 	if c.dispatcherRepo == nil {
 		c.dispatcherRepo = &persistence.DispatcherRepository{

@@ -1,23 +1,24 @@
 package main
 
 import (
+	"config-manager/api/controllers"
 	"config-manager/config"
 	"config-manager/infrastructure"
 	"config-manager/infrastructure/kafka"
-	"config-manager/utils"
 	"context"
-	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/labstack/echo/v4"
 
 	_ "github.com/lib/pq"
 )
 
 func main() {
 	ctx := context.Background()
-	var cmAddr = flag.String("cmAddr", ":8080", "Hostname:port of the config-manager server")
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 
@@ -25,14 +26,20 @@ func main() {
 
 	container := infrastructure.Container{Config: config}
 
-	apiMux := container.Mux()
-	apiSpec := container.ApiSpec()
+	// Temporary - need to relocate api spec (and remove need for identity header)
+	spec, err := controllers.GetSwagger()
+	if err != nil {
+		panic(err)
+	}
+	server := container.Server()
+	server.GET("/openapi.json", func(ctx echo.Context) error {
+		return ctx.JSON(http.StatusOK, spec)
+	})
+
 	configManager := container.CMController()
-
 	configManager.Routes()
-	apiSpec.Routes()
 
-	go utils.StartHTTPServer(*cmAddr, "config-manager", apiMux)
+	go configManager.Start("0.0.0.0:8080")
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)

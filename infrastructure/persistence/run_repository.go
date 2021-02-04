@@ -19,9 +19,41 @@ func (r *RunRepository) GetRun(id uuid.UUID) (*domain.Run, error) {
 	return run, err
 }
 
-func (r *RunRepository) GetRunsByLabel(label string, limit, offset int) ([]domain.Run, error) {
+func (r *RunRepository) GetRuns(accountID, filter, sortBy string, limit, offset int) ([]domain.Run, error) {
+	if filter != "" {
+		runs, err := r.GetRunsByLabel(filter, sortBy, limit, offset)
+		if err != nil {
+			return nil, err
+		}
+		return runs, err
+	}
+
 	rows, err := r.DB.Query("SELECT run_id, account_id, hostname, initiator, label, status, created_at, updated_at "+
-		"FROM runs WHERE label=$1 LIMIT $2 OFFSET $3", label, limit, offset)
+		"FROM runs WHERE account_id=$1 ORDER BY $2 LIMIT $3 OFFSET $4", accountID, sortBy, limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	runs := []domain.Run{}
+
+	for rows.Next() {
+		var run domain.Run
+		if err := rows.Scan(&run.RunID, &run.AccountID, &run.Hostname, &run.Initiator, &run.Label,
+			&run.Status, &run.CreatedAt, &run.UpdatedAt); err != nil {
+			return nil, err
+		}
+		runs = append(runs, run)
+	}
+
+	return runs, err
+}
+
+func (r *RunRepository) GetRunsByLabel(label, sortBy string, limit, offset int) ([]domain.Run, error) {
+	rows, err := r.DB.Query("SELECT run_id, account_id, hostname, initiator, label, status, created_at, updated_at "+
+		"FROM runs WHERE label=$1 ORDER BY $2 LIMIT $3 OFFSET $4", label, sortBy, limit, offset)
 
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
 	AccountStateRepo domain.AccountStateRepository
 	RunRepo          domain.RunRepository
@@ -17,6 +18,7 @@ type ConfigManagerService struct {
 	DispatcherRepo   domain.DispatcherRepository
 }
 
+// GetAccountState retrieves the current state for the account
 func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState, error) {
 	acc := &domain.AccountState{AccountID: id}
 	acc, err := s.AccountStateRepo.GetAccountState(acc)
@@ -34,7 +36,8 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 	return acc, err
 }
 
-func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[string]interface{}) (*domain.AccountState, error) {
+// UpdateAccountState updates the current state for the account and creates a new state archive
+func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[string]string) (*domain.AccountState, error) {
 	newStateID := uuid.New()
 	newLabel := id + "-" + uuid.New().String()
 	acc := &domain.AccountState{
@@ -66,9 +69,9 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 	return acc, err
 }
 
+// DeleteAccount TODO
 func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
-
 }
 
 func (s *ConfigManagerService) createAccountState(id string) (*domain.AccountState, error) {
@@ -107,6 +110,7 @@ func (s *ConfigManagerService) createAccountState(id string) (*domain.AccountSta
 	return acc, err
 }
 
+// GetClients TODO: Retrieve clients from inventory
 func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error) {
 	clients, err := s.ClientListRepo.GetConnectedClients(id)
 	if err != nil {
@@ -115,6 +119,9 @@ func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error)
 	return clients, nil
 }
 
+// ApplyState applies the current state to selected clients
+// TODO: Change return type to satisfy openapi response
+// TODO: Separate application function for automatic applications via kafka?
 func (s *ConfigManagerService) ApplyState(id, user string, clients []domain.Client) (*domain.AccountState, error) {
 
 	acc, _ := s.GetAccountState(id) // GetAccount or just have state passed in via the api call?
@@ -152,6 +159,10 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []domain.Clie
 	return acc, err
 }
 
+// GetStateChanges gets list of state archives/changes
+// TODO: Add sorting and filtering
+// Sorting: currently only ascending
+// Filtering idea: may need to filter on user/initiator
 func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset int) ([]domain.StateArchive, error) {
 	states, err := s.StateArchiveRepo.GetAllStateArchives(accountID, limit, offset)
 	if err != nil {
@@ -161,6 +172,25 @@ func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset i
 	return states, err
 }
 
+// GetSingleStateChange gets a single state archive by state_id
+// TODO: Function to get current state?
+// State archives contain additional information over the AccountState so this could be useful
+func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.StateArchive, error) {
+	id, err := uuid.Parse(stateID)
+	if err != nil {
+		return nil, err
+	}
+
+	archive := &domain.StateArchive{StateID: id}
+	state, err := s.StateArchiveRepo.GetStateArchive(archive)
+	if err != nil {
+		return nil, err
+	}
+
+	return state, err
+}
+
+// GetSingleRun gets a single run entry by run_id
 func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
 	id, err := uuid.Parse(runID)
 	if err != nil {
@@ -174,8 +204,10 @@ func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
 	return run, err
 }
 
-func (s *ConfigManagerService) GetRunsByLabel(label string, limit, offset int) ([]domain.Run, error) {
-	runs, err := s.RunRepo.GetRunsByLabel(label, limit, offset)
+// GetRuns gets runs for the account
+// TODO: Expand on filter - allow filtering by hostname/status/label/user
+func (s *ConfigManagerService) GetRuns(accountID, filter, sortBy string, limit, offset int) ([]domain.Run, error) {
+	runs, err := s.RunRepo.GetRuns(accountID, filter, sortBy, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +215,8 @@ func (s *ConfigManagerService) GetRunsByLabel(label string, limit, offset int) (
 	return runs, err
 }
 
+// GetRunStatus TODO: Get status updates from playbook dispatcher
+// PLACEHOLDER
 func (s *ConfigManagerService) GetRunStatus(label string) ([]domain.DispatcherRun, error) {
 	statusList, err := s.DispatcherRepo.GetStatus(label)
 	if err != nil {
