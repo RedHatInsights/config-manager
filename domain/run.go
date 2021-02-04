@@ -20,7 +20,6 @@ type Run struct {
 type RunRepository interface {
 	GetRun(id uuid.UUID) (*Run, error)
 	GetRuns(accountID, filter, sortBy string, limit, offset int) ([]Run, error)
-	// GetRunsByLabel(label string, limit, offset int) ([]Run, error)
 	UpdateRunStatus(r *Run) error
 	CreateRun(r *Run) error
 }
