@@ -3,7 +3,6 @@ package persistence
 import (
 	"config-manager/domain"
 	"database/sql"
-	"fmt"
 )
 
 type StateArchiveRepository struct {
@@ -18,7 +17,6 @@ func (r *StateArchiveRepository) GetStateArchive(s *domain.StateArchive) (*domai
 }
 
 func (r *StateArchiveRepository) GetAllStateArchives(accountID string, limit, offset int) ([]domain.StateArchive, error) {
-	fmt.Println("About to query..")
 	rows, err := r.DB.Query("SELECT account_id, state_id, label, initiator, created_at, state "+
 		"FROM state_archive WHERE account_id=$1 LIMIT $2 OFFSET $3", accountID, limit, offset)
 

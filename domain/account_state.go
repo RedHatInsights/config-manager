@@ -9,10 +9,10 @@ import (
 )
 
 type AccountState struct {
-	AccountID string    `db:"account_id"`
-	State     StateMap  `db:"state"`
-	StateID   uuid.UUID `db:"state_id"`
-	Label     string    `db:"label"`
+	AccountID string    `db:"account_id" json:"account"`
+	State     StateMap  `db:"state" json:"state"`
+	StateID   uuid.UUID `db:"state_id" json:"id"`
+	Label     string    `db:"label" json:"label"`
 }
 
 type AccountStateRepository interface {
@@ -22,7 +22,7 @@ type AccountStateRepository interface {
 	CreateAccountState(acc *AccountState) error
 }
 
-type StateMap map[string]interface{}
+type StateMap map[string]string
 
 // Value interface for StateMap
 func (s StateMap) Value() (driver.Value, error) {

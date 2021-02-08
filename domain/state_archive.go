@@ -7,12 +7,12 @@ import (
 )
 
 type StateArchive struct {
-	AccountID string    `db:"account_id"`
-	StateID   uuid.UUID `db:"state_id"`
-	Label     string    `db:"label"`
-	Initiator string    `db:"initiator"`
-	CreatedAt time.Time `db:"created_at"`
-	State     StateMap  `db:"state"`
+	AccountID string    `db:"account_id" json:"account"`
+	StateID   uuid.UUID `db:"state_id" json:"id"`
+	Label     string    `db:"label" json:"label"`
+	Initiator string    `db:"initiator" json:"initiator"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	State     StateMap  `db:"state" json:"state"`
 }
 
 type StateArchiveRepository interface {
