@@ -21,12 +21,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountState'
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountState'
         '400':
           description: Bad Request
           content: {}
