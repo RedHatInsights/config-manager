@@ -7,6 +7,7 @@ build:
 build-image:
 	docker build -t config-manager-poc .
 
+# export POSTGRES_URL=postgres://insights:insights@localhost:5432/config-manager?sslmode=disable (example)
 migrate-up:
 	migrate -database ${POSTGRES_URL} -path db/migrations/ up
 
