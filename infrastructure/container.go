@@ -36,12 +36,18 @@ type Container struct {
 // Database configures and opens a db connection
 func (c *Container) Database() *sql.DB {
 	if c.db == nil {
-		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable",
 			c.Config.GetString("DBUser"),
 			c.Config.GetString("DBPass"),
-			c.Config.GetString("DBName"))
+			c.Config.GetString("DBName"),
+			c.Config.GetString("DBHost"))
 
 		db, err := sql.Open("postgres", connectionString)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = db.Ping()
 		if err != nil {
 			log.Fatal(err)
 		}
