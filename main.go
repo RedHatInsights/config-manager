@@ -23,7 +23,6 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 
 	config := config.Get()
-	fmt.Println(config)
 
 	container := infrastructure.Container{Config: config}
 
