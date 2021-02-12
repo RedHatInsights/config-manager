@@ -13,6 +13,7 @@ func Get() *viper.Viper {
 	options.SetDefault("DBPass", "insights")
 	options.SetDefault("DBName", "config-manager")
 	options.SetDefault("DBHost", "localhost")
+	options.SetDefault("DBPort", 5432)
 
 	options.SetDefault("KafkaGroupID", "config-manager")
 	options.SetDefault("KafkaBrokers", []string{"localhost:9092"})
