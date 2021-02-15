@@ -10,7 +10,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka
     ports:
-      - 29092:29092
+      - "29092:29092"
     depends_on:
        - zookeeper
     environment:
@@ -30,11 +30,11 @@ services:
       POSTGRES_USER: insights
       POSTGRES_DB: config-manager
     ports:
-      - 5432:5432
+      - "5432:5432"
   config-manager:
     image: config-manager-poc
     ports:
-      - 8081:8081
+      - "8081:8081"
     depends_on:
       - kafka
       - db
