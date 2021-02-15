@@ -33,6 +33,7 @@ services:
       - 5432:5432
   config-manager:
     image: config-manager-poc
+    build: .
     ports:
       - 8081:8081
     depends_on:
