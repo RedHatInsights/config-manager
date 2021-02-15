@@ -1,5 +1,15 @@
 run:
 	go run .
 
-test:
-	go test -v
+build:
+	CGO_ENABLED=0 go build -o config_manager main.go
+
+build-image:
+	docker build -t config-manager-poc .
+
+# export POSTGRES_URL=postgres://insights:insights@localhost:5432/config-manager?sslmode=disable (example)
+migrate-up:
+	migrate -database ${POSTGRES_URL} -path db/migrations/ up
+
+migrate-down:
+	migrate -database ${POSTGRES_URL} -path db/migrations/ down

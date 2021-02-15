@@ -39,7 +39,7 @@ func main() {
 	configManager := container.CMController()
 	configManager.Routes()
 
-	go configManager.Start("0.0.0.0:8080")
+	go configManager.Start("0.0.0.0:8081")
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)

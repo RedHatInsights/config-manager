@@ -9,9 +9,11 @@ func Get() *viper.Viper {
 
 	options.SetDefault("ApiSpecFile", "api/openapi.json")
 
-	options.SetDefault("DBUser", "postgres")
-	options.SetDefault("DBPass", "")
-	options.SetDefault("DBName", "postgres")
+	options.SetDefault("DBUser", "insights")
+	options.SetDefault("DBPass", "insights")
+	options.SetDefault("DBName", "config-manager")
+	options.SetDefault("DBHost", "localhost")
+	options.SetDefault("DBPort", 5432)
 
 	options.SetDefault("KafkaGroupID", "config-manager")
 	options.SetDefault("KafkaBrokers", []string{"localhost:9092"})
@@ -19,7 +21,7 @@ func Get() *viper.Viper {
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
 	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
 
-	options.SetEnvPrefix("CONFIG_MANAGER")
+	options.SetEnvPrefix("CM")
 	options.AutomaticEnv()
 
 	return options
