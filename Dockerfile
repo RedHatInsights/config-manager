@@ -7,5 +7,5 @@ RUN ["go", "build", "-o", "config_manager", "main.go"]
 FROM registry.redhat.io/ubi8-minimal
 MAINTAINER jassteph@redhat.com
 COPY ./db/migrations ./db/migrations
-COPY --from=0 /go/src/app/config_manager .
+COPY --from=builder /go/src/app/config_manager .
 ENTRYPOINT ["./config_manager"]
