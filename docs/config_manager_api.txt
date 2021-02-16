@@ -1,6 +1,6 @@
 title config-manager
 
-participantgroup #lightyellow **external** 
+participantgroup #lightyellow **external**
 participant RHC Client
 participant RHC User
 end

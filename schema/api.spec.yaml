@@ -119,26 +119,26 @@ components:
       type: string
       minLength: 1
       maxLength: 10
-    
+
     State:
       type: object
       additionalProperties:
         type: string
-        
+
     StateID:
       type: string
       format: uuid
-      
+
     Label:
       type: string
-      
+
     Initiator:
       type: string
-      
+
     Timestamp:
       type: string
       format: date-time
-        
+
     AccountState:
       type: object
       properties:
@@ -150,7 +150,7 @@ components:
           $ref: '#/components/schemas/StateID'
         label:
           $ref: '#/components/schemas/Label'
-    
+
     StateArchive:
       type: object
       properties:
@@ -166,12 +166,12 @@ components:
           $ref: '#/components/schemas/Timestamp'
         state:
           $ref: '#/components/schemas/State'
-        
+
     StateArchives:
       type: array
       items:
         $ref: '#/components/schemas/StateArchive'
-  
+
   parameters:
     StateIDParam:
       in: path
@@ -213,7 +213,9 @@ components:
     Offset:
       in: query
       name: offset
-      description: Indicates the starting position of the query relative to the complete set of items that match the query
+      description: >-
+        Indicates the starting position of the query relative to the complete set of items that
+        match the query
       required: false
       schema:
         type: integer

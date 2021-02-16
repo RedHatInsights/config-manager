@@ -4,7 +4,7 @@ Config Manager is a backend service used by the Service Enablement dashboard to 
 
 Config Manager handles the following actions:
 
-- Retrieves the current configuration (enabled/disabled) of various services supported by Service Enablement 
+- Retrieves the current configuration (enabled/disabled) of various services supported by Service Enablement
 - Updates the current configuration of services
 - Maintains a history of configuration changes
 - Ensures that newly connected hosts are kept up to date with the latest configuration
@@ -25,7 +25,7 @@ Todo
 
 ## REST interface
 
-The REST interface can be used to view and update the current configuration for all hosts connected through RHC. It can also be used to view a history of previous configuration changes, and obtain logs related to those changes. 
+The REST interface can be used to view and update the current configuration for all hosts connected through RHC. It can also be used to view a history of previous configuration changes, and obtain logs related to those changes.
 
 See the [OpenAPI Schema](./schema/api.spec.yaml) for details on interacting with the REST interface.
 
