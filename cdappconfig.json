@@ -1,0 +1,42 @@
+{
+    "webPort": 8081,
+    "metricsPort": 9000,
+    "metricsPath": "/metrics",
+    "logging": {
+        "type": "cloudwatch",
+        "cloudwatch": {
+            "accessKeyId": "",
+            "secretAccessKey": "",
+            "region": "",
+            "logGroup": ""
+        }
+    },
+    "kafka": {
+        "brokers": [
+            {
+                "hostname": "kafka",
+                "port": 29092
+            }
+        ],
+        "topics": [
+            {
+                "requestedName": "platform.inventory.events",
+                "name": "platform.inventory.events"
+            },
+            {
+                "requestedName": "platform.playbook-dispatcher.runner-updates",
+                "name": "platform.playbook-dispatcher.runner-updates"
+            }
+        ]
+    },
+    "database": {
+        "hostname": "localhost",
+        "port": 5432,
+        "name": "config-manager",
+        "username": "insights",
+        "password": "insights",
+        "adminUsername": "insights",
+        "adminPassword": "insights",
+        "rdsCa": "ca"
+    }
+}
