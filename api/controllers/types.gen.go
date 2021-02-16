@@ -211,4 +211,3 @@ func (a State) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(object)
 }
-

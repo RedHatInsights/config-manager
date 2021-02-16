@@ -52,7 +52,7 @@ paths:
         '500':
           description: Internal Server Error
           content: {}
-  
+
   /changes:
     get:
       summary: Get state changes for requesting account
@@ -69,7 +69,7 @@ paths:
         '400':
           description: Bad Request
           content: {}
-  
+
   /changes/{id}:
     get:
       summary: Get single state change for requesting account
@@ -118,7 +118,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunsCreated'
-  
+
   /runs/{id}:
     get:
       summary: Get a single run
@@ -138,40 +138,40 @@ components:
       type: string
       minLength: 1
       maxLength: 10
-    
+
     State:
       type: object
       additionalProperties:
         type: string
-        
+
     StateID:
       type: string
       format: uuid
-      
+
     Label:
       type: string
-      
+
     Initiator:
       type: string
-      
+
     Timestamp:
       type: string
       format: date-time
-      
+
     RunID:
       type: string
       format: uuid
-    
+
     Hostname:
       type: string
-      
+
     RunStatus:
       type: string
       enum:
         - running
         - success
         - failure
-        
+
     RunCreated:
       type: object
       properties:
@@ -180,12 +180,12 @@ components:
           description: status code of request
         hostname:
           $ref: '#/components/schemas/Hostname'
-    
+
     RunsCreated:
       type: array
       items:
         $ref: '#/components/schemas/RunCreated'
-        
+
     AccountState:
       type: object
       properties:
@@ -205,7 +205,7 @@ components:
           $ref: '#/components/schemas/Account'
         state:
           $ref: '#/components/schemas/State'
-    
+
     StateArchive:
       type: object
       properties:
@@ -221,7 +221,7 @@ components:
           $ref: '#/components/schemas/Timestamp'
         state:
           $ref: '#/components/schemas/State'
-    
+
     Run:
       type: object
       properties:
@@ -241,17 +241,17 @@ components:
           $ref: '#/components/schemas/Timestamp'
         updated_at:
           $ref: '#/components/schemas/Timestamp'
-    
+
     Runs:
       type: array
       items:
         $ref: '#/components/schemas/Run'
-        
+
     StateArchives:
       type: array
       items:
         $ref: '#/components/schemas/StateArchive'
-  
+
   parameters:
     StateIDParam:
       in: path
@@ -301,7 +301,9 @@ components:
     Offset:
       in: query
       name: offset
-      description: Indicates the starting position of the query relative to the complete set of items that match the query
+      description: >-
+        Indicates the starting position of the query relative to the complete set of items that
+        match the query
       required: false
       schema:
         type: integer
