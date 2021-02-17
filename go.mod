@@ -12,6 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/lib/pq v1.9.0
 	github.com/pkg/errors v0.9.1
+	github.com/redhatinsights/app-common-go v1.2.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/sirupsen/logrus v1.7.0

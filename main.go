@@ -39,7 +39,7 @@ func main() {
 	configManager := container.CMController()
 	configManager.Routes()
 
-	go configManager.Start("0.0.0.0:8081")
+	go configManager.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("WebPort")))
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)
@@ -55,14 +55,6 @@ func main() {
 		if err != nil {
 			fmt.Println("error closing connection consumer")
 			return
-		}
-	}()
-
-	go func() {
-		for {
-			fmt.Println("Results consumer running")
-			m, _ := resultsConsumer.ReadMessage(ctx)
-			fmt.Println(m)
 		}
 	}()
 
