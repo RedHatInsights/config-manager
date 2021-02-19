@@ -39,7 +39,12 @@ func main() {
 	configManager := container.CMController()
 	configManager.Routes()
 
-	go configManager.Start("0.0.0.0:8081")
+	metricsServer := controllers.NewMetricsServer(config)
+	metricsServer.Routes()
+
+	go metricsServer.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("MetricsPort")))
+
+	go configManager.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("WebPort")))
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)
@@ -60,16 +65,11 @@ func main() {
 
 	go func() {
 		for {
-			fmt.Println("Results consumer running")
-			m, _ := resultsConsumer.ReadMessage(ctx)
-			fmt.Println(m)
-		}
-	}()
-
-	go func() {
-		for {
 			fmt.Println("Connections consumer running")
-			m, _ := connectionConsumer.ReadMessage(ctx)
+			m, err := connectionConsumer.ReadMessage(ctx)
+			if err != nil {
+				fmt.Println(err)
+			}
 			fmt.Println(m)
 		}
 	}()
