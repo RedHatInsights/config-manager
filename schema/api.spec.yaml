@@ -13,7 +13,55 @@ servers:
 paths:
   /states:
     get:
-      summary: Get configuration state for requesting account
+      summary: Get archive of state changes for requesting account
+      operationId: getStates
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateArchives'
+        '400':
+          description: Bad Request
+          content: {}
+        '401':
+          description: Authentication missing from request
+          content: {}
+        '500':
+          description: Internal Server Error
+          content: {}
+    post:
+      summary: Update and roll out configuration state for requesting account
+      operationId: updateStates
+      requestBody:
+        description: State map that needs to be updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/State'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountState'
+        '400':
+          description: Bad Request
+          content: {}
+        '500':
+          description: Internal Server Error
+          content: {}
+
+  /states/current:
+    get:
+      summary: Get the current state for requesting account
+      operationId: getCurrentState
       responses:
         '200':
           description: OK
@@ -30,49 +78,11 @@ paths:
         '500':
           description: Internal Server Error
           content: {}
-    post:
-      summary: Update configuration state for requesting account
-      requestBody:
-        description: State map that needs to be updated
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountStateInput'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountState'
-        '400':
-          description: Bad Request
-          content: {}
-        '500':
-          description: Internal Server Error
-          content: {}
-  
-  /changes:
-    get:
-      summary: Get state changes for requesting account
-      parameters:
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StateArchives'
-        '400':
-          description: Bad Request
-          content: {}
-  
-  /changes/{id}:
+
+  /states/{id}:
     get:
       summary: Get single state change for requesting account
+      operationId: getStateById
       parameters:
       - $ref: '#/components/parameters/StateIDParam'
       responses:
@@ -86,51 +96,22 @@ paths:
           description: Bad Request
           content: {}
 
-  /runs:
+  /states/{id}/playbook:
     get:
-      summary: Get a list of runs for each state change
+      summary: Get ansible playbook for current state configuration
+      operationId: getPlaybookById
       parameters:
-      - $ref: '#/components/parameters/RunsFilter'
-      - $ref: '#/components/parameters/RunsSortBy'
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/StateIDParam'
       responses:
         '200':
           description: OK
           content:
-            application/json:
+            text/vnd.yaml:
               schema:
-                $ref: '#/components/schemas/Runs'
+                type: string
         '400':
           description: Bad Request
           content: {}
-    post:
-      summary: Generate new runs by applying a state change
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AccountState'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunsCreated'
-  
-  /runs/{id}:
-    get:
-      summary: Get a single run
-      parameters:
-      - $ref: '#/components/parameters/RunIDParam'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Run'
 
 components:
   schemas:
@@ -157,34 +138,6 @@ components:
     Timestamp:
       type: string
       format: date-time
-      
-    RunID:
-      type: string
-      format: uuid
-    
-    Hostname:
-      type: string
-      
-    RunStatus:
-      type: string
-      enum:
-        - running
-        - success
-        - failure
-        
-    RunCreated:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: status code of request
-        hostname:
-          $ref: '#/components/schemas/Hostname'
-    
-    RunsCreated:
-      type: array
-      items:
-        $ref: '#/components/schemas/RunCreated'
         
     AccountState:
       type: object
@@ -197,14 +150,6 @@ components:
           $ref: '#/components/schemas/StateID'
         label:
           $ref: '#/components/schemas/Label'
-
-    AccountStateInput:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Account'
-        state:
-          $ref: '#/components/schemas/State'
     
     StateArchive:
       type: object
@@ -221,31 +166,6 @@ components:
           $ref: '#/components/schemas/Timestamp'
         state:
           $ref: '#/components/schemas/State'
-    
-    Run:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/RunID'
-        account:
-          $ref: '#/components/schemas/Account'
-        hostname:
-          $ref: '#/components/schemas/Hostname'
-        initiator:
-          $ref: '#/components/schemas/Initiator'
-        label:
-          $ref: '#/components/schemas/Label'
-        status:
-          $ref: '#/components/schemas/RunStatus'
-        created_at:
-          $ref: '#/components/schemas/Timestamp'
-        updated_at:
-          $ref: '#/components/schemas/Timestamp'
-    
-    Runs:
-      type: array
-      items:
-        $ref: '#/components/schemas/Run'
         
     StateArchives:
       type: array
@@ -261,22 +181,14 @@ components:
       schema:
         $ref: '#/components/schemas/StateID'
 
-    RunIDParam:
-      in: path
-      name: id
-      description: state archive identifier
-      required: true
-      schema:
-        $ref: '#/components/schemas/RunID'
-
-    RunsFilter:
+    Filter:
       in: query
       name: filter
       required: false
       schema:
         $ref: '#/components/schemas/Label'
 
-    RunsSortBy:
+    SortBy:
       in: query
       name: sort_by
       required: false

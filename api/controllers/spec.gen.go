@@ -18,27 +18,21 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get state changes for requesting account
-	// (GET /changes)
-	GetChanges(ctx echo.Context, params GetChangesParams) error
-	// Get single state change for requesting account
-	// (GET /changes/{id})
-	GetChangesId(ctx echo.Context, id StateIDParam) error
-	// Get a list of runs for each state change
-	// (GET /runs)
-	GetRuns(ctx echo.Context, params GetRunsParams) error
-	// Generate new runs by applying a state change
-	// (POST /runs)
-	PostRuns(ctx echo.Context) error
-	// Get a single run
-	// (GET /runs/{id})
-	GetRunsId(ctx echo.Context, id RunIDParam) error
-	// Get configuration state for requesting account
+	// Get archive of state changes for requesting account
 	// (GET /states)
-	GetStates(ctx echo.Context) error
-	// Update configuration state for requesting account
+	GetStates(ctx echo.Context, params GetStatesParams) error
+	// Update and roll out configuration state for requesting account
 	// (POST /states)
-	PostStates(ctx echo.Context) error
+	UpdateStates(ctx echo.Context) error
+	// Get the current state for requesting account
+	// (GET /states/current)
+	GetCurrentState(ctx echo.Context) error
+	// Get single state change for requesting account
+	// (GET /states/{id})
+	GetStateById(ctx echo.Context, id StateIDParam) error
+	// Get ansible playbook for current state configuration
+	// (GET /states/{id}/playbook)
+	GetPlaybookById(ctx echo.Context, id StateIDParam) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -46,12 +40,12 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetChanges converts echo context to params.
-func (w *ServerInterfaceWrapper) GetChanges(ctx echo.Context) error {
+// GetStates converts echo context to params.
+func (w *ServerInterfaceWrapper) GetStates(ctx echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetChangesParams
+	var params GetStatesParams
 	// ------------- Optional query parameter "limit" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
@@ -67,12 +61,30 @@ func (w *ServerInterfaceWrapper) GetChanges(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetChanges(ctx, params)
+	err = w.Handler.GetStates(ctx, params)
 	return err
 }
 
-// GetChangesId converts echo context to params.
-func (w *ServerInterfaceWrapper) GetChangesId(ctx echo.Context) error {
+// UpdateStates converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateStates(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.UpdateStates(ctx)
+	return err
+}
+
+// GetCurrentState converts echo context to params.
+func (w *ServerInterfaceWrapper) GetCurrentState(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetCurrentState(ctx)
+	return err
+}
+
+// GetStateById converts echo context to params.
+func (w *ServerInterfaceWrapper) GetStateById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id StateIDParam
@@ -83,63 +95,15 @@ func (w *ServerInterfaceWrapper) GetChangesId(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetChangesId(ctx, id)
+	err = w.Handler.GetStateById(ctx, id)
 	return err
 }
 
-// GetRuns converts echo context to params.
-func (w *ServerInterfaceWrapper) GetRuns(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetRunsParams
-	// ------------- Optional query parameter "filter" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "filter", ctx.QueryParams(), &params.Filter)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter filter: %s", err))
-	}
-
-	// ------------- Optional query parameter "sort_by" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort_by", ctx.QueryParams(), &params.SortBy)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter sort_by: %s", err))
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetRuns(ctx, params)
-	return err
-}
-
-// PostRuns converts echo context to params.
-func (w *ServerInterfaceWrapper) PostRuns(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostRuns(ctx)
-	return err
-}
-
-// GetRunsId converts echo context to params.
-func (w *ServerInterfaceWrapper) GetRunsId(ctx echo.Context) error {
+// GetPlaybookById converts echo context to params.
+func (w *ServerInterfaceWrapper) GetPlaybookById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var id RunIDParam
+	var id StateIDParam
 
 	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
 	if err != nil {
@@ -147,25 +111,7 @@ func (w *ServerInterfaceWrapper) GetRunsId(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetRunsId(ctx, id)
-	return err
-}
-
-// GetStates converts echo context to params.
-func (w *ServerInterfaceWrapper) GetStates(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetStates(ctx)
-	return err
-}
-
-// PostStates converts echo context to params.
-func (w *ServerInterfaceWrapper) PostStates(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.PostStates(ctx)
+	err = w.Handler.GetPlaybookById(ctx, id)
 	return err
 }
 
@@ -197,40 +143,34 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/changes", wrapper.GetChanges)
-	router.GET(baseURL+"/changes/:id", wrapper.GetChangesId)
-	router.GET(baseURL+"/runs", wrapper.GetRuns)
-	router.POST(baseURL+"/runs", wrapper.PostRuns)
-	router.GET(baseURL+"/runs/:id", wrapper.GetRunsId)
 	router.GET(baseURL+"/states", wrapper.GetStates)
-	router.POST(baseURL+"/states", wrapper.PostStates)
+	router.POST(baseURL+"/states", wrapper.UpdateStates)
+	router.GET(baseURL+"/states/current", wrapper.GetCurrentState)
+	router.GET(baseURL+"/states/:id", wrapper.GetStateById)
+	router.GET(baseURL+"/states/:id/playbook", wrapper.GetPlaybookById)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9SYX2/bNhDAvwrB7VGNnG590Vub7o+xDA3i7akIClo6WSwkUiGPWY1A3304UrKlSHbk",
-	"NGm3N8vkne5+94dH3fNUV7VWoNDy5J7XwogKEIx/upSVRPqRgU2NrFFqxRP+p/giK1cx5ao1GKZzZsC6",
-	"Ei1DzQygM4pHXNLWWwdmyyOuRAU84aVXGHGbFlCJoDkXrkSevFlEvAqKefJ6QU9ShafziOO2JnmpEDZg",
-	"eNNE/EOeW5iwbqkymQoEy7AAZlEYlGrDam0l7SBzacFbxgyUAuUdkOX0L9EoAYFZQNopESpSJJBVAtNi",
-	"L3rAQx2smnSx79Ni0qdrp5bvrygGY78sCgQmTFqQvTIDhTKXYDpDaoHF3g6Z8YgbuHXSQMYTNA76Nv1o",
-	"IOcJ/yHehz8Oqzb2RnTm2F9liWBIZsrdPKzOVX0p1lDuVK+0wXfbQ6qtNvhpvR3oBkXsPvLUgEDIPgki",
-	"vX9IhE2HfxBCfrNjbdFItfEGrAjn94fdmsEbsqn9k2Tepql2yqd3Jb5cgtpgwZPzkEK7x5FjUSfo9fqK",
-	"NroGgxK8WrFXe8yq7u1NRL7NdSHipY/vvCSIAuRZ2n3EWlf1+jOk+NDVpaodPoe/X2vU79piSIv7cXCW",
-	"SqIUqM3k6mVHb7Ry7dRz+NYrm0eE/pIVWBRVTWJFz6VjQjvXZ6VN22aooHpQjkns6T0p1ZydYdIqbGwi",
-	"7ursdFhTGXHt1EUAP45hqjOY7j7OMloMp+utA0ut7uGR8ZTYHDBx+Z5U5NpU5DB3zje1qUxc7Vh27dg4",
-	"pWg94talKVjLI54LWToDE803NH/f9ul0nREUvrdZGCO2nY4e1rmqOpEJjbuWKbLMjwqivBoEa+THiKNX",
-	"8TacGt+xYE/q2d+q/L6mqfa5zs+cQTQOBXxm3u/59ndTh3iFsoKxSOPR5npc3Rda5XLDKqHEBgyzYO5k",
-	"6jVILGG0gUf8DowNsouzxdk52aNrUKKWPOE/+b8iP5J4JHFaCLUJnDZhQqYsFPT6ZcYT/hvgRbslGkz8",
-	"H6d57rfE4UbQRI9ubKfz5oYGI1trZYNBrxeL0PcUQigFUdclDexSq/iz1f6gO2F22mWFJz4k/eEPQvVz",
-	"eOVw6Z3I2HXbV/3o5apKmG2gw8L413JkuTZdD6abRFfGJNaxju9l1swAvsxORj4YVL8Zz+fFKdWmhAHV",
-	"o1BNez4cgunPj1M59i4zM/K3dz+Zsfs/VRaeznOGT7BSWn8dpsD4yIFIi0E8SXWt7US8rrTtAtbG+53O",
-	"ts/m7eC+03i3X5TsboCYBvwAniISwBT8E9itt4xev/Up/wBgl/mP9hIy4wmNpPdx4aXzbyYdSq22Nxgv",
-	"FPHYMzla/auw4wU9eJhTT60k2nM+3vPWYQEKW9tYJS1BYLnR1W7WbyL+Zkr/UiEYJUq2AnMHhv1ijDYT",
-	"YFM/Q7hArk20Qy33WOX2YL9s7YYL/ARsv8oqUYfPcAog8x8a18DaK9ro40vzv8iNJ8f3b+/2SSH2CrzG",
-	"0CqcKXnCC8TaJnGcltplZwayQuBZqqtY1DIO6l+1U2h8RzPm0Nba6Myl/oGOvqBzpuzuw6v/ktbcNP8G",
-	"AAD//2rRgYCKFgAA",
+	"H4sIAAAAAAAC/9RXTW/jNhD9KwTbozZytt2LbpttURhNsUG3PRWLYiyObG7FjwyHRoxA/70gaVsR5Hx1",
+	"0xQ92RJnhm/eG85Qt7J1xjuLloNsbqUHAoOMlJ8utdGc/igMLWnP2lnZyF/gRptohI1mhSRcJwhD7DkI",
+	"doKQI1lZSZ1MryPSTlbSgkHZyD4HrGRoN2igRO4g9iybd4tKmhJYNm8X6Unb8nReSd755K8t4xpJDkMl",
+	"P3ZdwBPollbpFhiD4A2KwECs7Vp4F3SySHDTQkYmCHtgvcWEPL1NbPTIKAJystSMJgUCFga43Yyu92To",
+	"CqqTKd7NaXEyp08MjMsfrpIK88xCWhVA7SYh1got604jHaB44M2IRCtZScLrqAmVbJgi3kX1LWEnG/lN",
+	"PRZAXVZDvYchh4Rp/zL5vG9bF23m3MDNJdo1b2RzXvI6Ph4zC0zaruVQHRxz3Fxm5DwSa8xhYQz7EKrD",
+	"7kOVcntqCpXsYYX9Y/aX2Sile8D4aPSs2D5Vt/qCbYa2tJo1sKMUY0bE5QHLbOXIDSiVCxX6qwlLM4/Z",
+	"1jnE+1IeL8FySwiM6k941Ok3bTAwGP9scfRduh7yGXl9dUnv8pqpzF3hSQEPaoxhgQh2cjzrKUznyCSS",
+	"ZYz51M6kHvm9a62A8Q1rg3OXIVPbuXkT+eBsp9fCgIU1kghIW93mCJp7nBnISm6RQvFdnC3OzhMe59GC",
+	"17KR3+VXVe49mZI6s53/rkt7TkUIafelko38CUsbCNlpnDZ/nGZzNKnLNBqqRw33k2H4nPpf8M6Gguft",
+	"YpF+WmcZy0EA7/s0LLSz9ZeQcrx9Tos81kTme8rzx58TUd+XLadLF6DEr3gdMXCxOZ/bvI+8Sf29gBNG",
+	"h5CmWEfOCBp9352Kv7SMZKEXn5C2SOJHIlfmS4jGAO2KDMdJ4jpRRku7AbvGIDpHh03SpjC2BO/CCU1/",
+	"96kUj7LuXS+c2r0s36d4zgvCgC9T2iKqfA9ZoYgZ1nwMDv9iXUwm3VeVxT+WtqghwCpBru+FiyzafKhj",
+	"0Wyv9n0qD9XhENdtJNpTct9h/lBMSsL/C2L/s/OWL5iFrqdLcKvV8Ggzvdgt1bP76eSy+WrN8mu0mzGa",
+	"NOpx0r2eymnte9itnPvrIXKv9javwi/jDddbq852YPopuSem+wsxCDboVY/iwEamb1qkk96x/ybIhV5Y",
+	"iNTLRm6YfWjquu1dVGeEagN81jpTg9d1ifBmf6Wot+nCMAXpyanYlg2qQ8wn+h6/4fL3z/B5+DsAAP//",
+	"A0INV9UOAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
