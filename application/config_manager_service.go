@@ -122,19 +122,16 @@ func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error)
 // ApplyState applies the current state to selected clients
 // TODO: Change return type to satisfy openapi response
 // TODO: Separate application function for automatic applications via kafka?
-func (s *ConfigManagerService) ApplyState(id, user string, clients []domain.Client) (*domain.AccountState, error) {
-
-	acc, _ := s.GetAccountState(id) // GetAccount or just have state passed in via the api call?
-
+func (s *ConfigManagerService) ApplyState(acc *domain.AccountState, user string, clients []domain.Client) ([]*domain.DispatcherResponse, error) {
 	// construct and send work request to playbook dispatcher
 	// includes url to retrieve the playbook, url to upload results, and which client to send work to
 	var err error
+	var results []*domain.DispatcherResponse
 	for _, client := range clients {
 		res, err := s.DispatcherRepo.Dispatch(client.ClientID)
 		if err != nil {
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 		}
-		fmt.Println(res.Code)
 
 		runID := uuid.New()
 		initialTime := time.Now()
@@ -154,9 +151,11 @@ func (s *ConfigManagerService) ApplyState(id, user string, clients []domain.Clie
 		if err != nil {
 			return nil, err
 		}
+
+		results = append(results, res)
 	}
 
-	return acc, err
+	return results, err
 }
 
 // GetStateChanges gets list of state archives/changes

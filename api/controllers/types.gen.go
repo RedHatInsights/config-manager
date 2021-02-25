@@ -22,59 +22,11 @@ type AccountState struct {
 	State   *State   `json:"state,omitempty"`
 }
 
-// AccountStateInput defines model for AccountStateInput.
-type AccountStateInput struct {
-	Account *Account `json:"account,omitempty"`
-	State   *State   `json:"state,omitempty"`
-}
-
-// Hostname defines model for Hostname.
-type Hostname string
-
 // Initiator defines model for Initiator.
 type Initiator string
 
 // Label defines model for Label.
 type Label string
-
-// Run defines model for Run.
-type Run struct {
-	Account   *Account   `json:"account,omitempty"`
-	CreatedAt *Timestamp `json:"created_at,omitempty"`
-	Hostname  *Hostname  `json:"hostname,omitempty"`
-	Id        *RunID     `json:"id,omitempty"`
-	Initiator *Initiator `json:"initiator,omitempty"`
-	Label     *Label     `json:"label,omitempty"`
-	Status    *RunStatus `json:"status,omitempty"`
-	UpdatedAt *Timestamp `json:"updated_at,omitempty"`
-}
-
-// RunCreated defines model for RunCreated.
-type RunCreated struct {
-
-	// status code of request
-	Code     *int      `json:"code,omitempty"`
-	Hostname *Hostname `json:"hostname,omitempty"`
-}
-
-// RunID defines model for RunID.
-type RunID string
-
-// RunStatus defines model for RunStatus.
-type RunStatus string
-
-// List of RunStatus
-const (
-	RunStatus_failure RunStatus = "failure"
-	RunStatus_running RunStatus = "running"
-	RunStatus_success RunStatus = "success"
-)
-
-// Runs defines model for Runs.
-type Runs []Run
-
-// RunsCreated defines model for RunsCreated.
-type RunsCreated []RunCreated
 
 // State defines model for State.
 type State struct {
@@ -106,27 +58,11 @@ type Limit int
 // Offset defines model for Offset.
 type Offset int
 
-// RunIDParam defines model for RunIDParam.
-type RunIDParam RunID
-
-// RunsFilter defines model for RunsFilter.
-type RunsFilter Label
-
-// RunsSortBy defines model for RunsSortBy.
-type RunsSortBy string
-
-// List of RunsSortBy
-const (
-	RunsSortBy_created_at      RunsSortBy = "created_at"
-	RunsSortBy_created_at_asc  RunsSortBy = "created_at:asc"
-	RunsSortBy_created_at_desc RunsSortBy = "created_at:desc"
-)
-
 // StateIDParam defines model for StateIDParam.
 type StateIDParam StateID
 
-// GetChangesParams defines parameters for GetChanges.
-type GetChangesParams struct {
+// GetStatesParams defines parameters for GetStates.
+type GetStatesParams struct {
 
 	// Maximum number of results to return
 	Limit *Limit `json:"limit,omitempty"`
@@ -135,29 +71,11 @@ type GetChangesParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
-// GetRunsParams defines parameters for GetRuns.
-type GetRunsParams struct {
-	Filter *RunsFilter `json:"filter,omitempty"`
-	SortBy *RunsSortBy `json:"sort_by,omitempty"`
+// UpdateStatesJSONBody defines parameters for UpdateStates.
+type UpdateStatesJSONBody State
 
-	// Maximum number of results to return
-	Limit *Limit `json:"limit,omitempty"`
-
-	// Indicates the starting position of the query relative to the complete set of items that match the query
-	Offset *Offset `json:"offset,omitempty"`
-}
-
-// PostRunsJSONBody defines parameters for PostRuns.
-type PostRunsJSONBody AccountState
-
-// PostStatesJSONBody defines parameters for PostStates.
-type PostStatesJSONBody AccountStateInput
-
-// PostRunsJSONRequestBody defines body for PostRuns for application/json ContentType.
-type PostRunsJSONRequestBody PostRunsJSONBody
-
-// PostStatesJSONRequestBody defines body for PostStates for application/json ContentType.
-type PostStatesJSONRequestBody PostStatesJSONBody
+// UpdateStatesJSONRequestBody defines body for UpdateStates for application/json ContentType.
+type UpdateStatesJSONRequestBody UpdateStatesJSONBody
 
 // Getter for additional properties for State. Returns the specified
 // element and whether it was found
