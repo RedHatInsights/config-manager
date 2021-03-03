@@ -53,6 +53,10 @@ func Get() *viper.Viper {
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
 	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
 
+	options.SetDefault("PlaybookPath", "./playbooks/test/")
+	// TODO update default once real playbooks are in place
+	options.SetDefault("DefaultServiceEnablement", `{"test1": "enabled", "test2": "enabled"}`)
+
 	options.SetEnvPrefix("CM")
 	options.AutomaticEnv()
 

@@ -3,19 +3,24 @@ package application
 import (
 	"config-manager/domain"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/spf13/viper"
 
 	"github.com/google/uuid"
 )
 
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
+	Cfg              *viper.Viper
 	AccountStateRepo domain.AccountStateRepository
-	RunRepo          domain.RunRepository
 	StateArchiveRepo domain.StateArchiveRepository
 	ClientListRepo   domain.ClientListRepository
 	DispatcherRepo   domain.DispatcherRepository
+	PlaybookRepo     domain.PlaybookArchiveRepository
+	PBGenerator      Generator
 }
 
 // GetAccountState retrieves the current state for the account
@@ -26,8 +31,11 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			fmt.Println("Creating new account entry")
-			acc, err = s.createAccountState(id)
+			fmt.Println("Creating new account entry with default values")
+			defaultState := s.Cfg.GetString("DefaultServiceEnablement")
+			state := domain.StateMap{}
+			json.Unmarshal([]byte(defaultState), &state)
+			acc, err = s.UpdateAccountState(id, "redhat", state)
 		default:
 			return nil, err
 		}
@@ -37,6 +45,7 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 }
 
 // UpdateAccountState updates the current state for the account and creates a new state archive
+// TODO refactor
 func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[string]string) (*domain.AccountState, error) {
 	newStateID := uuid.New()
 	newLabel := id + "-" + uuid.New().String()
@@ -47,12 +56,17 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 		Label:     newLabel,
 	}
 
-	err := s.AccountStateRepo.UpdateAccountState(acc)
+	pb, err := s.PBGenerator.GeneratePlaybook(acc.State)
+	if err != nil {
+		return nil, err // TODO improve errors
+	}
+
+	err = s.AccountStateRepo.UpdateAccountState(acc)
 	if err != nil {
 		return nil, err
 	}
 
-	archive := &domain.StateArchive{
+	stateArchive := &domain.StateArchive{
 		AccountID: acc.AccountID,
 		StateID:   acc.StateID,
 		Label:     acc.Label,
@@ -61,7 +75,18 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 		State:     acc.State,
 	}
 
-	err = s.StateArchiveRepo.CreateStateArchive(archive)
+	err = s.StateArchiveRepo.CreateStateArchive(stateArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	playbookArchive := &domain.PlaybookArchive{
+		AccountID: acc.AccountID,
+		StateID:   acc.StateID,
+		Playbook:  pb,
+	}
+
+	err = s.PlaybookRepo.CreatePlaybookArchive(playbookArchive)
 	if err != nil {
 		return nil, err
 	}
@@ -72,42 +97,6 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 // DeleteAccount TODO
 func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
-}
-
-func (s *ConfigManagerService) createAccountState(id string) (*domain.AccountState, error) {
-	stateID := uuid.New()
-	label := id + "-default"
-	acc := &domain.AccountState{
-		AccountID: id,
-		State: domain.StateMap{
-			"insights":   "enabled",
-			"advisor":    "enabled",
-			"compliance": "enabled",
-		},
-		StateID: stateID,
-		Label:   label,
-	}
-
-	err := s.AccountStateRepo.CreateAccountState(acc)
-	if err != nil {
-		return nil, err
-	}
-
-	archive := &domain.StateArchive{
-		AccountID: acc.AccountID,
-		StateID:   acc.StateID,
-		Label:     acc.Label,
-		Initiator: "redhat",
-		CreatedAt: time.Now(),
-		State:     acc.State,
-	}
-
-	err = s.StateArchiveRepo.CreateStateArchive(archive)
-	if err != nil {
-		return nil, err
-	}
-
-	return acc, err
 }
 
 // GetClients TODO: Retrieve clients from inventory
@@ -131,25 +120,6 @@ func (s *ConfigManagerService) ApplyState(acc *domain.AccountState, user string,
 		res, err := s.DispatcherRepo.Dispatch(client.ClientID)
 		if err != nil {
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
-		}
-
-		runID := uuid.New()
-		initialTime := time.Now()
-
-		newRun := &domain.Run{
-			RunID:     runID,
-			AccountID: acc.AccountID, // Could runID come from dispatcher response?
-			Hostname:  client.Hostname,
-			Initiator: user,
-			Label:     acc.Label,
-			Status:    "in progress",
-			CreatedAt: initialTime,
-			UpdatedAt: initialTime,
-		}
-
-		err = s.RunRepo.CreateRun(newRun)
-		if err != nil {
-			return nil, err
 		}
 
 		results = append(results, res)
@@ -189,38 +159,18 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 	return state, err
 }
 
-// GetSingleRun gets a single run entry by run_id
-func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
-	id, err := uuid.Parse(runID)
+func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
+	id, err := uuid.Parse(stateID)
 	if err != nil {
-		return nil, err
-	}
-	run, err := s.RunRepo.GetRun(id)
-	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return run, err
-}
-
-// GetRuns gets runs for the account
-// TODO: Expand on filter - allow filtering by hostname/status/label/user
-func (s *ConfigManagerService) GetRuns(accountID, filter, sortBy string, limit, offset int) ([]domain.Run, error) {
-	runs, err := s.RunRepo.GetRuns(accountID, filter, sortBy, limit, offset)
+	archive := &domain.PlaybookArchive{StateID: id}
+	playbook, err := s.PlaybookRepo.GetPlaybookArchive(archive)
 	if err != nil {
-		return nil, err
+		fmt.Println("Could not retrieve playbook")
+		return "", err
 	}
 
-	return runs, err
-}
-
-// GetRunStatus TODO: Get status updates from playbook dispatcher
-// PLACEHOLDER
-func (s *ConfigManagerService) GetRunStatus(label string) ([]domain.DispatcherRun, error) {
-	statusList, err := s.DispatcherRepo.GetStatus(label)
-	if err != nil {
-		return nil, err
-	}
-
-	return statusList, err
+	return playbook.Playbook, err
 }

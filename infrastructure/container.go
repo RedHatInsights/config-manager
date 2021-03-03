@@ -23,17 +23,18 @@ type Container struct {
 	server *echo.Echo
 
 	// Config Manager Services
-	cmService *application.ConfigManagerService
+	cmService         *application.ConfigManagerService
+	playbookGenerator *application.Generator
 
 	// API Controllers
 	cmController *controllers.ConfigManagerController
 
 	// Repositories
 	accountStateRepo *persistence.AccountStateRepository
-	runRepo          *persistence.RunRepository
 	stateArchiveRepo *persistence.StateArchiveRepository
 	clientListRepo   *persistence.ClientListRepository
 	dispatcherRepo   *persistence.DispatcherRepository
+	playbookRepo     *persistence.PlaybookArchiveRepository
 }
 
 // Database configures and opens a db connection
@@ -94,15 +95,27 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
+			Cfg:              c.Config,
 			AccountStateRepo: c.AccountStateRepo(),
-			RunRepo:          c.RunRepo(),
 			StateArchiveRepo: c.StateArchiveRepo(),
 			ClientListRepo:   c.ClientListRepo(),
 			DispatcherRepo:   c.DispatcherRepo(),
+			PlaybookRepo:     c.PlaybookRepo(),
+			PBGenerator:      *c.PlaybookGenerator(),
 		}
 	}
 
 	return c.cmService
+}
+
+func (c *Container) PlaybookGenerator() *application.Generator {
+	if c.playbookGenerator == nil {
+		c.playbookGenerator = &application.Generator{
+			PlaybookPath: c.Config.GetString("PlaybookPath"),
+		}
+	}
+
+	return c.playbookGenerator
 }
 
 // CMController sets up handlers for api routes
@@ -126,17 +139,6 @@ func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	}
 
 	return c.accountStateRepo
-}
-
-// RunRepo enables interaction with the runs db table
-func (c *Container) RunRepo() *persistence.RunRepository {
-	if c.runRepo == nil {
-		c.runRepo = &persistence.RunRepository{
-			DB: c.Database(),
-		}
-	}
-
-	return c.runRepo
 }
 
 // StateArchiveRepo enables interaction with the state_archives db table
@@ -172,4 +174,15 @@ func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
 	}
 
 	return c.dispatcherRepo
+}
+
+// PlaybookRepo enables interaction with the playbook_archive db table
+func (c *Container) PlaybookRepo() *persistence.PlaybookArchiveRepository {
+	if c.playbookRepo == nil {
+		c.playbookRepo = &persistence.PlaybookArchiveRepository{
+			DB: c.Database(),
+		}
+	}
+
+	return c.playbookRepo
 }
