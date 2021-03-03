@@ -31,15 +31,26 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			fmt.Println("Creating new account entry with default values")
-			defaultState := s.Cfg.GetString("DefaultServiceEnablement")
-			state := domain.StateMap{}
-			json.Unmarshal([]byte(defaultState), &state)
-			acc, err = s.UpdateAccountState(id, "redhat", state)
+			acc, err = s.setupDefaultState(acc)
 		default:
 			return nil, err
 		}
 	}
+
+	return acc, err
+}
+
+func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*domain.AccountState, error) {
+	fmt.Println("Creating new account entry with default values")
+	err := s.AccountStateRepo.CreateAccountState(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultState := s.Cfg.GetString("DefaultServiceEnablement")
+	state := domain.StateMap{}
+	json.Unmarshal([]byte(defaultState), &state)
+	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state)
 
 	return acc, err
 }
