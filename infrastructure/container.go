@@ -34,7 +34,6 @@ type Container struct {
 	stateArchiveRepo *persistence.StateArchiveRepository
 	clientListRepo   *persistence.ClientListRepository
 	dispatcherRepo   *persistence.DispatcherRepository
-	playbookRepo     *persistence.PlaybookArchiveRepository
 }
 
 // Database configures and opens a db connection
@@ -100,7 +99,6 @@ func (c *Container) CMService() *application.ConfigManagerService {
 			StateArchiveRepo: c.StateArchiveRepo(),
 			ClientListRepo:   c.ClientListRepo(),
 			DispatcherRepo:   c.DispatcherRepo(),
-			PlaybookRepo:     c.PlaybookRepo(),
 			PBGenerator:      *c.PlaybookGenerator(),
 		}
 	}
@@ -174,15 +172,4 @@ func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
 	}
 
 	return c.dispatcherRepo
-}
-
-// PlaybookRepo enables interaction with the playbook_archive db table
-func (c *Container) PlaybookRepo() *persistence.PlaybookArchiveRepository {
-	if c.playbookRepo == nil {
-		c.playbookRepo = &persistence.PlaybookArchiveRepository{
-			DB: c.Database(),
-		}
-	}
-
-	return c.playbookRepo
 }

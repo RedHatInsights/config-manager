@@ -19,7 +19,6 @@ type ConfigManagerService struct {
 	StateArchiveRepo domain.StateArchiveRepository
 	ClientListRepo   domain.ClientListRepository
 	DispatcherRepo   domain.DispatcherRepository
-	PlaybookRepo     domain.PlaybookArchiveRepository
 	PBGenerator      Generator
 }
 
@@ -67,12 +66,7 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 		Label:     newLabel,
 	}
 
-	pb, err := s.PBGenerator.GeneratePlaybook(acc.State)
-	if err != nil {
-		return nil, err // TODO improve errors
-	}
-
-	err = s.AccountStateRepo.UpdateAccountState(acc)
+	err := s.AccountStateRepo.UpdateAccountState(acc)
 	if err != nil {
 		return nil, err
 	}
@@ -87,17 +81,6 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 	}
 
 	err = s.StateArchiveRepo.CreateStateArchive(stateArchive)
-	if err != nil {
-		return nil, err
-	}
-
-	playbookArchive := &domain.PlaybookArchive{
-		AccountID: acc.AccountID,
-		StateID:   acc.StateID,
-		Playbook:  pb,
-	}
-
-	err = s.PlaybookRepo.CreatePlaybookArchive(playbookArchive)
 	if err != nil {
 		return nil, err
 	}
@@ -176,12 +159,13 @@ func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 		return "", err
 	}
 
-	archive := &domain.PlaybookArchive{StateID: id}
-	playbook, err := s.PlaybookRepo.GetPlaybookArchive(archive)
+	archive := &domain.StateArchive{StateID: id}
+	archive, err = s.StateArchiveRepo.GetStateArchive(archive)
+	playbook, err := s.PBGenerator.GeneratePlaybook(archive.State)
 	if err != nil {
 		fmt.Println("Could not retrieve playbook")
 		return "", err
 	}
 
-	return playbook.Playbook, err
+	return playbook, err
 }
