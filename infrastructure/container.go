@@ -30,7 +30,6 @@ type Container struct {
 
 	// Repositories
 	accountStateRepo *persistence.AccountStateRepository
-	runRepo          *persistence.RunRepository
 	stateArchiveRepo *persistence.StateArchiveRepository
 	clientListRepo   *persistence.ClientListRepository
 	dispatcherRepo   *persistence.DispatcherRepository
@@ -95,7 +94,6 @@ func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
 			AccountStateRepo: c.AccountStateRepo(),
-			RunRepo:          c.RunRepo(),
 			StateArchiveRepo: c.StateArchiveRepo(),
 			ClientListRepo:   c.ClientListRepo(),
 			DispatcherRepo:   c.DispatcherRepo(),
@@ -126,17 +124,6 @@ func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	}
 
 	return c.accountStateRepo
-}
-
-// RunRepo enables interaction with the runs db table
-func (c *Container) RunRepo() *persistence.RunRepository {
-	if c.runRepo == nil {
-		c.runRepo = &persistence.RunRepository{
-			DB: c.Database(),
-		}
-	}
-
-	return c.runRepo
 }
 
 // StateArchiveRepo enables interaction with the state_archives db table

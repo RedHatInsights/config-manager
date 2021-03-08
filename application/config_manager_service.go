@@ -12,7 +12,6 @@ import (
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
 	AccountStateRepo domain.AccountStateRepository
-	RunRepo          domain.RunRepository
 	StateArchiveRepo domain.StateArchiveRepository
 	ClientListRepo   domain.ClientListRepository
 	DispatcherRepo   domain.DispatcherRepository
@@ -133,25 +132,6 @@ func (s *ConfigManagerService) ApplyState(acc *domain.AccountState, user string,
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 		}
 
-		runID := uuid.New()
-		initialTime := time.Now()
-
-		newRun := &domain.Run{
-			RunID:     runID,
-			AccountID: acc.AccountID, // Could runID come from dispatcher response?
-			Hostname:  client.Hostname,
-			Initiator: user,
-			Label:     acc.Label,
-			Status:    "in progress",
-			CreatedAt: initialTime,
-			UpdatedAt: initialTime,
-		}
-
-		err = s.RunRepo.CreateRun(newRun)
-		if err != nil {
-			return nil, err
-		}
-
 		results = append(results, res)
 	}
 
@@ -187,40 +167,4 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 	}
 
 	return state, err
-}
-
-// GetSingleRun gets a single run entry by run_id
-func (s *ConfigManagerService) GetSingleRun(runID string) (*domain.Run, error) {
-	id, err := uuid.Parse(runID)
-	if err != nil {
-		return nil, err
-	}
-	run, err := s.RunRepo.GetRun(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return run, err
-}
-
-// GetRuns gets runs for the account
-// TODO: Expand on filter - allow filtering by hostname/status/label/user
-func (s *ConfigManagerService) GetRuns(accountID, filter, sortBy string, limit, offset int) ([]domain.Run, error) {
-	runs, err := s.RunRepo.GetRuns(accountID, filter, sortBy, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	return runs, err
-}
-
-// GetRunStatus TODO: Get status updates from playbook dispatcher
-// PLACEHOLDER
-func (s *ConfigManagerService) GetRunStatus(label string) ([]domain.DispatcherRun, error) {
-	statusList, err := s.DispatcherRepo.GetStatus(label)
-	if err != nil {
-		return nil, err
-	}
-
-	return statusList, err
 }
