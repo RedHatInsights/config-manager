@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for disabling Remediations
+- hosts: localhost
+  tasks:
+    - name: Disabled Remediations
+      debug:
+        msg: "Remediations removed"

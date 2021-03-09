@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for disabling Insights services (advisor, drift, patch, vulnerability, and policies)
+- hosts: localhost
+  tasks:
+    - name: Disable Insights
+      debug:
+        msg: "Insights removed"

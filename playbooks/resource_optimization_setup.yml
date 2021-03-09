@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for setting up Resource Optimization
+- hosts: localhost
+  tasks:
+    - name: Setup Resource Optimization
+      debug:
+        msg: "Resource Optimization setup"

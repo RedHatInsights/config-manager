@@ -53,6 +53,8 @@ func Get() *viper.Viper {
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
 	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
 
+	options.SetDefault("PlaybookPath", "./playbooks/")
+
 	options.SetDefault("ServiceConfig", `{
 		"insights": "enabled",
 		"compliance_openscap": "enabled",

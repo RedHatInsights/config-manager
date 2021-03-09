@@ -1,0 +1,7 @@
+---
+- name: Test 1
+  hosts: localhost
+  tasks:
+    - name: Print 1 removed
+      debug:
+        msg: "1 removed"

@@ -13,11 +13,12 @@ import (
 
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
-	Cfg              *viper.Viper
-	AccountStateRepo domain.AccountStateRepository
-	StateArchiveRepo domain.StateArchiveRepository
-	ClientListRepo   domain.ClientListRepository
-	DispatcherRepo   domain.DispatcherRepository
+	Cfg               *viper.Viper
+	AccountStateRepo  domain.AccountStateRepository
+	StateArchiveRepo  domain.StateArchiveRepository
+	ClientListRepo    domain.ClientListRepository
+	DispatcherRepo    domain.DispatcherRepository
+	PlaybookGenerator Generator
 }
 
 // GetAccountState retrieves the current state for the account
@@ -148,4 +149,24 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 	}
 
 	return state, err
+}
+
+func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
+	id, err := uuid.Parse(stateID)
+	if err != nil {
+		return "", err
+	}
+
+	archive := &domain.StateArchive{StateID: id}
+	archive, err = s.StateArchiveRepo.GetStateArchive(archive)
+	if err != nil {
+		return "", err
+	}
+
+	playbook, err := s.PlaybookGenerator.GeneratePlaybook(archive.State)
+	if err != nil {
+		return "", err
+	}
+
+	return playbook, err
 }

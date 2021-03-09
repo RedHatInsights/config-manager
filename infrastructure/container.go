@@ -23,7 +23,8 @@ type Container struct {
 	server *echo.Echo
 
 	// Config Manager Services
-	cmService *application.ConfigManagerService
+	cmService         *application.ConfigManagerService
+	playbookGenerator *application.Generator
 
 	// API Controllers
 	cmController *controllers.ConfigManagerController
@@ -93,15 +94,26 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			Cfg:              c.Config,
-			AccountStateRepo: c.AccountStateRepo(),
-			StateArchiveRepo: c.StateArchiveRepo(),
-			ClientListRepo:   c.ClientListRepo(),
-			DispatcherRepo:   c.DispatcherRepo(),
+			Cfg:               c.Config,
+			AccountStateRepo:  c.AccountStateRepo(),
+			StateArchiveRepo:  c.StateArchiveRepo(),
+			ClientListRepo:    c.ClientListRepo(),
+			DispatcherRepo:    c.DispatcherRepo(),
+			PlaybookGenerator: *c.PlaybookGenerator(),
 		}
 	}
 
 	return c.cmService
+}
+
+func (c *Container) PlaybookGenerator() *application.Generator {
+	if c.playbookGenerator == nil {
+		c.playbookGenerator = &application.Generator{
+			PlaybookPath: c.Config.GetString("PlaybookPath"),
+		}
+	}
+
+	return c.playbookGenerator
 }
 
 // CMController sets up handlers for api routes
