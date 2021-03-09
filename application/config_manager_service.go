@@ -3,14 +3,17 @@ package application
 import (
 	"config-manager/domain"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
+	Cfg              *viper.Viper
 	AccountStateRepo domain.AccountStateRepository
 	StateArchiveRepo domain.StateArchiveRepository
 	ClientListRepo   domain.ClientListRepository
@@ -25,12 +28,26 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			fmt.Println("Creating new account entry")
-			acc, err = s.createAccountState(id)
+			acc, err = s.setupDefaultState(acc)
 		default:
 			return nil, err
 		}
 	}
+
+	return acc, err
+}
+
+func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*domain.AccountState, error) {
+	fmt.Println("Creating new account entry with default values")
+	err := s.AccountStateRepo.CreateAccountState(acc)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultState := s.Cfg.GetString("ServiceConfig")
+	state := domain.StateMap{}
+	json.Unmarshal([]byte(defaultState), &state)
+	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state)
 
 	return acc, err
 }
@@ -71,42 +88,6 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[s
 // DeleteAccount TODO
 func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
-}
-
-func (s *ConfigManagerService) createAccountState(id string) (*domain.AccountState, error) {
-	stateID := uuid.New()
-	label := id + "-default"
-	acc := &domain.AccountState{
-		AccountID: id,
-		State: domain.StateMap{
-			"insights":   "enabled",
-			"advisor":    "enabled",
-			"compliance": "enabled",
-		},
-		StateID: stateID,
-		Label:   label,
-	}
-
-	err := s.AccountStateRepo.CreateAccountState(acc)
-	if err != nil {
-		return nil, err
-	}
-
-	archive := &domain.StateArchive{
-		AccountID: acc.AccountID,
-		StateID:   acc.StateID,
-		Label:     acc.Label,
-		Initiator: "redhat",
-		CreatedAt: time.Now(),
-		State:     acc.State,
-	}
-
-	err = s.StateArchiveRepo.CreateStateArchive(archive)
-	if err != nil {
-		return nil, err
-	}
-
-	return acc, err
 }
 
 // GetClients TODO: Retrieve clients from inventory

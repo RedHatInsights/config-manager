@@ -32,7 +32,7 @@
     "database": {
         "hostname": "localhost",
         "port": 5432,
-        "name": "config-manager",
+        "name": "insights",
         "username": "insights",
         "password": "insights",
         "adminUsername": "insights",
