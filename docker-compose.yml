@@ -28,7 +28,7 @@ services:
     environment:
       POSTGRES_PASSWORD: insights
       POSTGRES_USER: insights
-      POSTGRES_DB: config-manager
+      POSTGRES_DB: insights
     ports:
       - "5432:5432"
   config-manager:

@@ -43,7 +43,7 @@ func Get() *viper.Viper {
 
 		options.SetDefault("DBHost", "localhost")
 		options.SetDefault("DBPort", 5432)
-		options.SetDefault("DBName", "config-manager")
+		options.SetDefault("DBName", "insights")
 		options.SetDefault("DBUser", "insights")
 		options.SetDefault("DBPass", "insights")
 	}
@@ -52,6 +52,13 @@ func Get() *viper.Viper {
 	options.SetDefault("KafkaConsumerOffset", -1)
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
 	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
+
+	options.SetDefault("ServiceConfig", `{
+		"insights": "enabled",
+		"compliance_openscap": "enabled",
+		"resource_optimization": "enabled",
+		"remediations": "enabled"
+	}`)
 
 	options.SetEnvPrefix("CM")
 	options.AutomaticEnv()

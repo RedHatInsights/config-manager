@@ -93,6 +93,7 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
+			Cfg:              c.Config,
 			AccountStateRepo: c.AccountStateRepo(),
 			StateArchiveRepo: c.StateArchiveRepo(),
 			ClientListRepo:   c.ClientListRepo(),
