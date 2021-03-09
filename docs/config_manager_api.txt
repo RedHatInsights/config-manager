@@ -1,0 +1,38 @@
+title config-manager
+
+participantgroup #lightyellow **external** 
+participant RHC Client
+participant RHC User
+end
+participantgroup #lightblue **cloud.redhat.com**
+participant Config-manager API
+participant Inventory API
+participant Playbook Dispatcher API
+end
+
+
+RHC User->Config-manager API:Get current Service Enablement\nstate for account
+
+Config-manager API->Config-manager API:Retrieve current\nstate from DB
+RHC User<--Config-manager API:Current state content
+RHC User->Config-manager API:Update Service Enablement\nstate for account
+Config-manager API->Inventory API:Get RHC connected clients\nfor requesting account
+Config-manager API<--Inventory API:List of RHC connected clients
+Config-manager API->Config-manager API:Create new State Archive\nand add to DB
+Config-manager API->Playbook Dispatcher API:Run playbook https://xyz\non host <rhc_client_id>\nusing label <state label>
+RHC User<--Config-manager API:Dispatch response
+note right of Playbook Dispatcher API:The playbook dispatcher utilizes\nthe cloud-connector to send\na message to the RHC client
+RHC Client<-Playbook Dispatcher API:Playbook work request\nhttps://xyz
+RHC Client->Config-manager API:Fetch https://xyz
+RHC Client<--Config-manager API:Playbook https://xyz content
+note left of RHC Client:The RHC Client will run the playbook\nvia ansible-runner and upload results\nvia Ingress. Results will be validated\nand stored by the playbook dispatcher\nfor later consumption by platform\nservices
+
+alt waiting for status updates from kafka
+Playbook Dispatcher API->(2)Config-manager API:Publish "success" message\nto <dispatcher events topic>\n
+Config-manager API->Inventory API:Update <rhc_config_state>\nID for host
+end
+
+
+RHC User->Config-manager API:Get history of state changes
+Config-manager API->Config-manager API:Retrieve state\narchives from DB
+RHC User<--Config-manager API:Filtered state archives for account
