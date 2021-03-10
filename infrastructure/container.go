@@ -153,9 +153,9 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
 	if c.dispatcherRepo == nil {
 		c.dispatcherRepo = &persistence.DispatcherRepository{
-			DispatcherURL: "",
-			PlaybookURL:   "",
-			RunStatusURL:  "",
+			DispatcherURL: c.Config.GetString("DispatcherURL"),
+			PlaybookURL:   c.Config.GetString("PlaybookURL"),
+			DispatcherPSK: c.Config.GetString("DispatcherPSK"),
 		}
 	}
 

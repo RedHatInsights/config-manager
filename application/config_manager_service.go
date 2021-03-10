@@ -108,7 +108,7 @@ func (s *ConfigManagerService) ApplyState(acc *domain.AccountState, user string,
 	var err error
 	var results []*domain.DispatcherResponse
 	for _, client := range clients {
-		res, err := s.DispatcherRepo.Dispatch(client.ClientID)
+		res, err := s.DispatcherRepo.Dispatch(client.ClientID, acc)
 		if err != nil {
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 		}

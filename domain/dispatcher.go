@@ -1,11 +1,10 @@
 package domain
 
 type DispatcherInput struct {
-	ClientID  string
-	AccountID string
+	Recipient string
+	Account   string
 	URL       string
-	Labels    string
-	Timeout   int
+	Labels    map[string]string
 }
 
 type DispatcherResponse struct {
@@ -24,6 +23,6 @@ type DispatcherRun struct {
 }
 
 type DispatcherRepository interface {
-	Dispatch(clientID string) (*DispatcherResponse, error)
+	Dispatch(clientID string, acc *AccountState) (*DispatcherResponse, error)
 	GetStatus(label string) ([]DispatcherRun, error)
 }
