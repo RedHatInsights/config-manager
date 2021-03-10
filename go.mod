@@ -3,7 +3,6 @@ module config-manager
 go 1.13
 
 require (
-	github.com/RedHatInsights/platform-receptor-controller v0.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.5.0
 	github.com/getkin/kin-openapi v0.38.0
 	github.com/globocom/echo-prometheus v0.1.2

@@ -39,3 +39,12 @@ func (s *StateMap) Scan(value interface{}) error {
 
 	return json.Unmarshal(b, &s)
 }
+
+func (s StateMap) GetKeys() []string {
+	keys := make([]string, 0, len(s))
+	for key := range s {
+		keys = append(keys, key)
+	}
+
+	return keys
+}

@@ -2,13 +2,16 @@ package application
 
 import (
 	"config-manager/domain"
+	"config-manager/utils"
 	"strings"
 	"testing"
 )
 
 func TestGenerateAllEnabled(t *testing.T) {
+	templates := utils.FilesIntoMap("../playbooks/test/", "*.yml")
+
 	pbg := &Generator{
-		PlaybookPath: "../playbooks/test/",
+		Templates: templates,
 	}
 
 	state := domain.StateMap{
@@ -43,8 +46,10 @@ func TestGenerateAllEnabled(t *testing.T) {
 }
 
 func TestGenerateAllDisabled(t *testing.T) {
+	templates := utils.FilesIntoMap("../playbooks/test/", "*.yml")
+
 	pbg := &Generator{
-		PlaybookPath: "../playbooks/test/",
+		Templates: templates,
 	}
 
 	state := domain.StateMap{

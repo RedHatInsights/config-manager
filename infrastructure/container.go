@@ -4,12 +4,10 @@ import (
 	"config-manager/api/controllers"
 	"config-manager/application"
 	"config-manager/infrastructure/persistence"
+	"config-manager/utils"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/labstack/echo/v4"
 
@@ -111,24 +109,10 @@ func (c *Container) CMService() *application.ConfigManagerService {
 
 func (c *Container) PlaybookGenerator() *application.Generator {
 	if c.playbookGenerator == nil {
-		templates := make(map[string][]byte)
-		plays, err := filepath.Glob(c.Config.GetString("PlaybookPath") + "*.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, play := range plays {
-			info, _ := os.Stat(play)
-			content, err := ioutil.ReadFile(play)
-			if err != nil {
-				log.Fatal(err)
-			}
-			templates[info.Name()] = content
-		}
+		templates := utils.FilesIntoMap(c.Config.GetString("PlaybookPath"), "*.yml")
 
 		c.playbookGenerator = &application.Generator{
-			PlaybookPath: c.Config.GetString("PlaybookPath"),
-			Templates:    templates,
+			Templates: templates,
 		}
 	}
 
