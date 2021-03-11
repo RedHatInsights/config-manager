@@ -24,7 +24,7 @@ services:
       - KAFKA_MAX_REQUEST_SIZE=1048576
   db:
     image: postgres
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_PASSWORD: insights
       POSTGRES_USER: insights
