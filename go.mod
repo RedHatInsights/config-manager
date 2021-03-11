@@ -18,4 +18,5 @@ require (
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.7.1
+	gotest.tools v2.2.0+incompatible
 )
