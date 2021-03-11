@@ -4,6 +4,7 @@ import (
 	"config-manager/api/controllers"
 	"config-manager/application"
 	"config-manager/infrastructure/persistence"
+	"config-manager/utils"
 	"database/sql"
 	"fmt"
 	"log"
@@ -23,7 +24,8 @@ type Container struct {
 	server *echo.Echo
 
 	// Config Manager Services
-	cmService *application.ConfigManagerService
+	cmService         *application.ConfigManagerService
+	playbookGenerator *application.Generator
 
 	// API Controllers
 	cmController *controllers.ConfigManagerController
@@ -93,15 +95,27 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			Cfg:              c.Config,
-			AccountStateRepo: c.AccountStateRepo(),
-			StateArchiveRepo: c.StateArchiveRepo(),
-			ClientListRepo:   c.ClientListRepo(),
-			DispatcherRepo:   c.DispatcherRepo(),
+			Cfg:               c.Config,
+			AccountStateRepo:  c.AccountStateRepo(),
+			StateArchiveRepo:  c.StateArchiveRepo(),
+			ClientListRepo:    c.ClientListRepo(),
+			DispatcherRepo:    c.DispatcherRepo(),
+			PlaybookGenerator: *c.PlaybookGenerator(),
 		}
 	}
 
 	return c.cmService
+}
+
+func (c *Container) PlaybookGenerator() *application.Generator {
+	if c.playbookGenerator == nil {
+		templates := utils.FilesIntoMap(c.Config.GetString("PlaybookPath"), "*.yml")
+		c.playbookGenerator = &application.Generator{
+			Templates: templates,
+		}
+	}
+
+	return c.playbookGenerator
 }
 
 // CMController sets up handlers for api routes

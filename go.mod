@@ -3,7 +3,6 @@ module config-manager
 go 1.13
 
 require (
-	github.com/RedHatInsights/platform-receptor-controller v0.0.1
 	github.com/deepmap/oapi-codegen v1.5.0
 	github.com/getkin/kin-openapi v0.38.0
 	github.com/globocom/echo-prometheus v0.1.2
@@ -19,4 +18,5 @@ require (
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.7.1
+	gotest.tools v2.2.0+incompatible
 )

@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for setting up Compliance
+- hosts: localhost
+  tasks:
+    - name: Setup Compliance
+      debug:
+        msg: "Compliance setup"

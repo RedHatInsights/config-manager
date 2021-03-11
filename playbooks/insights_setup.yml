@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for setting up Insights services (advisor, drift, patch, vulnerability, and policies)
+- hosts: localhost
+  tasks:
+    - name: Setup Insights
+      debug:
+        msg: "Insights setup"

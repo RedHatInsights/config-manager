@@ -142,7 +142,10 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 	id := identity.Get(ctx.Request().Context())
 	fmt.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
-	playbook := "not yet implemented"
+	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return ctx.JSON(http.StatusOK, playbook)
 }

@@ -9,5 +9,6 @@ USER 1001
 FROM registry.access.redhat.com/ubi8-minimal
 MAINTAINER jassteph@redhat.com
 COPY ./db/migrations ./db/migrations
+COPY ./playbooks ./playbooks
 COPY --from=builder /go/src/app/config_manager .
 ENTRYPOINT ["./config_manager"]

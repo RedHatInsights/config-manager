@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for setting up Remediations
+- hosts: localhost
+  tasks:
+    - name: Setup Remediations
+      debug:
+        msg: "Remediations setup"

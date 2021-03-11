@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for disabling Compliance
+- hosts: localhost
+  tasks:
+    - name: Disable Compliance
+      debug:
+        msg: "Compliance removed"

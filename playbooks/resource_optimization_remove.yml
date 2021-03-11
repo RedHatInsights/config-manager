@@ -1,0 +1,7 @@
+---
+# Placeholder playbook for disabling Resource Optimization
+- hosts: localhost
+  tasks:
+    - name: Disable Resource Optimization
+      debug:
+        msg: "Resource Optimization removed"
