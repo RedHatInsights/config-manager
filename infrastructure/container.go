@@ -124,6 +124,7 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 		c.cmController = &controllers.ConfigManagerController{
 			ConfigManagerService: c.CMService(),
 			Server:               c.Server(),
+			URLBasePath:          c.Config.GetString("URLBasePath"),
 		}
 	}
 

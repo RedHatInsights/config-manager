@@ -11,6 +11,15 @@ import (
 func Get() *viper.Viper {
 	options := viper.New()
 
+	options.SetDefault("AppName", "config-manager")
+	options.SetDefault("APIVersion", "v1")
+	options.SetDefault("URLPathPrefix", "api")
+	options.SetDefault("URLBasePath", buildURL(
+		options.GetString("URLPathPrefix"),
+		options.GetString("AppName"),
+		options.GetString("APIVersion"),
+	))
+
 	if os.Getenv("CLOWDER_ENABLED") == "true" {
 		cfg := clowder.LoadedConfig
 
@@ -48,6 +57,8 @@ func Get() *viper.Viper {
 		options.SetDefault("DBPass", "insights")
 	}
 
+	options.SetDefault("URLBasePath", "/api/config-manager/v1")
+
 	options.SetDefault("KafkaGroupID", "config-manager")
 	options.SetDefault("KafkaConsumerOffset", -1)
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
@@ -66,4 +77,8 @@ func Get() *viper.Viper {
 	options.AutomaticEnv()
 
 	return options
+}
+
+func buildURL(prefix, appName, version string) string {
+	return fmt.Sprintf("/%s/%s/%s", prefix, appName, version)
 }

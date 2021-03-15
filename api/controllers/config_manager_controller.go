@@ -16,14 +16,16 @@ import (
 type ConfigManagerController struct {
 	ConfigManagerService *application.ConfigManagerService
 	Server               *echo.Echo
+	URLBasePath          string
 }
 
 // Routes sets up middlewares and registers handlers for each route
 func (cmc *ConfigManagerController) Routes() {
-	cmc.Server.Use(echo.WrapMiddleware(identity.EnforceIdentity))
+	sub := cmc.Server.Group(cmc.URLBasePath)
+	sub.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	// TODO: This is a weird way to register the routes. Should probably
 	// remove Server from this controller and instead create an api "main.go"
-	RegisterHandlers(cmc.Server, cmc)
+	RegisterHandlers(sub, cmc)
 }
 
 // Start starts an http server with addr
