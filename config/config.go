@@ -57,8 +57,6 @@ func Get() *viper.Viper {
 		options.SetDefault("DBPass", "insights")
 	}
 
-	options.SetDefault("URLBasePath", "/api/config-manager/v1")
-
 	options.SetDefault("KafkaGroupID", "config-manager")
 	options.SetDefault("KafkaConsumerOffset", -1)
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
