@@ -3,11 +3,14 @@ package infrastructure
 import (
 	"config-manager/api/controllers"
 	"config-manager/application"
+	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
 	"config-manager/utils"
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -34,7 +37,7 @@ type Container struct {
 	accountStateRepo *persistence.AccountStateRepository
 	stateArchiveRepo *persistence.StateArchiveRepository
 	clientListRepo   *persistence.ClientListRepository
-	dispatcherRepo   *persistence.DispatcherRepository
+	dispatcherRepo   *persistence.DispatcherClient
 }
 
 // Database configures and opens a db connection
@@ -165,12 +168,16 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 }
 
 // DispatcherRepo enables interaction with the playbook dispatcher
-func (c *Container) DispatcherRepo() *persistence.DispatcherRepository {
+func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		c.dispatcherRepo = &persistence.DispatcherRepository{
-			DispatcherURL: "",
-			PlaybookURL:   "",
-			RunStatusURL:  "",
+		client := http.Client{
+			Timeout: time.Second * 10,
+		}
+
+		c.dispatcherRepo = &persistence.DispatcherClient{
+			DispatcherHost: c.Config.GetString("DispatcherHost"),
+			DispatcherPSK:  c.Config.GetString("DispatcherPSK"),
+			Client:         client,
 		}
 	}
 

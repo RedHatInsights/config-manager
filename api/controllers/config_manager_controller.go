@@ -102,7 +102,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	// TODO: Update ApplyState to return proper response data (dispatcher response code + id per client)
 
-	_, err = cmc.ConfigManagerService.ApplyState(acc, "demo-user", clients.Clients)
+	_, err = cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients.Clients)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

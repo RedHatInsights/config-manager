@@ -2,6 +2,7 @@ package application
 
 import (
 	"config-manager/domain"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -17,7 +18,7 @@ type ConfigManagerService struct {
 	AccountStateRepo  domain.AccountStateRepository
 	StateArchiveRepo  domain.StateArchiveRepository
 	ClientListRepo    domain.ClientListRepository
-	DispatcherRepo    domain.DispatcherRepository
+	DispatcherRepo    domain.DispatcherClient
 	PlaybookGenerator Generator
 }
 
@@ -101,15 +102,25 @@ func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error)
 }
 
 // ApplyState applies the current state to selected clients
-// TODO: Change return type to satisfy openapi response
 // TODO: Separate application function for automatic applications via kafka?
-func (s *ConfigManagerService) ApplyState(acc *domain.AccountState, user string, clients []domain.Client) ([]*domain.DispatcherResponse, error) {
-	// construct and send work request to playbook dispatcher
-	// includes url to retrieve the playbook, url to upload results, and which client to send work to
+func (s *ConfigManagerService) ApplyState(
+	ctx context.Context,
+	acc *domain.AccountState,
+	clients []domain.Client,
+) ([]*domain.DispatcherResponse, error) {
 	var err error
 	var results []*domain.DispatcherResponse
 	for _, client := range clients {
-		res, err := s.DispatcherRepo.Dispatch(client.ClientID)
+		input := domain.DispatcherInput{
+			Recipient: client.ClientID,
+			Account:   acc.AccountID,
+			URL:       fmt.Sprintf(s.Cfg.GetString("PlaybookURL"), acc.StateID),
+			Labels: map[string]string{
+				"cm-playbook": acc.StateID.String(),
+			},
+		}
+
+		res, err := s.DispatcherRepo.Dispatch(ctx, input)
 		if err != nil {
 			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 		}
