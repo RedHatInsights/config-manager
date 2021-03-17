@@ -52,6 +52,11 @@ objects:
           value: ${LOG_LEVEL}
         - name: CLOWDER_ENABLED
           value: "true"
+        - name: CM_DISPATCHERPSK
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: psk-playbook-dispatcher
       resources:
         limits:
           cpu: ${CPU_LIMIT}
