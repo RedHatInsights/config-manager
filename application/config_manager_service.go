@@ -123,13 +123,13 @@ func (s *ConfigManagerService) ApplyState(
 
 		inputs = append(inputs, input)
 
-		if len(inputs) == 50 || i == len(clients)-1 {
+		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
 			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
 			if err != nil {
 				fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 			}
 
-			results = res
+			results = append(results, res...)
 			inputs = nil
 		}
 	}

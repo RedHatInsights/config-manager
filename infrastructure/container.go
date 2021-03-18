@@ -171,7 +171,7 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
 		client := &http.Client{
-			Timeout: time.Second * 10,
+			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
 		}
 
 		c.dispatcherRepo = &persistence.DispatcherClient{
