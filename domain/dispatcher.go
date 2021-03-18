@@ -7,7 +7,7 @@ type DispatcherInput struct {
 	Account   string            `json:"account"`
 	URL       string            `json:"url"`
 	Labels    map[string]string `json:"labels"`
-	Timeout   int               `json:"timeout"`
+	Timeout   int               `json:"timeout,omitempty"`
 }
 
 type DispatcherResponse struct {
@@ -26,6 +26,6 @@ type DispatcherRun struct {
 }
 
 type DispatcherClient interface {
-	Dispatch(ctx context.Context, input DispatcherInput) (*DispatcherResponse, error)
+	Dispatch(ctx context.Context, inputs []DispatcherInput) ([]DispatcherResponse, error)
 	// GetStatus(ctx context.Context, labels string) ()
 }

@@ -107,10 +107,11 @@ func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
 	clients []domain.Client,
-) ([]*domain.DispatcherResponse, error) {
+) ([]domain.DispatcherResponse, error) {
 	var err error
-	var results []*domain.DispatcherResponse
-	for _, client := range clients {
+	var results []domain.DispatcherResponse
+	var inputs []domain.DispatcherInput
+	for i, client := range clients {
 		input := domain.DispatcherInput{
 			Recipient: client.ClientID,
 			Account:   acc.AccountID,
@@ -120,12 +121,17 @@ func (s *ConfigManagerService) ApplyState(
 			},
 		}
 
-		res, err := s.DispatcherRepo.Dispatch(ctx, input)
-		if err != nil {
-			fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
-		}
+		inputs = append(inputs, input)
 
-		results = append(results, res)
+		if len(inputs) == 50 || i == len(clients)-1 {
+			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
+			if err != nil {
+				fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+			}
+
+			results = res
+			inputs = nil
+		}
 	}
 
 	return results, err

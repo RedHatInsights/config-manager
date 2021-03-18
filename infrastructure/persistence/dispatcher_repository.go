@@ -17,17 +17,18 @@ type DispatcherClient struct {
 
 func (r *DispatcherClient) Dispatch(
 	ctx context.Context,
-	input domain.DispatcherInput,
-) (*domain.DispatcherResponse, error) {
-	fmt.Println("Sending request to playbook dispatcher for client: ", input.Recipient)
+	inputs []domain.DispatcherInput,
+) ([]domain.DispatcherResponse, error) {
+	fmt.Println("Sending request to playbook dispatcher")
 
-	reqBody, err := json.Marshal(input)
+	reqBody, err := json.Marshal(inputs)
 	if err != nil {
 		panic(err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", r.DispatcherHost+"/internal/dispatch", bytes.NewBuffer(reqBody))
 	req.Header.Set("Authorization", fmt.Sprintf("PSK %s", r.DispatcherPSK))
+	req.Header.Set("Content-Type", "application/json")
 
 	res, err := r.Client.Do(req)
 	if err != nil {
@@ -35,7 +36,7 @@ func (r *DispatcherClient) Dispatch(
 	}
 	defer res.Body.Close()
 
-	var dRes *domain.DispatcherResponse
+	var dRes []domain.DispatcherResponse
 	err = json.NewDecoder(res.Body).Decode(&dRes)
 	return dRes, err
 }
