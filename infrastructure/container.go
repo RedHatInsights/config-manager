@@ -170,7 +170,7 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		client := http.Client{
+		client := &http.Client{
 			Timeout: time.Second * 10,
 		}
 

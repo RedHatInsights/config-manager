@@ -27,5 +27,4 @@ type DispatcherRun struct {
 
 type DispatcherClient interface {
 	Dispatch(ctx context.Context, inputs []DispatcherInput) ([]DispatcherResponse, error)
-	// GetStatus(ctx context.Context, labels string) ()
 }

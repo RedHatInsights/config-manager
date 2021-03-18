@@ -9,10 +9,14 @@ import (
 	"net/http"
 )
 
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type DispatcherClient struct {
 	DispatcherHost string
 	DispatcherPSK  string
-	Client         http.Client
+	Client         HTTPClient
 }
 
 func (r *DispatcherClient) Dispatch(
@@ -40,9 +44,3 @@ func (r *DispatcherClient) Dispatch(
 	err = json.NewDecoder(res.Body).Decode(&dRes)
 	return dRes, err
 }
-
-// Placeholder
-// func (r *DispatcherRepository) GetStatus(label string) ([]domain.DispatcherRun, error) {
-// 	fmt.Println("Getting status for hosts using label: ", label)
-// 	return nil, nil
-// }
