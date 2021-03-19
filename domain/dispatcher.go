@@ -1,16 +1,18 @@
 package domain
 
+import "context"
+
 type DispatcherInput struct {
-	ClientID  string
-	AccountID string
-	URL       string
-	Labels    string
-	Timeout   int
+	Recipient string            `json:"recipient"`
+	Account   string            `json:"account"`
+	URL       string            `json:"url"`
+	Labels    map[string]string `json:"labels"`
+	Timeout   int               `json:"timeout,omitempty"`
 }
 
 type DispatcherResponse struct {
-	Code  int
-	RunID string
+	Code  int    `json:"code"`
+	RunID string `json:"id"`
 }
 
 type DispatcherRun struct {
@@ -23,7 +25,6 @@ type DispatcherRun struct {
 	Status    string
 }
 
-type DispatcherRepository interface {
-	Dispatch(clientID string) (*DispatcherResponse, error)
-	GetStatus(label string) ([]DispatcherRun, error)
+type DispatcherClient interface {
+	Dispatch(ctx context.Context, inputs []DispatcherInput) ([]DispatcherResponse, error)
 }

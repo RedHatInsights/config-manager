@@ -62,6 +62,12 @@ func Get() *viper.Viper {
 	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
 	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
 
+	options.SetDefault("DispatcherHost", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
+	options.SetDefault("DispatcherPSK", "")
+	options.SetDefault("Dispatcher_Batch_Size", 50) //TODO change string format on all other config vars
+	options.SetDefault("Dispatcher_Timeout", 10)
+	options.SetDefault("PlaybookURL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
+
 	options.SetDefault("PlaybookPath", "./playbooks/")
 
 	options.SetDefault("ServiceConfig", `{
