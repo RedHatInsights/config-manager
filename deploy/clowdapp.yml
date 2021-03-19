@@ -57,6 +57,8 @@ objects:
               secretKeyRef:
                 key: key
                 name: psk-playbook-dispatcher
+        - name: CM_DISPATCHERHOST
+          value: ${CM_DISPATCHERHOST}
       resources:
         limits:
           cpu: ${CPU_LIMIT}
@@ -81,3 +83,5 @@ parameters:
   value: 512Mi
 - name: REPLICAS
   value: "2"
+- name: CM_DISPATCHERHOST
+  required: true
