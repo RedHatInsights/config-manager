@@ -42,9 +42,9 @@ func main() {
 	metricsServer := controllers.NewMetricsServer(config)
 	metricsServer.Routes()
 
-	go metricsServer.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("MetricsPort")))
+	go metricsServer.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("Metrics_Port")))
 
-	go configManager.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("WebPort")))
+	go configManager.Start(fmt.Sprintf("0.0.0.0:%s", config.GetString("Web_Port")))
 
 	resultsConsumer := kafka.NewResultsConsumer(config)
 	connectionConsumer := kafka.NewConnectionsConsumer(config)

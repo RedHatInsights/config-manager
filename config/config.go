@@ -11,66 +11,66 @@ import (
 func Get() *viper.Viper {
 	options := viper.New()
 
-	options.SetDefault("AppName", "config-manager")
-	options.SetDefault("APIVersion", "v1")
-	options.SetDefault("URLPathPrefix", "api")
-	options.SetDefault("URLBasePath", buildURL(
-		options.GetString("URLPathPrefix"),
-		options.GetString("AppName"),
-		options.GetString("APIVersion"),
+	options.SetDefault("App_Name", "config-manager")
+	options.SetDefault("API_Version", "v1")
+	options.SetDefault("URL_Path_Prefix", "api")
+	options.SetDefault("URL_Base_Path", buildURL(
+		options.GetString("URL_Path_Prefix"),
+		options.GetString("App_Name"),
+		options.GetString("API_Version"),
 	))
 
 	if os.Getenv("CLOWDER_ENABLED") == "true" {
 		cfg := clowder.LoadedConfig
 
-		options.SetDefault("WebPort", cfg.WebPort)
-		options.SetDefault("MetricsPort", cfg.MetricsPort)
-		options.SetDefault("MetricsPath", cfg.MetricsPath)
+		options.SetDefault("Web_Port", cfg.WebPort)
+		options.SetDefault("Metrics_Port", cfg.MetricsPort)
+		options.SetDefault("Metrics_Path", cfg.MetricsPath)
 
-		options.SetDefault("KafkaBrokers", fmt.Sprintf(cfg.Kafka.Brokers[0].Hostname, cfg.Kafka.Brokers[0].Port))
+		options.SetDefault("Kafka_Brokers", fmt.Sprintf(cfg.Kafka.Brokers[0].Hostname, cfg.Kafka.Brokers[0].Port))
 
-		options.SetDefault("LogGroup", cfg.Logging.Cloudwatch.LogGroup)
-		options.SetDefault("AwsRegion", cfg.Logging.Cloudwatch.Region)
-		options.SetDefault("AwsAccessKeyId", cfg.Logging.Cloudwatch.AccessKeyId)
-		options.SetDefault("AwsSecretAccessKey", cfg.Logging.Cloudwatch.SecretAccessKey)
+		options.SetDefault("Log_Group", cfg.Logging.Cloudwatch.LogGroup)
+		options.SetDefault("Aws_Region", cfg.Logging.Cloudwatch.Region)
+		options.SetDefault("Aws_Access_Key_Id", cfg.Logging.Cloudwatch.AccessKeyId)
+		options.SetDefault("Aws_Secret_Access_Key", cfg.Logging.Cloudwatch.SecretAccessKey)
 
-		options.SetDefault("DBHost", cfg.Database.Hostname)
-		options.SetDefault("DBPort", cfg.Database.Port)
-		options.SetDefault("DBName", cfg.Database.Name)
-		options.SetDefault("DBUser", cfg.Database.Username)
-		options.SetDefault("DBPass", cfg.Database.Password)
+		options.SetDefault("DB_Host", cfg.Database.Hostname)
+		options.SetDefault("DB_Port", cfg.Database.Port)
+		options.SetDefault("DB_Name", cfg.Database.Name)
+		options.SetDefault("DB_User", cfg.Database.Username)
+		options.SetDefault("DB_Pass", cfg.Database.Password)
 	} else {
-		options.SetDefault("WebPort", 8081)
-		options.SetDefault("MetricsPort", 9000)
+		options.SetDefault("Web_Port", 8081)
+		options.SetDefault("Metrics_Port", 9000)
 
-		options.SetDefault("KafkaBrokers", []string{"localhost:29092"})
+		options.SetDefault("Kafka_Brokers", []string{"localhost:29092"})
 
-		options.SetDefault("LogGroup", "platform-dev")
-		options.SetDefault("AwsRegion", "us-east-1")
-		options.SetDefault("AwsAccessKeyId", os.Getenv("CW_AWS_ACCESS_KEY_ID"))
-		options.SetDefault("AwsSecretAccessKey", os.Getenv("CW_AWS_SECRET_ACCESS_KEY"))
+		options.SetDefault("Log_Group", "platform-dev")
+		options.SetDefault("Aws_Region", "us-east-1")
+		options.SetDefault("Aws_Access_Key_Id", os.Getenv("CW_AWS_ACCESS_KEY_ID"))
+		options.SetDefault("Aws_Secret_Access_Key", os.Getenv("CW_AWS_SECRET_ACCESS_KEY"))
 
-		options.SetDefault("DBHost", "localhost")
-		options.SetDefault("DBPort", 5432)
-		options.SetDefault("DBName", "insights")
-		options.SetDefault("DBUser", "insights")
-		options.SetDefault("DBPass", "insights")
+		options.SetDefault("DB_Host", "localhost")
+		options.SetDefault("DB_Port", 5432)
+		options.SetDefault("DB_Name", "insights")
+		options.SetDefault("DB_User", "insights")
+		options.SetDefault("DB_Pass", "insights")
 	}
 
-	options.SetDefault("KafkaGroupID", "config-manager")
-	options.SetDefault("KafkaConsumerOffset", -1)
-	options.SetDefault("KafkaResultsTopic", "platform.playbook-dispatcher.results")
-	options.SetDefault("KafkaConnectionsTopic", "platform.inventory.connections")
+	options.SetDefault("Kafka_Group_ID", "config-manager")
+	options.SetDefault("Kafka_Consumer_Offset", -1)
+	options.SetDefault("Kafka_Results_Topic", "platform.playbook-dispatcher.results")
+	options.SetDefault("Kafka_Connections_Topic", "platform.inventory.connections")
 
-	options.SetDefault("DispatcherHost", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
-	options.SetDefault("DispatcherPSK", "")
+	options.SetDefault("Dispatcher_Host", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
+	options.SetDefault("Dispatcher_PSK", "")
 	options.SetDefault("Dispatcher_Batch_Size", 50) //TODO change string format on all other config vars
 	options.SetDefault("Dispatcher_Timeout", 10)
-	options.SetDefault("PlaybookURL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
+	options.SetDefault("Playbook_URL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
 
-	options.SetDefault("PlaybookPath", "./playbooks/")
+	options.SetDefault("Playbook_Path", "./playbooks/")
 
-	options.SetDefault("ServiceConfig", `{
+	options.SetDefault("Service_Config", `{
 		"insights": "enabled",
 		"compliance_openscap": "enabled",
 		"resource_optimization": "enabled",

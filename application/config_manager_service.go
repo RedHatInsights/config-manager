@@ -46,7 +46,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 		return nil, err
 	}
 
-	defaultState := s.Cfg.GetString("ServiceConfig")
+	defaultState := s.Cfg.GetString("Service_Config")
 	state := domain.StateMap{}
 	json.Unmarshal([]byte(defaultState), &state)
 	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state)
@@ -115,7 +115,7 @@ func (s *ConfigManagerService) ApplyState(
 		input := domain.DispatcherInput{
 			Recipient: client.ClientID,
 			Account:   acc.AccountID,
-			URL:       fmt.Sprintf(s.Cfg.GetString("PlaybookURL"), acc.StateID),
+			URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
 			Labels: map[string]string{
 				"cm-playbook": acc.StateID.String(),
 			},
