@@ -55,7 +55,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 }
 
 // UpdateAccountState updates the current state for the account and creates a new state archive
-func (s *ConfigManagerService) UpdateAccountState(id, user string, payload map[string]string) (*domain.AccountState, error) {
+func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domain.StateMap) (*domain.AccountState, error) {
 	newStateID := uuid.New()
 	newLabel := id + "-" + uuid.New().String()
 	acc := &domain.AccountState{

@@ -2,11 +2,15 @@ package controllers
 
 import (
 	"config-manager/application"
+	"config-manager/domain"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/getkin/kin-openapi/openapi3"
+
+	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
 
 	"github.com/redhatinsights/platform-go-middlewares/identity"
@@ -20,9 +24,11 @@ type ConfigManagerController struct {
 }
 
 // Routes sets up middlewares and registers handlers for each route
-func (cmc *ConfigManagerController) Routes() {
+func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
+	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
 	sub := cmc.Server.Group(cmc.URLBasePath)
 	sub.Use(echo.WrapMiddleware(identity.EnforceIdentity))
+	sub.Use(oapiMiddleware.OapiRequestValidator(spec))
 	// TODO: This is a weird way to register the routes. Should probably
 	// remove Server from this controller and instead create an api "main.go"
 	RegisterHandlers(sub, cmc)
@@ -77,7 +83,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	id := identity.Get(ctx.Request().Context())
 	fmt.Println("Updating and applying state for account: ", id.Identity.AccountNumber)
 
-	payload := &State{}
+	payload := &domain.StateMap{}
 	bytes, err := ioutil.ReadAll(ctx.Request().Body)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -88,7 +94,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", payload.AdditionalProperties)
+	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

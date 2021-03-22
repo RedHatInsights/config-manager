@@ -122,8 +122,21 @@ components:
     
     State:
       type: object
-      additionalProperties:
-        type: string
+      properties:
+        insights:
+          type: string
+          enum: [enabled, disabled]
+        compliance_openscap:
+          type: string
+          enum: [enabled, disabled]
+        remediations:
+          type: string
+          enum: [enabled, disabled]
+      required:
+        - insights
+        - compliance_openscap
+        - remediations
+      additionalProperties: false
         
     StateID:
       type: string
