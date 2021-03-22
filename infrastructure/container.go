@@ -44,11 +44,11 @@ type Container struct {
 func (c *Container) Database() *sql.DB {
 	if c.db == nil {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
-			c.Config.GetString("DBUser"),
-			c.Config.GetString("DBPass"),
-			c.Config.GetString("DBName"),
-			c.Config.GetString("DBHost"),
-			c.Config.GetInt("DBPort"))
+			c.Config.GetString("DB_User"),
+			c.Config.GetString("DB_Pass"),
+			c.Config.GetString("DB_Name"),
+			c.Config.GetString("DB_Host"),
+			c.Config.GetInt("DB_Port"))
 
 		db, err := sql.Open("postgres", connectionString)
 		if err != nil {
@@ -112,7 +112,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 
 func (c *Container) PlaybookGenerator() *application.Generator {
 	if c.playbookGenerator == nil {
-		templates := utils.FilesIntoMap(c.Config.GetString("PlaybookPath"), "*.yml")
+		templates := utils.FilesIntoMap(c.Config.GetString("Playbook_Path"), "*.yml")
 		c.playbookGenerator = &application.Generator{
 			Templates: templates,
 		}
@@ -127,7 +127,7 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 		c.cmController = &controllers.ConfigManagerController{
 			ConfigManagerService: c.CMService(),
 			Server:               c.Server(),
-			URLBasePath:          c.Config.GetString("URLBasePath"),
+			URLBasePath:          c.Config.GetString("URL_Base_Path"),
 		}
 	}
 
@@ -175,8 +175,8 @@ func (c *Container) DispatcherRepo() domain.DispatcherClient {
 		}
 
 		c.dispatcherRepo = &persistence.DispatcherClient{
-			DispatcherHost: c.Config.GetString("DispatcherHost"),
-			DispatcherPSK:  c.Config.GetString("DispatcherPSK"),
+			DispatcherHost: c.Config.GetString("Dispatcher_Host"),
+			DispatcherPSK:  c.Config.GetString("Dispatcher_PSK"),
 			Client:         client,
 		}
 	}

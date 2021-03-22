@@ -52,13 +52,13 @@ objects:
           value: ${LOG_LEVEL}
         - name: CLOWDER_ENABLED
           value: "true"
-        - name: CM_DISPATCHERPSK
+        - name: CM_DISPATCHER_PSK
           valueFrom:
             secretKeyRef:
               key: key
               name: psk-playbook-dispatcher
-        - name: CM_DISPATCHERHOST
-          value: ${CM_DISPATCHERHOST}
+        - name: CM_DISPATCHER_HOST
+          value: ${CM_DISPATCHER_HOST}
       resources:
         limits:
           cpu: ${CPU_LIMIT}
@@ -83,5 +83,5 @@ parameters:
   value: 512Mi
 - name: REPLICAS
   value: "2"
-- name: CM_DISPATCHERHOST
+- name: CM_DISPATCHER_HOST
   required: true
