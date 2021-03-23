@@ -40,4 +40,4 @@ services:
       - kafka
       - db
     environment:
-      - CM_DBHOST=db
+      - CM_DB_HOST=db
