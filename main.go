@@ -37,7 +37,7 @@ func main() {
 	})
 
 	configManager := container.CMController()
-	configManager.Routes()
+	configManager.Routes(spec)
 
 	metricsServer := controllers.NewMetricsServer(config)
 	metricsServer.Routes()

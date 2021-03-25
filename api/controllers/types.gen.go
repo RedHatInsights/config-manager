@@ -4,11 +4,7 @@
 package controllers
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Account defines model for Account.
@@ -30,7 +26,9 @@ type Label string
 
 // State defines model for State.
 type State struct {
-	AdditionalProperties map[string]string `json:"-"`
+	ComplianceOpenscap string `json:"compliance_openscap"`
+	Insights           string `json:"insights"`
+	Remediations       string `json:"remediations"`
 }
 
 // StateArchive defines model for StateArchive.
@@ -76,57 +74,4 @@ type UpdateStatesJSONBody State
 
 // UpdateStatesJSONRequestBody defines body for UpdateStates for application/json ContentType.
 type UpdateStatesJSONRequestBody UpdateStatesJSONBody
-
-// Getter for additional properties for State. Returns the specified
-// element and whether it was found
-func (a State) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for State
-func (a *State) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for State to handle AdditionalProperties
-func (a *State) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for State to handle AdditionalProperties
-func (a State) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return json.Marshal(object)
-}
 
