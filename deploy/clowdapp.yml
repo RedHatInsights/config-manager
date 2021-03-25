@@ -59,6 +59,12 @@ objects:
               name: psk-playbook-dispatcher
         - name: CM_DISPATCHER_HOST
           value: ${CM_DISPATCHER_HOST}
+        - name: CM_DISPATCHER_IMPL
+          value: ${CM_DISPATCHER_IMPL}
+        - name: CM_CLOUD_CONNECTOR_HOST
+          value: ${CM_CLOUD_CONNECTOR_HOST}
+        - name: CM_CLOUD_CONNECTOR_IMPL
+          value: ${CM_CLOUD_CONNECTOR_IMPL}
       resources:
         limits:
           cpu: ${CPU_LIMIT}
@@ -75,13 +81,23 @@ parameters:
 - description : ClowdEnvironment name
   name: ENV_NAME
   required: true
+
 - name: LOG_LEVEL
   value: INFO
 - name: CPU_LIMIT
   value: 500m
 - name: MEMORY_LIMIT
   value: 512Mi
+
 - name: REPLICAS
   value: "2"
+
 - name: CM_DISPATCHER_HOST
   required: true
+- name: CM_DISPATCHER_IMPL
+  value: impl
+
+- name: CM_CLOUD_CONNECTOR_HOST
+  value: mock
+- name: CM_CLOUD_CONNECTOR_IMPL
+  value: mock

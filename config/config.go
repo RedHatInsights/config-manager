@@ -64,17 +64,22 @@ func Get() *viper.Viper {
 
 	options.SetDefault("Dispatcher_Host", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
 	options.SetDefault("Dispatcher_PSK", "")
-	options.SetDefault("Dispatcher_Batch_Size", 50) //TODO change string format on all other config vars
+	options.SetDefault("Dispatcher_Batch_Size", 50)
 	options.SetDefault("Dispatcher_Timeout", 10)
 	options.SetDefault("Dispatcher_Impl", "impl")
 	options.SetDefault("Playbook_URL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
+
+	options.SetDefault("Cloud_Connector_Host", "http://cloud-connector.connector-ci.svc.cluster.local:8080")
+	options.SetDefault("Cloud_Connector_Client_ID", "config-manager")
+	options.SetDefault("Cloud_Connector_PSK", "")
+	options.SetDefault("Cloud_Connector_Timeout", 10)
+	options.SetDefault("Cloud_Connector_Impl", "impl")
 
 	options.SetDefault("Playbook_Path", "./playbooks/")
 
 	options.SetDefault("Service_Config", `{
 		"insights": "enabled",
 		"compliance_openscap": "enabled",
-		"resource_optimization": "enabled",
 		"remediations": "enabled"
 	}`)
 

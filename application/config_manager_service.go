@@ -14,12 +14,12 @@ import (
 
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
-	Cfg               *viper.Viper
-	AccountStateRepo  domain.AccountStateRepository
-	StateArchiveRepo  domain.StateArchiveRepository
-	ClientListRepo    domain.ClientListRepository
-	DispatcherRepo    domain.DispatcherClient
-	PlaybookGenerator Generator
+	Cfg                *viper.Viper
+	AccountStateRepo   domain.AccountStateRepository
+	StateArchiveRepo   domain.StateArchiveRepository
+	CloudConnectorRepo domain.CloudConnectorClient
+	DispatcherRepo     domain.DispatcherClient
+	PlaybookGenerator  Generator
 }
 
 // GetAccountState retrieves the current state for the account
@@ -93,8 +93,8 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 }
 
 // GetClients TODO: Retrieve clients from inventory
-func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error) {
-	clients, err := s.ClientListRepo.GetConnectedClients(id)
+func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id string) ([]string, error) {
+	clients, err := s.CloudConnectorRepo.GetConnections(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +106,14 @@ func (s *ConfigManagerService) GetClients(id string) (*domain.ClientList, error)
 func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
-	clients []domain.Client,
+	clients []string,
 ) ([]domain.DispatcherResponse, error) {
 	var err error
 	var results []domain.DispatcherResponse
 	var inputs []domain.DispatcherInput
 	for i, client := range clients {
 		input := domain.DispatcherInput{
-			Recipient: client.ClientID,
+			Recipient: client,
 			Account:   acc.AccountID,
 			URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
 			Labels: map[string]string{

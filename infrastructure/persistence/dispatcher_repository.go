@@ -3,46 +3,17 @@ package persistence
 import (
 	"bytes"
 	"config-manager/domain"
+	"config-manager/utils"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
-
-type MockDoType func(req *http.Request) (*http.Response, error)
-
-type ClientMock struct {
-	MockDo MockDoType
-}
-
-func (m *ClientMock) Do(req *http.Request) (*http.Response, error) {
-	return m.MockDo(req)
-}
-
-func SetupMockDispatcherClient(expectedResponse string) *ClientMock {
-	r := ioutil.NopCloser(bytes.NewReader([]byte(expectedResponse)))
-
-	client := &ClientMock{
-		MockDo: func(*http.Request) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 207,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	return client
-}
-
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
 
 type DispatcherClient struct {
 	DispatcherHost string
 	DispatcherPSK  string
-	Client         HTTPClient
+	Client         utils.HTTPClient
 }
 
 func (r *DispatcherClient) Dispatch(
@@ -53,16 +24,22 @@ func (r *DispatcherClient) Dispatch(
 
 	reqBody, err := json.Marshal(inputs)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error marshalling inputs for request body: ", err)
+		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", r.DispatcherHost+"/internal/dispatch", bytes.NewBuffer(reqBody))
+	if err != nil {
+		fmt.Println("Error constructing request to playbook-dispatcher: ", err)
+		return nil, err
+	}
 	req.Header.Set("Authorization", fmt.Sprintf("PSK %s", r.DispatcherPSK))
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := r.Client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error during request to playbook-dispatcher: ", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
