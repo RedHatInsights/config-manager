@@ -1,41 +1,13 @@
 package persistence_test
 
 import (
-	"bytes"
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
 	"context"
-	"io/ioutil"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type MockDoType func(req *http.Request) (*http.Response, error)
-
-type ClientMock struct {
-	MockDo MockDoType
-}
-
-func (m *ClientMock) Do(req *http.Request) (*http.Response, error) {
-	return m.MockDo(req)
-}
-
-func setupClient(expectedResponse string) *ClientMock {
-	r := ioutil.NopCloser(bytes.NewReader([]byte(expectedResponse)))
-
-	client := &ClientMock{
-		MockDo: func(*http.Request) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 207,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	return client
-}
 
 var inputs = []domain.DispatcherInput{
 	domain.DispatcherInput{
@@ -65,7 +37,7 @@ func TestDispatchSuccess(t *testing.T) {
 	dispatcher := &persistence.DispatcherClient{
 		DispatcherHost: "test",
 		DispatcherPSK:  "test",
-		Client:         setupClient(response),
+		Client:         persistence.SetupMockDispatcherClient(response),
 	}
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)
@@ -89,7 +61,7 @@ func TestDispatchNotFound(t *testing.T) {
 	dispatcher := &persistence.DispatcherClient{
 		DispatcherHost: "test",
 		DispatcherPSK:  "test",
-		Client:         setupClient(response),
+		Client:         persistence.SetupMockDispatcherClient(response),
 	}
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)

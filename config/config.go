@@ -66,6 +66,7 @@ func Get() *viper.Viper {
 	options.SetDefault("Dispatcher_PSK", "")
 	options.SetDefault("Dispatcher_Batch_Size", 50) //TODO change string format on all other config vars
 	options.SetDefault("Dispatcher_Timeout", 10)
+	options.SetDefault("Dispatcher_Impl", "impl")
 	options.SetDefault("Playbook_URL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
 
 	options.SetDefault("Playbook_Path", "./playbooks/")

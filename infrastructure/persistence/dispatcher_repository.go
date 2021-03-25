@@ -6,8 +6,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
+
+type MockDoType func(req *http.Request) (*http.Response, error)
+
+type ClientMock struct {
+	MockDo MockDoType
+}
+
+func (m *ClientMock) Do(req *http.Request) (*http.Response, error) {
+	return m.MockDo(req)
+}
+
+func SetupMockDispatcherClient(expectedResponse string) *ClientMock {
+	r := ioutil.NopCloser(bytes.NewReader([]byte(expectedResponse)))
+
+	client := &ClientMock{
+		MockDo: func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: 207,
+				Body:       r,
+			}, nil
+		},
+	}
+
+	return client
+}
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)

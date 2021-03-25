@@ -170,8 +170,17 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		client := &http.Client{
-			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
+		var client persistence.HTTPClient
+		if c.Config.GetString("Dispatcher_Impl") == "mock" {
+			expectedResponse := `[
+				{"code": 200, "id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
+				{"code": 200, "id": "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"}
+			]`
+			client = persistence.SetupMockDispatcherClient(expectedResponse)
+		} else {
+			client = &http.Client{
+				Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
+			}
 		}
 
 		c.dispatcherRepo = &persistence.DispatcherClient{
