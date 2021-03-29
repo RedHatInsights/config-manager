@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	server := container.Server()
-	server.GET("/openapi.json", func(ctx echo.Context) error {
+	server.GET(config.GetString("URL_Base_Path")+"/openapi.json", func(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, spec)
 	})
 
