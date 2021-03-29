@@ -42,3 +42,4 @@ services:
     environment:
       - CM_DB_HOST=db
       - CM_DISPATCHER_IMPL=mock
+      - CM_CLOUD_CONNECTOR_IMPL=mock

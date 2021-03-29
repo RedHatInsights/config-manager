@@ -101,14 +101,14 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	// This should happen before the call to update state. Perhaps as another api call that responds with a list
 	// of clients to be passed into this endpoint - preflight check
-	clients, err := cmc.ConfigManagerService.GetClients(id.Identity.AccountNumber)
+	clients, err := cmc.ConfigManagerService.GetConnectorClients(ctx.Request().Context(), id.Identity.AccountNumber)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	// TODO: Update ApplyState to return proper response data (dispatcher response code + id per client)
 
-	results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients.Clients)
+	results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

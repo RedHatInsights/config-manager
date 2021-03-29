@@ -3,6 +3,7 @@ package persistence_test
 import (
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
+	"config-manager/utils"
 	"context"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestDispatchSuccess(t *testing.T) {
 	dispatcher := &persistence.DispatcherClient{
 		DispatcherHost: "test",
 		DispatcherPSK:  "test",
-		Client:         persistence.SetupMockDispatcherClient(response),
+		Client:         utils.SetupMockHTTPClient(response, 207),
 	}
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)
@@ -61,7 +62,7 @@ func TestDispatchNotFound(t *testing.T) {
 	dispatcher := &persistence.DispatcherClient{
 		DispatcherHost: "test",
 		DispatcherPSK:  "test",
-		Client:         persistence.SetupMockDispatcherClient(response),
+		Client:         utils.SetupMockHTTPClient(response, 207),
 	}
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)

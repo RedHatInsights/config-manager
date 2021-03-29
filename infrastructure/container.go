@@ -34,10 +34,11 @@ type Container struct {
 	cmController *controllers.ConfigManagerController
 
 	// Repositories
-	accountStateRepo *persistence.AccountStateRepository
-	stateArchiveRepo *persistence.StateArchiveRepository
-	clientListRepo   *persistence.ClientListRepository
-	dispatcherRepo   *persistence.DispatcherClient
+	accountStateRepo   *persistence.AccountStateRepository
+	stateArchiveRepo   *persistence.StateArchiveRepository
+	clientListRepo     *persistence.ClientListRepository
+	dispatcherRepo     *persistence.DispatcherClient
+	cloudConnectorRepo *persistence.CloudConnectorClient
 }
 
 // Database configures and opens a db connection
@@ -98,12 +99,12 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			Cfg:               c.Config,
-			AccountStateRepo:  c.AccountStateRepo(),
-			StateArchiveRepo:  c.StateArchiveRepo(),
-			ClientListRepo:    c.ClientListRepo(),
-			DispatcherRepo:    c.DispatcherRepo(),
-			PlaybookGenerator: *c.PlaybookGenerator(),
+			Cfg:                c.Config,
+			AccountStateRepo:   c.AccountStateRepo(),
+			StateArchiveRepo:   c.StateArchiveRepo(),
+			CloudConnectorRepo: c.CloudConnectorRepo(),
+			DispatcherRepo:     c.DispatcherRepo(),
+			PlaybookGenerator:  *c.PlaybookGenerator(),
 		}
 	}
 
@@ -170,13 +171,13 @@ func (c *Container) ClientListRepo() *persistence.ClientListRepository {
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		var client persistence.HTTPClient
+		var client utils.HTTPClient
 		if c.Config.GetString("Dispatcher_Impl") == "mock" {
 			expectedResponse := `[
 				{"code": 200, "id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
 				{"code": 200, "id": "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"}
 			]`
-			client = persistence.SetupMockDispatcherClient(expectedResponse)
+			client = utils.SetupMockHTTPClient(expectedResponse, 200)
 		} else {
 			client = &http.Client{
 				Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
@@ -191,4 +192,30 @@ func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	}
 
 	return c.dispatcherRepo
+}
+
+// CloudConnectorRepo enables interaction with the cloud connector
+func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
+	if c.cloudConnectorRepo == nil {
+		var client utils.HTTPClient
+		if c.Config.GetString("Cloud_Connector_Impl") == "mock" {
+			expectedResponse := `{
+				"connections": ["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]
+			}`
+			client = utils.SetupMockHTTPClient(expectedResponse, 200)
+		} else {
+			client = &http.Client{
+				Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Cloud_Connector_Timeout")),
+			}
+		}
+
+		c.cloudConnectorRepo = &persistence.CloudConnectorClient{
+			CloudConnectorHost:     c.Config.GetString("Cloud_Connector_Host"),
+			CloudConnectorClientID: c.Config.GetString("Cloud_Connector_Client_ID"),
+			CloudConnectorPSK:      c.Config.GetString("Cloud_Connector_PSK"),
+			Client:                 client,
+		}
+	}
+
+	return c.cloudConnectorRepo
 }
