@@ -42,6 +42,7 @@ func Get() *viper.Viper {
 	} else {
 		options.SetDefault("Web_Port", 8081)
 		options.SetDefault("Metrics_Port", 9000)
+		options.SetDefault("Metrics_Path", "/metrics")
 
 		options.SetDefault("Kafka_Brokers", []string{"localhost:29092"})
 
@@ -59,8 +60,8 @@ func Get() *viper.Viper {
 
 	options.SetDefault("Kafka_Group_ID", "config-manager")
 	options.SetDefault("Kafka_Consumer_Offset", -1)
-	options.SetDefault("Kafka_Results_Topic", "platform.playbook-dispatcher.results")
-	options.SetDefault("Kafka_Connections_Topic", "platform.inventory.connections")
+	options.SetDefault("Kafka_Dispatcher_Topic", "platform.playbook-dispatcher.results")
+	options.SetDefault("Kafka_Inventory_Topic", "platform.inventory.connections")
 
 	options.SetDefault("Dispatcher_Host", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
 	options.SetDefault("Dispatcher_PSK", "")
