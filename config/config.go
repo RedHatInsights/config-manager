@@ -27,7 +27,7 @@ func Get() *viper.Viper {
 		options.SetDefault("Metrics_Port", cfg.MetricsPort)
 		options.SetDefault("Metrics_Path", cfg.MetricsPath)
 
-		options.SetDefault("Kafka_Brokers", fmt.Sprintf(cfg.Kafka.Brokers[0].Hostname, cfg.Kafka.Brokers[0].Port))
+		options.SetDefault("Kafka_Brokers", clowder.KafkaServers)
 
 		options.SetDefault("Log_Group", cfg.Logging.Cloudwatch.LogGroup)
 		options.SetDefault("Aws_Region", cfg.Logging.Cloudwatch.Region)

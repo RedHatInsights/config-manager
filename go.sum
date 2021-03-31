@@ -412,6 +412,7 @@ github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDa
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/redhatinsights/app-common-go v1.2.0 h1:Z4TxbamehwIHdgK0GI7VDDv0q9mhaHlutiZeGtE+an4=
 github.com/redhatinsights/app-common-go v1.2.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
+github.com/redhatinsights/app-common-go v1.3.0 h1:5cqBY2Sr1ZQmVMPM3BFLgIIWc2cfMsJdRlWf6CkYIFg=
 github.com/redhatinsights/platform-go-middlewares v0.7.0 h1:1prVr6XxYHSKThfblJr3kaLecD/6s4xaQ9zZ+BKhHJM=
 github.com/redhatinsights/platform-go-middlewares v0.7.0/go.mod h1:g//UN9p5sxgIoZfRyyiRy+rAw1/GMqkZ4hWUFcEC71A=
 github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=

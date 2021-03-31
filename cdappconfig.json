@@ -24,8 +24,8 @@
                 "name": "platform.inventory.events"
             },
             {
-                "requestedName": "platform.playbook-dispatcher.runner-updates",
-                "name": "platform.playbook-dispatcher.runner-updates"
+                "requestedName": "platform.playbook-dispatcher.runs",
+                "name": "platform.playbook-dispatcher.runs"
             }
         ]
     },
