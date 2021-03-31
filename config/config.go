@@ -60,8 +60,8 @@ func Get() *viper.Viper {
 
 	options.SetDefault("Kafka_Group_ID", "config-manager")
 	options.SetDefault("Kafka_Consumer_Offset", -1)
-	options.SetDefault("Kafka_Dispatcher_Topic", "platform.playbook-dispatcher.results")
-	options.SetDefault("Kafka_Inventory_Topic", "platform.inventory.connections")
+	options.SetDefault("Kafka_Dispatcher_Topic", "platform.playbook-dispatcher.runs")
+	options.SetDefault("Kafka_Inventory_Topic", "platform.inventory.events")
 
 	options.SetDefault("Dispatcher_Host", "http://playbook-dispatcher-api.playbook-dispatcher-ci.svc.cluster.local:8000")
 	options.SetDefault("Dispatcher_PSK", "")
