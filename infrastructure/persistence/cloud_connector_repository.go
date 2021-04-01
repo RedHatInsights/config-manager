@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	headerCloudConnectorClientID = "x-rh-receptor-controller-client-id"
-	headerCloudConnectorAccount  = "x-rh-receptor-controller-account"
-	headerCloudConnectorPSK      = "x-rh-receptor-controller-psk"
+	headerCloudConnectorClientID = "x-rh-cloud-connector-client-id"
+	headerCloudConnectorAccount  = "x-rh-cloud-connector-account"
+	headerCloudConnectorPSK      = "x-rh-cloud-connector-psk"
 )
 
 type CloudConnectorClient struct {
