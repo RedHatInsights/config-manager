@@ -2,14 +2,13 @@ package kafka
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
 )
 
-func NewConsumer(cfg *viper.Viper, topic string) (*kafka.Reader, error) {
+func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     cfg.GetStringSlice("Kafka_Brokers"),
 		Topic:       topic,
@@ -17,9 +16,7 @@ func NewConsumer(cfg *viper.Viper, topic string) (*kafka.Reader, error) {
 		StartOffset: cfg.GetInt64("Kafka_Consumer_Offset"),
 	})
 
-	err := verifyTopic(cfg.GetStringSlice("Kafka_Brokers"), topic)
-
-	return consumer, err
+	return consumer
 }
 
 func NewConsumerEventLoop(
@@ -38,30 +35,4 @@ func NewConsumerEventLoop(
 			handler(ctx, m)
 		}
 	}
-}
-
-func verifyTopic(brokers []string, topic string) error {
-	for _, broker := range brokers {
-		conn, err := kafka.Dial("tcp", broker)
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-
-		partitions, err := conn.ReadPartitions()
-		if err != nil {
-			return err
-		}
-
-		m := map[string]struct{}{}
-		for _, p := range partitions {
-			m[p.Topic] = struct{}{}
-		}
-
-		if _, ok := m[topic]; ok {
-			return nil
-		}
-	}
-
-	return errors.New("Topic not found")
 }

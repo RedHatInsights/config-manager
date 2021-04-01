@@ -3,7 +3,6 @@ package dispatcherconsumer
 import (
 	"config-manager/infrastructure/kafka"
 	"context"
-	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -13,11 +12,7 @@ func Start(
 	cfg *viper.Viper,
 	errors chan<- error,
 ) {
-	consumer, err := kafka.NewConsumer(cfg, cfg.GetString("Kafka_Dispatcher_Topic"))
-	if err != nil {
-		fmt.Println("Error during dispatcher consumer setup")
-		errors <- err
-	}
+	consumer := kafka.NewConsumer(cfg, cfg.GetString("Kafka_Dispatcher_Topic"))
 
 	handler := &handler{}
 
