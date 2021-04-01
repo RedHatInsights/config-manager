@@ -34,11 +34,6 @@ func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
 	RegisterHandlers(sub, cmc)
 }
 
-// Start starts an http server with addr
-func (cmc *ConfigManagerController) Start(addr string) {
-	cmc.Server.Start(addr)
-}
-
 // TODO: Again I don't like this.. Come up with a better solution for validating params (middleware?)
 func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	p := map[string]interface{}{

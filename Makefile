@@ -2,7 +2,7 @@ run:
 	go run .
 
 build:
-	CGO_ENABLED=0 go build -o config_manager main.go
+	CGO_ENABLED=0 go build -o cm .
 
 build-image:
 	docker build -t config-manager-poc .
