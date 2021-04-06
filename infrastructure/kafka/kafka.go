@@ -36,3 +36,13 @@ func NewConsumerEventLoop(
 		}
 	}
 }
+
+func GetHeader(msg kafka.Message, key string) (string, error) {
+	for _, value := range msg.Headers {
+		if value.Key == key {
+			return string(value.Value), nil
+		}
+	}
+
+	return "", fmt.Errorf("Header not found: %s", key)
+}

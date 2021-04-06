@@ -1,8 +1,9 @@
 package inventoryconsumer
 
 import (
-	"config-manager/application"
+	"config-manager/domain"
 	"config-manager/domain/message"
+	kafkaUtils "config-manager/infrastructure/kafka"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,10 +12,20 @@ import (
 )
 
 type handler struct {
-	ConfigManagerService *application.ConfigManagerService
+	ConfigManagerService domain.ConfigManagerInterface
 }
 
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
+	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
+	if err != nil {
+		fmt.Println("Error getting header: ", err)
+		return
+	}
+
+	if eventType == "delete" {
+		return
+	}
+
 	value := &message.InventoryEvent{}
 
 	if err := json.Unmarshal(msg.Value, &value); err != nil {
@@ -22,9 +33,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		return
 	}
 
-	fmt.Printf("Unmarshalled Message: %+v\n", value)
-
-	if value.Host.SystemProfile.RHCID != "" {
+	if value.Host.Reporter == "cloud-connector" {
 		accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
 		if err != nil {
 			fmt.Println("Error retrieving state for account: ", value.Host.Account)
@@ -32,20 +41,12 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 		clientSlice := []string{value.Host.SystemProfile.RHCID}
 
-		switch value.Type {
-		case "created":
-			responses, err := this.ConfigManagerService.ApplyState(ctx, accState, clientSlice)
-			if err != nil {
-				fmt.Println("Error applying state: ", err)
-			}
-			fmt.Println("Message sent to the dispatcher. Results: ", responses)
-		case "updated":
-			// TODO: Config-manager needs to update rhc_config_state in inventory before this can be implemented
-			// Check rhc_config_state: if not equal to accState.StateID then apply new state
-			fmt.Println("Existing RHC client.. checking state")
-		default:
-			// type "deleted". Remove host reference from state record
-			fmt.Println("RHC client removed from inventory")
+		// TODO: Switch on event type. Once config-manager is updating rhc_config_state in inventory
+		// a check can be made on the rhc_config_state id to determine if work should be done.
+		responses, err := this.ConfigManagerService.ApplyState(ctx, accState, clientSlice)
+		if err != nil {
+			fmt.Println("Error applying state: ", err)
 		}
+		fmt.Println("Message sent to the dispatcher. Results: ", responses)
 	}
 }
