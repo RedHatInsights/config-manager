@@ -10,9 +10,6 @@ import (
 )
 
 func newKafkaMessage(t *testing.T, headers []kafka.Header, data []byte) kafka.Message {
-	// value, err := json.Marshal(data)
-	// assert.Nil(t, err)
-
 	return kafka.Message{
 		Headers: headers,
 		Value:   data,
