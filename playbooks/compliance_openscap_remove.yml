@@ -1,7 +1,10 @@
 ---
-# Placeholder playbook for disabling Compliance
-- hosts: localhost
+# This playbook will take care of all steps required to remove
+# Insights Compliance (OpenSCAP packages)
+- hosts: all
+  become: yes
   tasks:
-    - name: Disable Compliance
-      debug:
-        msg: "Compliance removed"
+    - name: Remove OpenSCAP packages
+      yum:
+        name: openscap, openscap-scanner, scap-security-guide
+        state: absent

@@ -1,7 +1,37 @@
 ---
-# Placeholder playbook for setting up Insights services (advisor, drift, patch, vulnerability, and policies)
-- hosts: localhost
+# Steps required to get your system ready to use the Insights Client:
+# 1. Yum install the insights-client
+# 2. Register the insights-client
+# 3. Modify file permissions
+- hosts: all
+  become: yes
   tasks:
-    - name: Setup Insights
-      debug:
-        msg: "Insights setup"
+    - name: Install 'insights-client'
+      yum:
+        name: insights-client
+    
+    - name: Register Insights Client
+      command: insights-client --register
+    
+    - name: Change permissions of Insights Config directory so that Insights System ID can be read
+      file:
+        path: /etc/insights-client
+        mode: og=rx
+    
+    - name: Change permissions of machine_id file so that Insights System ID can be read
+      file:
+        path: /etc/insights-client/machine-id
+        mode: og=r
+    
+    - name: Create directory for ansible custom facts
+      file:
+        state: directory
+        recurse: true
+        path: /etc/ansible/facts.d
+    
+    - name: Install custom insights fact
+      copy:
+        src: insights.fact
+        dest: /etc/ansible/facts.d
+        mode: a+x
+
