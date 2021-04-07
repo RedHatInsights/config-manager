@@ -1,6 +1,7 @@
 package inventoryconsumer
 
 import (
+	"config-manager/infrastructure"
 	"config-manager/infrastructure/kafka"
 	"context"
 
@@ -14,7 +15,11 @@ func Start(
 ) {
 	consumer := kafka.NewConsumer(cfg, cfg.GetString("Kafka_Inventory_Topic"))
 
-	handler := &handler{}
+	container := infrastructure.Container{Config: cfg}
+
+	cmService := container.CMService()
+
+	handler := &handler{ConfigManagerService: cmService}
 
 	start := kafka.NewConsumerEventLoop(ctx, consumer, handler.onMessage, errors)
 
