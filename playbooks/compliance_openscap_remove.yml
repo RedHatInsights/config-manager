@@ -4,7 +4,6 @@
 - hosts: localhost
   become: yes
   tasks:
-    - name: Remove OpenSCAP packages
-      yum:
-        name: openscap, openscap-scanner, scap-security-guide
-        state: absent
+    - name: Compliance OpenSCAP disabled
+      debug:
+        msg: "Compliance OpenSCAP is not enabled. Nothing to do"
