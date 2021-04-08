@@ -14,8 +14,9 @@
       yum:
         name: rhc-worker-playbook
         state: latest
-    - name: Install 'insights-client'
+    - name: Install the latest version of 'insights-client'
       yum:
         name: insights-client
+        state: latest
     - name: Register Insights Client
       command: insights-client --register

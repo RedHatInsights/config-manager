@@ -6,7 +6,3 @@
   tasks:
     - name: Unregister the insights-client
       command: insights-client --unregister
-    - name: Remove Insights Client
-      yum:
-        name: insights-client
-        state: absent
