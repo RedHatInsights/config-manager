@@ -6,6 +6,14 @@
 - hosts: localhost
   become: yes
   tasks:
+    - name: Update to the latest version of rhc
+      yum:
+        name: rhc
+        state: latest
+    - name: Update to the latest version of rhc-worker-playbook
+      yum:
+        name: rhc-worker-playbook
+        state: latest
     - name: Install 'insights-client'
       yum:
         name: insights-client
