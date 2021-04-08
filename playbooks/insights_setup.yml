@@ -3,7 +3,7 @@
 # 1. Yum install the insights-client
 # 2. Register the insights-client
 # 3. Modify file permissions
-- hosts: all
+- hosts: localhost
   become: yes
   tasks:
     - name: Install 'insights-client'

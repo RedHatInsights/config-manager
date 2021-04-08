@@ -6,7 +6,7 @@
 # 3. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
 #    Note: Steps 2 & 3 above will be taken care of by this playbook.
 
-- hosts: all
+- hosts: localhost
   become: yes
   tasks:
     - name: Install OpenSCAP packages for Compliance service

@@ -1,7 +1,7 @@
 ---
 # This playbook will take care of all steps required to remove
 # Insights Compliance (OpenSCAP packages)
-- hosts: all
+- hosts: localhost
   become: yes
   tasks:
     - name: Remove OpenSCAP packages
