@@ -152,5 +152,5 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return ctx.JSON(http.StatusOK, playbook)
+	return ctx.String(http.StatusOK, playbook)
 }
