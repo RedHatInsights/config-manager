@@ -36,9 +36,9 @@ type Container struct {
 	// Repositories
 	accountStateRepo   *persistence.AccountStateRepository
 	stateArchiveRepo   *persistence.StateArchiveRepository
-	clientListRepo     *persistence.ClientListRepository
 	dispatcherRepo     *persistence.DispatcherClient
 	cloudConnectorRepo *persistence.CloudConnectorClient
+	inventoryRepo      *persistence.InventoryClient
 }
 
 // Database configures and opens a db connection
@@ -157,17 +157,6 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	return c.stateArchiveRepo
 }
 
-// ClientListRepo enables interaction with inventory (needs a different name)
-func (c *Container) ClientListRepo() *persistence.ClientListRepository {
-	if c.clientListRepo == nil {
-		c.clientListRepo = &persistence.ClientListRepository{
-			InventoryURL: "",
-		}
-	}
-
-	return c.clientListRepo
-}
-
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
@@ -218,4 +207,42 @@ func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 	}
 
 	return c.cloudConnectorRepo
+}
+
+// InventoryRepo enables interaction with inventory
+func (c *Container) InventoryRepo() domain.InventoryClient {
+	if c.inventoryRepo == nil {
+		var client utils.HTTPClient
+		if c.Config.GetString("Inventory_Impl") == "mock" {
+			expectedResponse := `{
+				"total": "1",
+				"count": "1",
+				"page": "1",
+				"per_page": "50",
+				"results": [
+					{
+						"id": "1234",
+						"account": "0000001",
+						"display_name": "test",
+						"system_profile": {
+							"rhc_client_id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
+							"rhc_config_state": "3ef6c247-d913-491b-b3eb-56315a6e0f84"
+						}
+					}
+				]
+			}`
+			client = utils.SetupMockHTTPClient(expectedResponse, 200)
+		} else {
+			client = &http.Client{
+				Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
+			}
+		}
+
+		c.inventoryRepo = &persistence.InventoryClient{
+			PlatformURL: c.Config.GetString("Platform_URL"),
+			Client:      client,
+		}
+	}
+
+	return c.inventoryRepo
 }

@@ -36,11 +36,11 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				fmt.Println("Error retrieving state for account: ", value.Host.Account)
 			}
 
-			clientSlice := []string{value.Host.SystemProfile.RHCID}
+			client := []domain.Host{value.Host}
 
 			// TODO: Switch on event type. Once config-manager is updating rhc_config_state in inventory
 			// a check can be made on the rhc_config_state id to determine if work should be done.
-			responses, err := this.ConfigManagerService.ApplyState(ctx, accState, clientSlice)
+			responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
 			if err != nil {
 				fmt.Println("Error applying state: ", err)
 			}

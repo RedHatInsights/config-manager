@@ -29,8 +29,6 @@ func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
 	sub := cmc.Server.Group(cmc.URLBasePath)
 	sub.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	sub.Use(oapiMiddleware.OapiRequestValidator(spec))
-	// TODO: This is a weird way to register the routes. Should probably
-	// remove Server from this controller and instead create an api "main.go"
 	RegisterHandlers(sub, cmc)
 }
 
@@ -49,6 +47,27 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	}
 
 	return p
+}
+
+func (cmc *ConfigManagerController) buildClientList(ctx echo.Context) ([]domain.Host, error) {
+	var clients []domain.Host
+
+	res, err := cmc.ConfigManagerService.GetInventoryClients(ctx, 1)
+	if err != nil {
+		return nil, err
+	}
+	clients = append(clients, res.Results...)
+
+	for res.Page*res.Count < res.Total {
+		page := res.Page + 1
+		res, err = cmc.ConfigManagerService.GetInventoryClients(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+		clients = append(clients, res.Results...)
+	}
+
+	return clients, err
 }
 
 // GetStates get the archive of state changes for requesting account
@@ -94,9 +113,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	// This should happen before the call to update state. Perhaps as another api call that responds with a list
-	// of clients to be passed into this endpoint - preflight check
-	clients, err := cmc.ConfigManagerService.GetConnectorClients(ctx.Request().Context(), id.Identity.AccountNumber)
+	clients, err := cmc.buildClientList(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

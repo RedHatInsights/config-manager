@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
 
@@ -18,6 +19,7 @@ type ConfigManagerService struct {
 	AccountStateRepo   domain.AccountStateRepository
 	StateArchiveRepo   domain.StateArchiveRepository
 	CloudConnectorRepo domain.CloudConnectorClient
+	InventoryRepo      domain.InventoryClient
 	DispatcherRepo     domain.DispatcherClient
 	PlaybookGenerator  Generator
 }
@@ -92,7 +94,7 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
 }
 
-// GetClients TODO: Retrieve clients from inventory
+// GetConnectorClients Retrieve clients from cloud-connector
 func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id string) ([]string, error) {
 	clients, err := s.CloudConnectorRepo.GetConnections(ctx, id)
 	if err != nil {
@@ -101,19 +103,29 @@ func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id strin
 	return clients, nil
 }
 
+// GetInventoryClients Retrive clients from inventory
+func (s *ConfigManagerService) GetInventoryClients(ctx echo.Context, page int) (domain.InventoryResponse, error) {
+	var res domain.InventoryResponse
+	res, err := s.InventoryRepo.GetConnectedClients(ctx, page)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
 // ApplyState applies the current state to selected clients
 // TODO: Separate application function for automatic applications via kafka?
 func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
-	clients []string,
+	clients []domain.Host,
 ) ([]domain.DispatcherResponse, error) {
 	var err error
 	var results []domain.DispatcherResponse
 	var inputs []domain.DispatcherInput
 	for i, client := range clients {
 		input := domain.DispatcherInput{
-			Recipient: client,
+			Recipient: client.SystemProfile.RHCID,
 			Account:   acc.AccountID,
 			URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
 			Labels: map[string]string{

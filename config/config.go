@@ -58,6 +58,8 @@ func Get() *viper.Viper {
 		options.SetDefault("DB_Pass", "insights")
 	}
 
+	options.SetDefault("Platform_URL", "https://ci.cloud.redhat.com")
+
 	options.SetDefault("Kafka_Group_ID", "config-manager")
 	options.SetDefault("Kafka_Consumer_Offset", -1)
 	options.SetDefault("Kafka_Dispatcher_Topic", "platform.playbook-dispatcher.runs")
