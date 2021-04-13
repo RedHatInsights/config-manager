@@ -13,14 +13,25 @@ import (
 type DispatcherClient struct {
 	DispatcherHost string
 	DispatcherPSK  string
+	DispatcherImpl string
 	Client         utils.HTTPClient
 }
 
-func (r *DispatcherClient) Dispatch(
+func (dc *DispatcherClient) Dispatch(
 	ctx context.Context,
 	inputs []domain.DispatcherInput,
 ) ([]domain.DispatcherResponse, error) {
 	fmt.Println("Sending request to playbook dispatcher")
+
+	if dc.DispatcherImpl == "mock" {
+		expectedResponse := []byte(`[
+			{"code": 200, "id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
+			{"code": 200, "id": "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"}
+		]`)
+		var dRes []domain.DispatcherResponse
+		err := json.Unmarshal(expectedResponse, &dRes)
+		return dRes, err
+	}
 
 	reqBody, err := json.Marshal(inputs)
 	if err != nil {
@@ -28,15 +39,15 @@ func (r *DispatcherClient) Dispatch(
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", r.DispatcherHost+"/internal/dispatch", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, "POST", dc.DispatcherHost+"/internal/dispatch", bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println("Error constructing request to playbook-dispatcher: ", err)
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("PSK %s", r.DispatcherPSK))
+	req.Header.Set("Authorization", fmt.Sprintf("PSK %s", dc.DispatcherPSK))
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := r.Client.Do(req)
+	res, err := dc.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error during request to playbook-dispatcher: ", err)
 		return nil, err
