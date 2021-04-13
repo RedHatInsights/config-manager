@@ -1,7 +1,22 @@
 ---
-# Placeholder playbook for setting up Insights services (advisor, drift, patch, vulnerability, and policies)
+# Steps required to get your system ready to use the Insights Client:
+# 1. Yum install the insights-client
+# 2. Register the insights-client
+# 3. Modify file permissions
 - hosts: localhost
+  become: yes
   tasks:
-    - name: Setup Insights
-      debug:
-        msg: "Insights setup"
+    - name: Update to the latest version of rhc
+      yum:
+        name: rhc
+        state: latest
+    - name: Update to the latest version of rhc-worker-playbook
+      yum:
+        name: rhc-worker-playbook
+        state: latest
+    - name: Install the latest version of 'insights-client'
+      yum:
+        name: insights-client
+        state: latest
+    - name: Register Insights Client
+      command: insights-client --register
