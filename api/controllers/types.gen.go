@@ -42,7 +42,23 @@ type StateArchive struct {
 }
 
 // StateArchives defines model for StateArchives.
-type StateArchives []StateArchive
+type StateArchives struct {
+
+	// A number of entries returned from offset
+	Count *int `json:"count,omitempty"`
+
+	// A max number of entries to return
+	Limit *int `json:"limit,omitempty"`
+
+	// A number representing he starting point for retrieving entries
+	Offset *int `json:"offset,omitempty"`
+
+	// Query results
+	Results *[]StateArchive `json:"results,omitempty"`
+
+	// A total count of found entries
+	Total *int `json:"total,omitempty"`
+}
 
 // StateID defines model for StateID.
 type StateID string
@@ -72,6 +88,12 @@ type GetStatesParams struct {
 // UpdateStatesJSONBody defines parameters for UpdateStates.
 type UpdateStatesJSONBody State
 
+// GetPlaybookPreviewJSONBody defines parameters for GetPlaybookPreview.
+type GetPlaybookPreviewJSONBody State
+
 // UpdateStatesJSONRequestBody defines body for UpdateStates for application/json ContentType.
 type UpdateStatesJSONRequestBody UpdateStatesJSONBody
+
+// GetPlaybookPreviewJSONRequestBody defines body for GetPlaybookPreview for application/json ContentType.
+type GetPlaybookPreviewJSONRequestBody GetPlaybookPreviewJSONBody
 

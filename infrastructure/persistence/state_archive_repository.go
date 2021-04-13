@@ -16,7 +16,13 @@ func (r *StateArchiveRepository) GetStateArchive(s *domain.StateArchive) (*domai
 	return s, err
 }
 
-func (r *StateArchiveRepository) GetAllStateArchives(accountID string, limit, offset int) ([]domain.StateArchive, error) {
+func (r *StateArchiveRepository) GetAllStateArchives(accountID string, limit, offset int) (*domain.StateArchives, error) {
+	var total int
+	err := r.DB.QueryRow("SELECT COUNT(*) FROM state_archive WHERE account_id=$1", accountID).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := r.DB.Query("SELECT account_id, state_id, label, initiator, created_at, state "+
 		"FROM state_archive WHERE account_id=$1 LIMIT $2 OFFSET $3", accountID, limit, offset)
 
@@ -37,7 +43,15 @@ func (r *StateArchiveRepository) GetAllStateArchives(accountID string, limit, of
 		states = append(states, state)
 	}
 
-	return states, err
+	archives := &domain.StateArchives{
+		Count:  len(states),
+		Limit:  limit,
+		Offset: offset,
+		Total:  total,
+		States: states,
+	}
+
+	return archives, err
 }
 
 func (r *StateArchiveRepository) DeleteStateArchive(s *domain.StateArchive) error {

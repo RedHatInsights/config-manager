@@ -15,9 +15,17 @@ type StateArchive struct {
 	State     StateMap  `db:"state" json:"state"`
 }
 
+type StateArchives struct {
+	Count  int            `json:"count"`
+	Limit  int            `json:"limit"`
+	Offset int            `json:"offset"`
+	Total  int            `json:"total"`
+	States []StateArchive `json:"results"`
+}
+
 type StateArchiveRepository interface {
 	GetStateArchive(s *StateArchive) (*StateArchive, error)
-	GetAllStateArchives(accountID string, limit, offset int) ([]StateArchive, error)
+	GetAllStateArchives(accountID string, limit, offset int) (*StateArchives, error)
 	DeleteStateArchive(s *StateArchive) error
 	CreateStateArchive(s *StateArchive) error
 }
