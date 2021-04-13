@@ -79,6 +79,28 @@ paths:
           description: Internal Server Error
           content: {}
 
+  /states/preview:
+    post:
+      summary: Get a preview of the playbook built from the provided state map
+      operationId: getPlaybookPreview
+      requestBody:
+        description: State map used to generate a preview playbook
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/State'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            text/vnd.yaml:
+              schema:
+                type: string
+        '400':
+          description: Bad Request
+          content: {}
+
   /states/{id}:
     get:
       summary: Get single state change for requesting account
@@ -181,9 +203,25 @@ components:
           $ref: '#/components/schemas/State'
         
     StateArchives:
-      type: array
-      items:
-        $ref: '#/components/schemas/StateArchive'
+      type: object
+      properties:
+        total:
+          description: A total count of found entries
+          type: integer
+        count:
+          description: A number of entries returned from offset
+          type: integer
+        limit:
+          description: A max number of entries to return
+          type: integer
+        offset:
+          description: A number representing he starting point for retrieving entries
+          type: integer
+        results:
+          description: Query results
+          type: array
+          items:
+            $ref: '#/components/schemas/StateArchive'
   
   parameters:
     StateIDParam:
