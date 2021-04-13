@@ -20,6 +20,7 @@ type CloudConnectorClient struct {
 	CloudConnectorClientID string
 	CloudConnectorPSK      string
 	Client                 utils.HTTPClient
+	CloudConnectorImpl     string
 }
 
 func (c *CloudConnectorClient) GetConnections(
@@ -27,6 +28,15 @@ func (c *CloudConnectorClient) GetConnections(
 	accountID string,
 ) ([]string, error) {
 	fmt.Println("Sending request to cloud connector")
+
+	if c.CloudConnectorImpl == "mock" {
+		expectedResponse := []byte(`{
+			"connections": ["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]
+		}`)
+		var cloudConnectorRes domain.CloudConnectorConnections
+		err := json.Unmarshal(expectedResponse, &cloudConnectorRes)
+		return cloudConnectorRes.Connections, err
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.CloudConnectorHost+"/api/cloud-connector/v1/connection/"+accountID, nil)
 	if err != nil {
