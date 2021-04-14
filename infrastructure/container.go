@@ -198,30 +198,8 @@ func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 // InventoryRepo enables interaction with inventory
 func (c *Container) InventoryRepo() domain.InventoryClient {
 	if c.inventoryRepo == nil {
-		var client utils.HTTPClient
-		if c.Config.GetString("Inventory_Impl") == "mock" {
-			expectedResponse := `{
-				"total": "1",
-				"count": "1",
-				"page": "1",
-				"per_page": "50",
-				"results": [
-					{
-						"id": "1234",
-						"account": "0000001",
-						"display_name": "test",
-						"system_profile": {
-							"rhc_client_id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
-							"rhc_config_state": "3ef6c247-d913-491b-b3eb-56315a6e0f84"
-						}
-					}
-				]
-			}`
-			client = utils.SetupMockHTTPClient(expectedResponse, 200)
-		} else {
-			client = &http.Client{
-				Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
-			}
+		client = &http.Client{
+			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
 		}
 
 		c.inventoryRepo = &persistence.InventoryClient{
