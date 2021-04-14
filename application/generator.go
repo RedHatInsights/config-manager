@@ -42,8 +42,10 @@ func (g *Generator) GeneratePlaybook(state domain.StateMap) (string, error) {
 			return "", err
 		}
 
-		play := g.Templates[key]
-		playbook = append(playbook, formatPlay(play)...)
+		play, exists := g.Templates[key]
+		if exists {
+			playbook = append(playbook, formatPlay(play)...)
+		}
 	}
 
 	return string(playbook), err

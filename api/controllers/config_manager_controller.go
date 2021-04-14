@@ -171,3 +171,28 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 
 	return ctx.String(http.StatusOK, playbook)
 }
+
+// GetPlaybookPreview generates and returns a playbook preview to a requesting client
+// (GET /states/preview)
+func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
+	id := identity.Get(ctx.Request().Context())
+	fmt.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
+
+	payload := &domain.StateMap{}
+	bytes, err := ioutil.ReadAll(ctx.Request().Body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = json.Unmarshal(bytes, payload)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	playbook, err := cmc.ConfigManagerService.PlaybookGenerator.GeneratePlaybook(*payload)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.String(http.StatusOK, playbook)
+}

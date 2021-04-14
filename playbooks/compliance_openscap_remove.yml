@@ -1,7 +1,9 @@
 ---
-# Placeholder playbook for disabling Compliance
+# This playbook will take care of all steps required to remove
+# Insights Compliance (OpenSCAP packages)
 - hosts: localhost
+  become: yes
   tasks:
-    - name: Disable Compliance
+    - name: Compliance OpenSCAP disabled
       debug:
-        msg: "Compliance removed"
+        msg: "Compliance OpenSCAP is not enabled. Nothing to do"

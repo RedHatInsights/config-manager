@@ -153,7 +153,7 @@ func (s *ConfigManagerService) ApplyState(
 // TODO: Add sorting and filtering
 // Sorting: currently only ascending
 // Filtering idea: may need to filter on user/initiator
-func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset int) ([]domain.StateArchive, error) {
+func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset int) (*domain.StateArchives, error) {
 	states, err := s.StateArchiveRepo.GetAllStateArchives(accountID, limit, offset)
 	if err != nil {
 		return nil, err
