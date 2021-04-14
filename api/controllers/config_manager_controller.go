@@ -49,7 +49,7 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	return p
 }
 
-func (cmc *ConfigManagerController) buildClientList(ctx echo.Context) ([]domain.Host, error) {
+func (cmc *ConfigManagerController) getAllClients(ctx echo.Context) ([]domain.Host, error) {
 	var clients []domain.Host
 
 	res, err := cmc.ConfigManagerService.GetInventoryClients(ctx, 1)
@@ -58,7 +58,7 @@ func (cmc *ConfigManagerController) buildClientList(ctx echo.Context) ([]domain.
 	}
 	clients = append(clients, res.Results...)
 
-	for res.Page*res.Count < res.Total {
+	for len(clients) < res.Total {
 		page := res.Page + 1
 		res, err = cmc.ConfigManagerService.GetInventoryClients(ctx, page)
 		if err != nil {
@@ -113,7 +113,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	clients, err := cmc.buildClientList(ctx)
+	clients, err := cmc.getAllClients(ctx)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

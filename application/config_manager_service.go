@@ -95,17 +95,22 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 }
 
 // GetConnectorClients Retrieve clients from cloud-connector
-func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id string) ([]string, error) {
+func (s *ConfigManagerService) GetConnectedClients(ctx context.Context, id string) (map[string]bool, error) {
+	connected := make(map[string]bool)
+
 	clients, err := s.CloudConnectorRepo.GetConnections(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return clients, nil
+
+	for _, client := range clients {
+		connected[client] = true
+	}
+	return connected, nil
 }
 
-// GetInventoryClients Retrive clients from inventory
+// GetInventoryClients Retrieve clients from inventory
 func (s *ConfigManagerService) GetInventoryClients(ctx echo.Context, page int) (domain.InventoryResponse, error) {
-	var res domain.InventoryResponse
 	res, err := s.InventoryRepo.GetConnectedClients(ctx, page)
 	if err != nil {
 		return res, err
@@ -123,26 +128,35 @@ func (s *ConfigManagerService) ApplyState(
 	var err error
 	var results []domain.DispatcherResponse
 	var inputs []domain.DispatcherInput
+
+	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
+	if err != nil {
+		fmt.Println("Couldn't get currently connected clients from cloud-connector: ", err)
+		return results, err
+	}
+
 	for i, client := range clients {
-		input := domain.DispatcherInput{
-			Recipient: client.SystemProfile.RHCID,
-			Account:   acc.AccountID,
-			URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
-			Labels: map[string]string{
-				"cm-playbook": acc.StateID.String(),
-			},
-		}
-
-		inputs = append(inputs, input)
-
-		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
-			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
-			if err != nil {
-				fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+		if connected[client.SystemProfile.RHCID] {
+			input := domain.DispatcherInput{
+				Recipient: client.SystemProfile.RHCID,
+				Account:   acc.AccountID,
+				URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
+				Labels: map[string]string{
+					"cm-playbook": acc.StateID.String(),
+				},
 			}
 
-			results = append(results, res...)
-			inputs = nil
+			inputs = append(inputs, input)
+
+			if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
+				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
+				if err != nil {
+					fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+				}
+
+				results = append(results, res...)
+				inputs = nil
+			}
 		}
 	}
 

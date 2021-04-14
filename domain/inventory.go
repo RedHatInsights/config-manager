@@ -29,5 +29,5 @@ type SystemProfile struct {
 }
 
 type InventoryClient interface {
-	GetConnectedClients(ctx echo.Context, page int) (InventoryResponse, error)
+	GetInventoryClients(ctx echo.Context, page int) (InventoryResponse, error)
 }

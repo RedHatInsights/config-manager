@@ -105,6 +105,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 			CloudConnectorRepo: c.CloudConnectorRepo(),
 			DispatcherRepo:     c.DispatcherRepo(),
 			PlaybookGenerator:  *c.PlaybookGenerator(),
+			InventoryRepo:      c.InventoryRepo(),
 		}
 	}
 
@@ -224,8 +225,9 @@ func (c *Container) InventoryRepo() domain.InventoryClient {
 		}
 
 		c.inventoryRepo = &persistence.InventoryClient{
-			PlatformURL: c.Config.GetString("Platform_URL"),
-			Client:      client,
+			InventoryHost: c.Config.GetString("Inventory_Host"),
+			InventoryImpl: c.Config.GetString("Inventory_Impl"),
+			Client:        client,
 		}
 	}
 
