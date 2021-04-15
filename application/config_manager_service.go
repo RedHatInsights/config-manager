@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -136,6 +137,7 @@ func (s *ConfigManagerService) ApplyState(
 
 	for i, client := range clients {
 		if connected[client.SystemProfile.RHCID] {
+			log.Println(fmt.Sprintf("Client %s is connected - dispatching work", client.SystemProfile.RHCID))
 			input := domain.DispatcherInput{
 				Recipient: client.SystemProfile.RHCID,
 				Account:   acc.AccountID,
@@ -146,16 +148,16 @@ func (s *ConfigManagerService) ApplyState(
 			}
 
 			inputs = append(inputs, input)
+		}
 
-			if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
-				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
-				if err != nil {
-					fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
-				}
-
-				results = append(results, res...)
-				inputs = nil
+		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
+			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
+			if err != nil {
+				fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 			}
+
+			results = append(results, res...)
+			inputs = nil
 		}
 	}
 
