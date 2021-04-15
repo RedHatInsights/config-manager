@@ -1,6 +1,6 @@
 package domain
 
-import "github.com/labstack/echo/v4"
+import "context"
 
 type InventoryParams struct {
 	Page    int `json:"page"`
@@ -29,5 +29,5 @@ type SystemProfile struct {
 }
 
 type InventoryClient interface {
-	GetInventoryClients(ctx echo.Context, page int) (InventoryResponse, error)
+	GetInventoryClients(ctx context.Context, page int) (InventoryResponse, error)
 }

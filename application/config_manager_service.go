@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
 
@@ -110,8 +109,8 @@ func (s *ConfigManagerService) GetConnectedClients(ctx context.Context, id strin
 }
 
 // GetInventoryClients Retrieve clients from inventory
-func (s *ConfigManagerService) GetInventoryClients(ctx echo.Context, page int) (domain.InventoryResponse, error) {
-	res, err := s.InventoryRepo.GetConnectedClients(ctx, page)
+func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
+	res, err := s.InventoryRepo.GetInventoryClients(ctx, page)
 	if err != nil {
 		return res, err
 	}

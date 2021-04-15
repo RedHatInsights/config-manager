@@ -3,6 +3,7 @@ package controllers
 import (
 	"config-manager/application"
 	"config-manager/domain"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -50,9 +51,11 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 }
 
 func (cmc *ConfigManagerController) getAllClients(ctx echo.Context) ([]domain.Host, error) {
+	//TODO There's probably a better way to do this
+	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
 	var clients []domain.Host
 
-	res, err := cmc.ConfigManagerService.GetInventoryClients(ctx, 1)
+	res, err := cmc.ConfigManagerService.GetInventoryClients(ctxWithID, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +63,7 @@ func (cmc *ConfigManagerController) getAllClients(ctx echo.Context) ([]domain.Ho
 
 	for len(clients) < res.Total {
 		page := res.Page + 1
-		res, err = cmc.ConfigManagerService.GetInventoryClients(ctx, page)
+		res, err = cmc.ConfigManagerService.GetInventoryClients(ctxWithID, page)
 		if err != nil {
 			return nil, err
 		}

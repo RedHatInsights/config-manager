@@ -3,12 +3,11 @@ package persistence
 import (
 	"config-manager/domain"
 	"config-manager/utils"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-
-	"github.com/labstack/echo/v4"
 )
 
 type InventoryClient struct {
@@ -34,7 +33,7 @@ func (c *InventoryClient) buildURL(page int) string {
 	return Url.String()
 }
 
-func (c *InventoryClient) GetInventoryClients(ctx echo.Context, page int) (domain.InventoryResponse, error) {
+func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
 	var results domain.InventoryResponse
 
 	if c.InventoryImpl == "mock" {
@@ -50,12 +49,12 @@ func (c *InventoryClient) GetInventoryClients(ctx echo.Context, page int) (domai
 		return results, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx.Request().Context(), "GET", c.buildURL(page), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", c.buildURL(page), nil)
 	if err != nil {
 		fmt.Println("Error constructing request to inventory: ", err)
 		return results, err
 	}
-	req.Header.Add("X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0]) //TODO: Re-evaluate header forwarding
+	req.Header.Add("X-Rh-Identity", ctx.Value("X-Rh-Identity").(string)) //TODO: Re-evaluate header forwarding
 
 	res, err := c.Client.Do(req)
 	if err != nil {

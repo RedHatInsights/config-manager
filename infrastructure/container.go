@@ -198,7 +198,7 @@ func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 // InventoryRepo enables interaction with inventory
 func (c *Container) InventoryRepo() domain.InventoryClient {
 	if c.inventoryRepo == nil {
-		client = &http.Client{
+		client := &http.Client{
 			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
 		}
 
