@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -56,5 +58,9 @@ func (dc *DispatcherClient) Dispatch(
 
 	var dRes []domain.DispatcherResponse
 	err = json.NewDecoder(res.Body).Decode(&dRes)
+	if err != nil {
+		body, _ := ioutil.ReadAll(res.Body)
+		log.Println("Error decoding dispatcher response: ", string(body))
+	}
 	return dRes, err
 }

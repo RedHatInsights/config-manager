@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 )
@@ -64,5 +66,9 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&results)
+	if err != nil {
+		body, _ := ioutil.ReadAll(res.Body)
+		log.Println("Error decoding inventory response: ", string(body))
+	}
 	return results, nil
 }
