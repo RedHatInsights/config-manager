@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,6 +19,7 @@ type ConfigManagerService struct {
 	AccountStateRepo   domain.AccountStateRepository
 	StateArchiveRepo   domain.StateArchiveRepository
 	CloudConnectorRepo domain.CloudConnectorClient
+	InventoryRepo      domain.InventoryClient
 	DispatcherRepo     domain.DispatcherClient
 	PlaybookGenerator  Generator
 }
@@ -92,13 +94,28 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
 }
 
-// GetClients TODO: Retrieve clients from inventory
-func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id string) ([]string, error) {
+// GetConnectorClients Retrieve clients from cloud-connector
+func (s *ConfigManagerService) GetConnectedClients(ctx context.Context, id string) (map[string]bool, error) {
+	connected := make(map[string]bool)
+
 	clients, err := s.CloudConnectorRepo.GetConnections(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return clients, nil
+
+	for _, client := range clients {
+		connected[client] = true
+	}
+	return connected, nil
+}
+
+// GetInventoryClients Retrieve clients from inventory
+func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
+	res, err := s.InventoryRepo.GetInventoryClients(ctx, page)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
 }
 
 // ApplyState applies the current state to selected clients
@@ -106,22 +123,32 @@ func (s *ConfigManagerService) GetConnectorClients(ctx context.Context, id strin
 func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
-	clients []string,
+	clients []domain.Host,
 ) ([]domain.DispatcherResponse, error) {
 	var err error
 	var results []domain.DispatcherResponse
 	var inputs []domain.DispatcherInput
-	for i, client := range clients {
-		input := domain.DispatcherInput{
-			Recipient: client,
-			Account:   acc.AccountID,
-			URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
-			Labels: map[string]string{
-				"cm-playbook": acc.StateID.String(),
-			},
-		}
 
-		inputs = append(inputs, input)
+	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
+	if err != nil {
+		fmt.Println("Couldn't get currently connected clients from cloud-connector: ", err)
+		return results, err
+	}
+
+	for i, client := range clients {
+		if connected[client.SystemProfile.RHCID] {
+			log.Println(fmt.Sprintf("Client %s is connected - dispatching work", client.SystemProfile.RHCID))
+			input := domain.DispatcherInput{
+				Recipient: client.SystemProfile.RHCID,
+				Account:   acc.AccountID,
+				URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
+				Labels: map[string]string{
+					"cm-playbook": acc.StateID.String(),
+				},
+			}
+
+			inputs = append(inputs, input)
+		}
 
 		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
 			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)

@@ -76,6 +76,9 @@ func Get() *viper.Viper {
 	options.SetDefault("Cloud_Connector_Timeout", 10)
 	options.SetDefault("Cloud_Connector_Impl", "impl")
 
+	options.SetDefault("Inventory_Host", "http://insights-inventory.platform-ci.svc.cluster.local:8080")
+	options.SetDefault("Inventory_Impl", "impl")
+
 	options.SetDefault("Playbook_Path", "./playbooks/")
 
 	options.SetDefault("Service_Config", `{

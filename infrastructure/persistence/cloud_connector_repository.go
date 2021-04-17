@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -56,5 +58,9 @@ func (c *CloudConnectorClient) GetConnections(
 
 	var cloudConnectorRes domain.CloudConnectorConnections
 	err = json.NewDecoder(res.Body).Decode(&cloudConnectorRes)
+	if err != nil {
+		body, _ := ioutil.ReadAll(res.Body)
+		log.Println("Error decoding cloud-connector response: ", string(body))
+	}
 	return cloudConnectorRes.Connections, err
 }

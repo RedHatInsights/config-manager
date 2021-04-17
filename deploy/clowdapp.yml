@@ -66,10 +66,24 @@ objects:
             value: ${CM_DISPATCHER_HOST}
           - name: CM_DISPATCHER_IMPL
             value: ${CM_DISPATCHER_IMPL}
+          - name: CM_CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: client-psk
+                name: psk-cloud-connector
+          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: client-id
+                name: psk-cloud-connector
           - name: CM_CLOUD_CONNECTOR_HOST
             value: ${CM_CLOUD_CONNECTOR_HOST}
           - name: CM_CLOUD_CONNECTOR_IMPL
             value: ${CM_CLOUD_CONNECTOR_IMPL}
+          - name: CM_INVENTORY_HOST
+            value: ${CM_INVENTORY_HOST}
+          - name: CM_INVENTORY_IMPL
+            value: ${CM_INVENTORY_IMPL}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -195,3 +209,8 @@ parameters:
   value: mock
 - name: CM_CLOUD_CONNECTOR_IMPL
   value: mock
+
+- name: CM_INVENTORY_HOST
+  required: true
+- name: CM_INVENTORY_IMPL
+  value: impl

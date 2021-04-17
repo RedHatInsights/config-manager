@@ -36,9 +36,9 @@ type Container struct {
 	// Repositories
 	accountStateRepo   *persistence.AccountStateRepository
 	stateArchiveRepo   *persistence.StateArchiveRepository
-	clientListRepo     *persistence.ClientListRepository
 	dispatcherRepo     *persistence.DispatcherClient
 	cloudConnectorRepo *persistence.CloudConnectorClient
+	inventoryRepo      *persistence.InventoryClient
 }
 
 // Database configures and opens a db connection
@@ -105,6 +105,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 			CloudConnectorRepo: c.CloudConnectorRepo(),
 			DispatcherRepo:     c.DispatcherRepo(),
 			PlaybookGenerator:  *c.PlaybookGenerator(),
+			InventoryRepo:      c.InventoryRepo(),
 		}
 	}
 
@@ -157,17 +158,6 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	return c.stateArchiveRepo
 }
 
-// ClientListRepo enables interaction with inventory (needs a different name)
-func (c *Container) ClientListRepo() *persistence.ClientListRepository {
-	if c.clientListRepo == nil {
-		c.clientListRepo = &persistence.ClientListRepository{
-			InventoryURL: "",
-		}
-	}
-
-	return c.clientListRepo
-}
-
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() domain.DispatcherClient {
 	if c.dispatcherRepo == nil {
@@ -203,4 +193,21 @@ func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 	}
 
 	return c.cloudConnectorRepo
+}
+
+// InventoryRepo enables interaction with inventory
+func (c *Container) InventoryRepo() domain.InventoryClient {
+	if c.inventoryRepo == nil {
+		client := &http.Client{
+			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
+		}
+
+		c.inventoryRepo = &persistence.InventoryClient{
+			InventoryHost: c.Config.GetString("Inventory_Host"),
+			InventoryImpl: c.Config.GetString("Inventory_Impl"),
+			Client:        client,
+		}
+	}
+
+	return c.inventoryRepo
 }
