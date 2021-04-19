@@ -173,6 +173,24 @@ objects:
               secretKeyRef:
                 key: key
                 name: psk-playbook-dispatcher
+          - name: CM_DISPATCHER_HOST
+            value: ${CM_DISPATCHER_HOST}
+          - name: CM_DISPATCHER_IMPL
+            value: ${CM_DISPATCHER_IMPL}
+          - name: CM_CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: client-psk
+                name: psk-cloud-connector
+          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: client-id
+                name: psk-cloud-connector
+          - name: CM_CLOUD_CONNECTOR_HOST
+            value: ${CM_CLOUD_CONNECTOR_HOST}
+          - name: CM_CLOUD_CONNECTOR_IMPL
+            value: ${CM_CLOUD_CONNECTOR_IMPL}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
