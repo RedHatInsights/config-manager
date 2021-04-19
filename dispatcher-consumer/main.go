@@ -1,6 +1,7 @@
 package dispatcherconsumer
 
 import (
+	"config-manager/infrastructure"
 	"config-manager/infrastructure/kafka"
 	"context"
 
@@ -13,8 +14,13 @@ func Start(
 	errors chan<- error,
 ) {
 	consumer := kafka.NewConsumer(cfg, cfg.GetString("Kafka_Dispatcher_Topic"))
+	producer := kafka.NewProducer(cfg, cfg.GetString("Kafka_System_Profile_Topic"))
 
-	handler := &handler{}
+	container := infrastructure.Container{Config: cfg}
+
+	cmService := container.CMService()
+
+	handler := &handler{producer: producer, ConfigManagerService: cmService}
 
 	start := kafka.NewConsumerEventLoop(ctx, consumer, handler.onMessage, errors)
 

@@ -19,6 +19,15 @@ func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
 	return consumer
 }
 
+func NewProducer(cfg *viper.Viper, topic string) *kafka.Writer {
+	producer := &kafka.Writer{
+		Addr:  kafka.TCP(cfg.GetStringSlice("Kafka_Brokers")[0]),
+		Topic: topic,
+	}
+
+	return producer
+}
+
 func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Reader,

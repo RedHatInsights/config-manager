@@ -24,6 +24,10 @@
                 "name": "platform.inventory.events"
             },
             {
+                "requestedName": "platform.inventory.system-profile",
+                "name": "platform.inventory.system-profile"
+            },
+            {
                 "requestedName": "platform.playbook-dispatcher.runs",
                 "name": "platform.playbook-dispatcher.runs"
             }

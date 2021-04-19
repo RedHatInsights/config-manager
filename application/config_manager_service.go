@@ -143,7 +143,8 @@ func (s *ConfigManagerService) ApplyState(
 				Account:   acc.AccountID,
 				URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
 				Labels: map[string]string{
-					"cm-playbook": acc.StateID.String(),
+					"state_id": acc.StateID.String(),
+					"id":       client.ID,
 				},
 			}
 

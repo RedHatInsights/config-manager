@@ -21,6 +21,9 @@ objects:
     - replicas: 3
       partitions: 16
       topicName: platform.inventory.events
+    - replicas: 3
+      partitions: 16
+      topicName: platform.inventory.system-profile
 
     deployments:
     - name: service
