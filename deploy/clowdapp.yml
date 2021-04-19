@@ -206,9 +206,9 @@ parameters:
   value: impl
 
 - name: CM_CLOUD_CONNECTOR_HOST
-  value: mock
+  required: true
 - name: CM_CLOUD_CONNECTOR_IMPL
-  value: mock
+  value: impl
 
 - name: CM_INVENTORY_HOST
   required: true
