@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
+
 	kafka "github.com/segmentio/kafka-go"
 )
 
@@ -17,9 +19,10 @@ type handler struct {
 	ConfigManagerService domain.ConfigManagerInterface
 }
 
-func buildMessage(stateID string, payload message.DispatcherEventPayload) ([]byte, error) {
+func buildMessage(stateID string, payload message.DispatcherEventPayload, reqID uuid.UUID) ([]byte, error) {
 	msg := message.InventoryUpdate{
 		Operation: "add_host",
+		Metadata:  message.PlatformMetadata{RequestID: reqID.String()},
 		Data: message.HostUpdateData{
 			ID:      payload.Labels["id"],
 			Account: payload.Account,
@@ -64,7 +67,8 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				break
 			}
 
-			updateMsg, err := buildMessage(state.StateID.String(), value.Payload)
+			reqID := uuid.New()
+			updateMsg, err := buildMessage(state.StateID.String(), value.Payload, reqID)
 			if err != nil {
 				log.Println("Error building message for inventory update: ", err)
 				break
@@ -76,7 +80,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				},
 			)
 			if err != nil {
-				log.Println("Error producing message to system profile topic")
+				log.Println("Error producing message to system profile topic. request_id: ", reqID.String())
 			}
 		case "running":
 			log.Println("Received running event for host ", value.Payload.Recipient)

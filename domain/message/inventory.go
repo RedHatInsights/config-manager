@@ -8,8 +8,13 @@ type InventoryEvent struct {
 }
 
 type InventoryUpdate struct {
-	Operation string         `json:"operation"`
-	Data      HostUpdateData `json:"data"`
+	Operation string           `json:"operation"`
+	Metadata  PlatformMetadata `json:"platform_metadata"`
+	Data      HostUpdateData   `json:"data"`
+}
+
+type PlatformMetadata struct {
+	RequestID string `json:"request_id"`
 }
 
 type HostUpdateData struct {
