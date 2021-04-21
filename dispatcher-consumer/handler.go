@@ -1,7 +1,6 @@
 package dispatcherconsumer
 
 import (
-	"config-manager/domain"
 	"config-manager/domain/message"
 	kafkaUtils "config-manager/infrastructure/kafka"
 	"context"
@@ -15,11 +14,13 @@ import (
 )
 
 type handler struct {
-	producer             *kafka.Writer
-	ConfigManagerService domain.ConfigManagerInterface
+	producer      kafkaUtils.KafkaWriterInterface
+	uuidGenerator func() uuid.UUID
 }
 
-func buildMessage(stateID string, payload message.DispatcherEventPayload, reqID uuid.UUID) ([]byte, error) {
+// This message to inventory is constructed using data from provided labels. This will change
+// once this information can be consumed from the run_hosts topic.
+func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]byte, error) {
 	msg := message.InventoryUpdate{
 		Operation: "add_host",
 		Metadata:  message.PlatformMetadata{RequestID: reqID.String()},
@@ -27,7 +28,7 @@ func buildMessage(stateID string, payload message.DispatcherEventPayload, reqID 
 			ID:      payload.Labels["id"],
 			Account: payload.Account,
 			SystemProfile: message.HostUpdateSystemProfile{
-				RHCState: stateID,
+				RHCState: payload.Labels["state_id"],
 			},
 		},
 	}
@@ -61,14 +62,8 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			log.Println("Received success event for host ", value.Payload.Recipient)
 			log.Println(fmt.Sprintf("Message payload: %+v", value.Payload))
 
-			state, err := this.ConfigManagerService.GetSingleStateChange(value.Payload.Labels["state_id"])
-			if err != nil {
-				log.Println("Error retrieving the state archive for this run: ", err)
-				break
-			}
-
-			reqID := uuid.New()
-			updateMsg, err := buildMessage(state.StateID.String(), value.Payload, reqID)
+			reqID := this.uuidGenerator()
+			updateMsg, err := buildMessage(value.Payload, reqID)
 			if err != nil {
 				log.Println("Error building message for inventory update: ", err)
 				break

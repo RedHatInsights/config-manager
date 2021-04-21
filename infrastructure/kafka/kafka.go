@@ -6,7 +6,21 @@ import (
 
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/mock"
 )
+
+type KafkaWriterInterface interface {
+	WriteMessages(ctx context.Context, msgs ...kafka.Message) error
+}
+
+type MockWriter struct {
+	mock.Mock
+}
+
+func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
+	args := w.Called(ctx, msgs)
+	return args.Error(0)
+}
 
 func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
