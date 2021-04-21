@@ -1,8 +1,31 @@
 ---
-# This playbook will take care of all steps required to remove
-# Insights Compliance (OpenSCAP packages)
-- hosts: localhost
+# This playbook will perform steps required to remove Insights Compliance service from your system.
+- name: Compliance OpenSCAP Remove
+  hosts: localhost
   become: yes
+  vars:
+    insights_signature_exclude: /hosts,/vars/insights_signature
+    insights_signature: !!binary |
+      TFMwdExTMUNSVWRKVGlCUVIxQWdVMGxIVGtGVVZWSkZMUzB0TFMwS1ZtVnljMmx2YmpvZ1IyNTFV
+      RWNnZGpFS0NtbFJTVlpCZDFWQldVbENSa2c0ZG5jMU9FUXJhalZ3VGtGUmFuSXlRUzhyU3pOa1kw
+      dGtUVkZpYTNVellWRmFVV1UzY0VSWVdVdEdabXhsU1M5dlFra0tWR1lyZURkYVkyNUpaMk5WWjBo
+      MlpWWlRiVFpvVWtzM2QycDZhWGxGV0RGTlZHUTFPVGhTYUhaU2VGRjZVMUZvTVd0V1EzQkROWG94
+      SzBob2FXTkxjd3B4TjFGV2RXZ3lNWFpFVm10TGRIazNSemhKZVhKT2J6UnlXbTl4ZG5kSWJUaDNh
+      VFJVV0RKTVNFcDRhM0JaSzBGSldFMVVPR1JXZEU1VGQySXZRekYwQ2tFek1sUjNMMmx2Y0hONlpq
+      SkdOWGxsZWpWcU9YbEZaa0ZGSzNocE9YWnZjMlpFZFV4blRXWjVUVVV6UjJZeVdYRm1OVFpETVZa
+      NlJUWmthVU4wWm00S2JsQjZTR2xOUW1kTVVVZHpORmR4V0VwUGVrc3dZbU4zZW5VNVdUTXdZVXhQ
+      VUZneWNHWm9hMEpQWW5wbGRDOXBOR2RhTTBoNmRWTkJRamxaYmpOYUx3cEJaa2xSZW5OQ2JrMUNV
+      a05LYTNOeVJrZzVPV0V5YzAwdlVIUXJaR2hMZW01Q1lXOUpRbGhwY25GMFF6aEVNbEpHUVROdFpY
+      bzBPVlpyVjB4V1drUkhDalZQTTBrMFNXMDNSVGMyYkdGaUsxWk5jbmRQTVV4S2NrVnRNazFGVWtK
+      aFRrWm1ObGhSV0ZkVlpqQTVURXBRYmpSd2NXd3diRTgwYjNORE1sWkJkVGtLVHpOcGFuaDNWVEJ2
+      YTA1dGJsUm5hVFpqTTFBNGRubEtNbTVvTkRscFQzbHJhRmxRY0ROa1ExVmlZMGRCTDBsM1UzSnFk
+      MmRZSzFSck9ISmpMMDVuV1FwTmVVUlNRalZtWlc1UGFrdElPRVp1V2tvM1VXY3dWekUzUzI5WVox
+      VjBaa2w2WmxORFZqTnpiMVJ3TVVKcVZ6STVURWhyWlV4dVZIbDFZbTVCVlRCc0NtVnlPRmhoV2s5
+      RmVTOXpZbmhPVEZKSWVVb3ZUMkpWUVc5NlQzcGFORUZzVmswMk0zUTNVbUZzTTJvMlkyMW1VbXhD
+      VlhSQlJsaDNjVFpDYWpSQ2JYUUtSV1ZpY1N0UFl6aDZZM3BIZEVaNU55dHJSa1F6V0VKbGJubFJW
+      emxrTWk4eU9XWkdNVzF2VmxsVVRXazRiQzlLYVZKU1ZtSlJUelI0TWtwMmVWUTNTQXBMVTBwUlRE
+      SnZUMnc1T0QwS1BXcEpaa3dLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
+      PQ==
   tasks:
     - name: Compliance OpenSCAP disabled
       debug:

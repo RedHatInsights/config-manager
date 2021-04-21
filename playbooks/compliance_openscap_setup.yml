@@ -1,17 +1,39 @@
 ---
-# Steps required to get your system ready for the Insights-Compliance service:
+# This playbook will install the required OpenSCAP packages to get your systems ready to be used
+# with Insights Compliance service.
+# 
+# After running this playbook, perform the following steps manually:
 # 1. Create a Compliance policy in cloud.redhat.com and associate the required systems.
-#    Note: Step 1 must be done manually in cloud.redhat.com before the following steps are executed.
-# 2. Install OpenSCAP packages on your system.
-# 3. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
-#    Note: Steps 2 & 3 above will be taken care of by this playbook.
+# 2. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
 
-- hosts: localhost
+- name: Compliance OpenSCAP Setup
+  hosts: localhost
   become: yes
+  vars:
+    insights_signature_exclude: /hosts,/vars/insights_signature
+    insights_signature: !!binary |
+      TFMwdExTMUNSVWRKVGlCUVIxQWdVMGxIVGtGVVZWSkZMUzB0TFMwS1ZtVnljMmx2YmpvZ1IyNTFV
+      RWNnZGpFS0NtbFJTVlpCZDFWQldVbERURWRqZG5jMU9FUXJhalZ3VGtGUmFsTXZkeThyUzFVd1JW
+      cHlXSE5tUlRWdmIybFJlbVpZTDFWT1NuSjRjV2hwTXpCclNsSUthMUV5VEdaeGVVVlBibnBJY0Za
+      Qk1tczRjVmRRVDFwcU9IcFdkR2d3Tm5oVGJFZHVUMEY0ZDFCQlpHdDFZa05zTjJWYUx5OXBlRlk0
+      U0hoNlZVeFVUZ3AxUm1OSGRHSkJOVTU2V0ZocFIzVlhXRTlOT0hwS1YyZFBVM1pPVUVGU2FXVkRh
+      eXMyVEVsNlFXaEhNMnh6YVZKNWVEaDZXSFZUYlZsdFVVOVpURUZRQ2tsRFRFRmhOamhZYjNZeFRV
+      OUVSak5UZG5VelkxWm9LME16TWxKNmRscFNVVEk1YTJGVU9ITmlSMlo0V1VaQmVIRTNVM0Y2Y0RW
+      MloySktVa2xMYmtrS2MxSlpNbnBqZDBKa1NUVk9RMDlRZFdreFIwOUNjVWRIYmxWcmVuTXhNM2hy
+      YTJkdVEwUkhSbWRySzJOeWFGcFBNRzExYjFKU2RteE5VVzFCYlZjMlFRcFhjVUpxVUZWVVJXczRN
+      WFphVjA1TmJscFNiRUo0ZUc1RGEydG5OR05LV2tKMlowczFOWE5WYVVGQlNXaHRlVlpTYUdsalMw
+      eGtTR1o2T0U5VFVpOVVDazQzYlVFNWNtVkdNVTlsYm10aWNGQnRkV1pCZWpaRGJ6QkVjalYzVUds
+      emJtNXphUzlDYVcxWWQwdFVXWEJrTkhWNmNsRTFheTlwU3pnclZYaDFRMWdLVFUwNFNIWmxjbkJV
+      WTA0eFVtdzFRVGR1UlUxUFFuRmxhek5EYm1SeWIydGlaV0ZQZG1ReFVWSnJObkF5YVZCRVFuQnRT
+      MGMzTUZwM2FXRXhaMXBLV1FvMVEyNHJiMjl5VldOeVpHZEdjemRyWW1KNGJsTm5SV2d2ZFVsVGMy
+      SnNZVTEzTnpjNGVGSldMelZvVERCVlRGSmtTMGx1WlZkamNDOUNjMHAwUVV4MkNtNVlNMkV2U0dS
+      MlozUTVTMGhpUnpaVVVtMUhSMVV4VGtabWVHbHVjVlYzWkhsWlYxZEJZbE5MU2xoRGVUQlpTSHBQ
+      TUhwaGJ6VnljeTluZUdsWlkxQUtVMk5tZWtaMVdFOVZhamRVWVdJM1luRXhaalZDY0RCNGFpOHhX
+      Rzh3YVRWUk1WSk1OalkwZVc1dlNVZFdNSGwwVVhwb1FsbHJZV2hUUWtoeU1WQnVVQXBYVm5WTVNt
+      bDRNR281VFQwS1BWUm5iVFlLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
+      PQ==
   tasks:
     - name: Install OpenSCAP packages for Compliance service
       yum:
         name: openscap, openscap-scanner, scap-security-guide
         state: latest
-    - name: Run insights-client compliance option
-      command: insights-client --compliance
