@@ -13,5 +13,3 @@
       yum:
         name: openscap, openscap-scanner, scap-security-guide
         state: latest
-    - name: Run insights-client compliance option
-      command: insights-client --compliance
