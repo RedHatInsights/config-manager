@@ -3,8 +3,32 @@
 # 1. Yum install the insights-client
 # 2. Register the insights-client
 # 3. Modify file permissions
-- hosts: localhost
+- name: Insights Setup
+  hosts: localhost
   become: yes
+  vars:
+    insights_signature_exclude: /hosts,/vars/insights_signature
+    insights_signature: !!binary |
+      TFMwdExTMUNSVWRKVGlCUVIxQWdVMGxIVGtGVVZWSkZMUzB0TFMwS1ZtVnljMmx2YmpvZ1IyNTFV
+      RWNnZGpFS0NtbFJTVlpCZDFWQldVbENSMlk0ZG5jMU9FUXJhalZ3VGtGUloyaEdVUzhyVUdReFpI
+      QnVXbEZ1UnpaSlkzaHdXbE5OZWxOWUsyMUZkV1pHTlVzclMwRUtkVU4zYlVaek0wZHJUbEJEVGpW
+      NU1WUXJjemRuYlVaeVlYcHdURlF6UW1KaGRFbHdNbHBXTVcxa1JtcERialpJTmtKdVZHWXJTbEZ4
+      VVRWamJrWllRZ3BJWm1VeWEzSlhkekpUZDFOd2JYa3JaMlp3VUV0WE5VTktaamRwUjI4M04wVXhh
+      RWhvY3pOdU1IZFdZMVIwVEhKQ09FaHZWR0VyY1M5WU5FUm9ablJuQ2s5RlFUVXhlVFY1YVdJMmVt
+      UkxXV05wY1dRd1ptVkJXWFpaTms0dlkxSlFVSE5ETVZKc1RVaEdhWEpvV1RONlVFWXpiMWswWjA5
+      Tk5GTnJjM0kyVmt3S1ZtdFNSMEZ4SzAxeE5tbHdlVVJDT1hobFJqY3lSa1JNYkZCaVYycG1ZeTlX
+      WVVGemVEUlpibmx4TTNRNVZYWnVjSGh3UkdWWFRrZG5ZV0UyTDIxTVNBb3JTSGRHTWk5b2RGQjRh
+      bFoyVjAxRmFVWjZRbFJ3YzJKMmVrSTVjRUpOY25oamJXVnNlSGRqUmpkWlptRnJOM1V3UzJwYVkx
+      VlhRMlJQY0VGMmNWVXlDbE4zT0U1elNtWnpTbkJYWmpBelEzVkNUbms0ZFVWb1RHOWFkMUZDWjBw
+      UGVtVjVXamhPUlZGUlJteElRWHBDY1M5dFNWTnpjWFJWYW5sdFZtdGlWRE1LWkZFM1JFOUxkR1ly
+      Wm5oa1VIcEJhWFpxV0hwaFJqazRkWFZsWVdSaFJrNDRZalpRVmpGME9FTXpOQzgyU0hCdVR6aEtO
+      RXd5UjNFeGFVUk5lbVI0VHdwWGFWTnVNQ3RxTjBOS2JqbHdVSFZzUm1RM01HbHFZM1ZDYVhNMk5W
+      SjRNbHBTYVhOSmNtc3lkSGRuUWtWSVVreFRlaXNyWlhGM1MySmhUbTh4ZGxWSENrVkNhekpIU1Zw
+      VEwzY3ljR2xaTXpodE5TOVVNbWNyVUhOdWJVWnZaMVJCUmtKelRscEtLMHBwWVhad1EwNHdjRVY1
+      WlVKcVQwZFZSVTFtY2xsdFEyUUtWQ3N3VjBjclVGWkpORGxST0VaNFoxTjROMFZZU0hGaGNFMVdS
+      R0p0V2xKSFkzcFhSemx6TVVNMFJtYzNkelE1Y2tSRlFWRnBNME5DV2xsVlVVazBVd292Um5kWWNr
+      aHpXbE41U1QwS1BXRTRja1lLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
+      PQ==
   tasks:
     - name: Update to the latest version of rhc
       yum:
