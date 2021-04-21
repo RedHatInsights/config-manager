@@ -1,10 +1,10 @@
 ---
-# Steps required to get your system ready for the Insights-Compliance service:
+# This playbook will install the required OpenSCAP packages to get your systems ready to be used
+# with Insights Compliance service.
+# 
+# After running this playbook, perform the following steps manually:
 # 1. Create a Compliance policy in cloud.redhat.com and associate the required systems.
-#    Note: Step 1 must be done manually in cloud.redhat.com before the following steps are executed.
-# 2. Install OpenSCAP packages on your system.
-# 3. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
-#    Note: Steps 2 & 3 above will be taken care of by this playbook.
+# 2. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
 
 - hosts: localhost
   become: yes
