@@ -56,11 +56,6 @@ func (dc *DispatcherClient) Dispatch(
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 207 {
-		log.Println("Unexpected response from playbook_dispatcher: status ", res.StatusCode)
-		log.Println("Provided input: ", string(reqBody))
-	}
-
 	var dRes []domain.DispatcherResponse
 	err = json.NewDecoder(res.Body).Decode(&dRes)
 	if err != nil {
