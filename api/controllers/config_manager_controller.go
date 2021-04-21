@@ -50,24 +50,43 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	return p
 }
 
-func (cmc *ConfigManagerController) getAllClients(ctx echo.Context) ([]domain.Host, error) {
+func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState domain.AccountState) ([]domain.Host, error) {
 	//TODO There's probably a better way to do this
 	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
 	var clients []domain.Host
+	var err error
 
-	res, err := cmc.ConfigManagerService.GetInventoryClients(ctxWithID, 1)
-	if err != nil {
-		return nil, err
-	}
-	clients = append(clients, res.Results...)
-
-	for len(clients) < res.Total {
-		page := res.Page + 1
-		res, err = cmc.ConfigManagerService.GetInventoryClients(ctxWithID, page)
+	// workaround: If insights is disabled - get clients from cloud-connector instead of inventory
+	// This should be a temporary fix.
+	if currentState.State["insights"] == "enabled" {
+		res, err := cmc.ConfigManagerService.GetInventoryClients(ctxWithID, 1)
 		if err != nil {
 			return nil, err
 		}
 		clients = append(clients, res.Results...)
+
+		for len(clients) < res.Total {
+			page := res.Page + 1
+			res, err = cmc.ConfigManagerService.GetInventoryClients(ctxWithID, page)
+			if err != nil {
+				return nil, err
+			}
+			clients = append(clients, res.Results...)
+		}
+	} else {
+		res, err := cmc.ConfigManagerService.GetConnectedClients(ctxWithID, currentState.AccountID)
+		if err != nil {
+			return nil, err
+		}
+
+		for clientID := range res {
+			clients = append(clients, domain.Host{
+				Account: currentState.AccountID,
+				SystemProfile: domain.SystemProfile{
+					RHCID: clientID,
+				},
+			})
+		}
 	}
 
 	return clients, err
@@ -111,12 +130,14 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
+
 	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	clients, err := cmc.getAllClients(ctx)
+	clients, err := cmc.getClients(ctx, *currentState)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

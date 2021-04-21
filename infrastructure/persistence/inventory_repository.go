@@ -40,10 +40,10 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 
 	if c.InventoryImpl == "mock" {
 		expectedResponse := []byte(`{
-			"total": "0",
-			"count": "0",
-			"page": "1",
-			"per_page": "50",
+			"total": 0,
+			"count": 0,
+			"page": 1,
+			"per_page": 50,
 			"results": []
 		}`)
 
