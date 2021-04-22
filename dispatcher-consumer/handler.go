@@ -52,7 +52,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	if eventService == "config_manager" {
 		value := &message.DispatcherEvent{}
 
-		if err := json.Unmarshal(msg.Value, &value); err != nil {
+		if err := json.Unmarshal(msg.Value, value); err != nil {
 			log.Println("Couldn't unmarshal dispatcher event: ", err)
 			return
 		}
@@ -71,11 +71,15 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 			err = this.producer.WriteMessages(ctx,
 				kafka.Message{
+					Key:   []byte("cm-" + value.Payload.Labels["id"]),
 					Value: updateMsg,
 				},
 			)
 			if err != nil {
 				log.Println("Error producing message to system profile topic. request_id: ", reqID.String())
+			} else {
+				log.Println(fmt.Sprintf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
+					reqID.String(), value.Payload.Labels["id"], value.Payload.Account))
 			}
 		case "running":
 			log.Println("Received running event for host ", value.Payload.Recipient)

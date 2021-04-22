@@ -159,6 +159,7 @@ func TestDispatcherMessageHandler(t *testing.T) {
 				ctx,
 				[]kafka.Message{
 					kafka.Message{
+						Key:   []byte("cm-" + value.Payload.Labels["id"]),
 						Value: producerMsg,
 					},
 				},
@@ -182,6 +183,7 @@ func TestDispatcherMessageHandler(t *testing.T) {
 						ctx,
 						[]kafka.Message{
 							kafka.Message{
+								Key:   []byte("cm-" + value.Payload.Labels["id"]),
 								Value: producerMsg,
 							},
 						},
