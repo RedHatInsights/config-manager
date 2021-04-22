@@ -44,3 +44,4 @@ services:
       - CM_DISPATCHER_IMPL=mock
       - CM_CLOUD_CONNECTOR_IMPL=mock
       - CM_INVENTORY_IMPL=mock
+      - CM_PLAYBOOK_HOST=localhost
