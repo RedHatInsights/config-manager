@@ -68,7 +68,9 @@ func Get() *viper.Viper {
 	options.SetDefault("Dispatcher_Batch_Size", 50)
 	options.SetDefault("Dispatcher_Timeout", 10)
 	options.SetDefault("Dispatcher_Impl", "impl")
-	options.SetDefault("Playbook_URL", "https://ci.cloud.redhat.com/api/config-manager/v1/states/%s/playbook")
+
+	options.SetDefault("Playbook_Host", "https://ci.cloud.redhat.com")
+	options.SetDefault("Playbook_Path", "/api/config-manager/v1/states/%s/playbook")
 
 	options.SetDefault("Cloud_Connector_Host", "http://cloud-connector.connector-ci.svc.cluster.local:8080")
 	options.SetDefault("Cloud_Connector_Client_ID", "config-manager")
@@ -80,7 +82,7 @@ func Get() *viper.Viper {
 	options.SetDefault("Inventory_Timeout", 10)
 	options.SetDefault("Inventory_Impl", "impl")
 
-	options.SetDefault("Playbook_Path", "./playbooks/")
+	options.SetDefault("Playbook_Files", "./playbooks/")
 
 	options.SetDefault("Service_Config", `{
 		"insights": "enabled",

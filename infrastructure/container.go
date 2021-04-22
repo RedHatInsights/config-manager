@@ -114,7 +114,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 
 func (c *Container) PlaybookGenerator() *application.Generator {
 	if c.playbookGenerator == nil {
-		templates := utils.FilesIntoMap(c.Config.GetString("Playbook_Path"), "*.yml")
+		templates := utils.FilesIntoMap(c.Config.GetString("Playbook_Files"), "*.yml")
 		c.playbookGenerator = &application.Generator{
 			Templates: templates,
 		}
