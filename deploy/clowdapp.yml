@@ -87,6 +87,8 @@ objects:
             value: ${CM_INVENTORY_HOST}
           - name: CM_INVENTORY_IMPL
             value: ${CM_INVENTORY_IMPL}
+          - name: CM_PLAYBOOK_HOST
+            value: ${CM_PLAYBOOK_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -194,6 +196,8 @@ objects:
             value: ${CM_CLOUD_CONNECTOR_HOST}
           - name: CM_CLOUD_CONNECTOR_IMPL
             value: ${CM_CLOUD_CONNECTOR_IMPL}
+          - name: CM_PLAYBOOK_HOST
+            value: ${CM_PLAYBOOK_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -235,3 +239,6 @@ parameters:
   required: true
 - name: CM_INVENTORY_IMPL
   value: impl
+
+- name: CM_PLAYBOOK_HOST
+  required: true
