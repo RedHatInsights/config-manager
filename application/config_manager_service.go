@@ -141,7 +141,7 @@ func (s *ConfigManagerService) ApplyState(
 			input := domain.DispatcherInput{
 				Recipient: client.SystemProfile.RHCID,
 				Account:   acc.AccountID,
-				URL:       fmt.Sprintf(s.Cfg.GetString("Playbook_URL"), acc.StateID),
+				URL:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
 				Labels: map[string]string{
 					"cm-playbook": acc.StateID.String(),
 				},
