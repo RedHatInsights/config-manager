@@ -143,7 +143,8 @@ func (s *ConfigManagerService) ApplyState(
 				Account:   acc.AccountID,
 				URL:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
 				Labels: map[string]string{
-					"cm-playbook": acc.StateID.String(),
+					"state_id": acc.StateID.String(),
+					"id":       client.ID,
 				},
 			}
 
@@ -151,13 +152,17 @@ func (s *ConfigManagerService) ApplyState(
 		}
 
 		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
-			res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
-			if err != nil {
-				fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
-			}
+			if inputs != nil {
+				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
+				if err != nil {
+					fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+				}
 
-			results = append(results, res...)
-			inputs = nil
+				results = append(results, res...)
+				inputs = nil
+			} else {
+				log.Println("Nothing sent to playbook dispatcher - no systems currently connected")
+			}
 		}
 	}
 

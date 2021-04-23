@@ -20,3 +20,8 @@ func (m *ConfigManagerServiceMock) ApplyState(ctx context.Context, acc *domain.A
 	args := m.Called(ctx, acc, clients)
 	return args.Get(0).([]domain.DispatcherResponse), args.Error(1)
 }
+
+func (m *ConfigManagerServiceMock) GetSingleStateChange(id string) (*domain.AccountState, error) {
+	args := m.Called(id)
+	return args.Get(0).(*domain.AccountState), args.Error(1)
+}
