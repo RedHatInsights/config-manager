@@ -3,6 +3,7 @@ package inventoryconsumer
 import (
 	"config-manager/application"
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence/dispatcher"
 	"context"
 	"testing"
 
@@ -117,8 +118,19 @@ func TestInventoryMessageHandler(t *testing.T) {
 				"ApplyState",
 				ctx,
 				&domain.AccountState{AccountID: tt.account},
-				[]string{"3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
-			).Return([]domain.DispatcherResponse{}, nil)
+				[]domain.Host{
+					domain.Host{
+						ID:          "1234",
+						Account:     tt.account,
+						DisplayName: "",
+						Reporter:    "cloud-connector",
+						SystemProfile: domain.SystemProfile{
+							RHCID:    "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
+							RHCState: "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
+						},
+					},
+				},
+			).Return([]dispatcher.RunCreated{}, nil)
 
 			handler := &handler{
 				ConfigManagerService: cmServiceMock,
@@ -133,7 +145,18 @@ func TestInventoryMessageHandler(t *testing.T) {
 					"ApplyState",
 					ctx,
 					&domain.AccountState{AccountID: tt.account},
-					[]string{"3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
+					[]domain.Host{
+						domain.Host{
+							ID:          "1234",
+							Account:     tt.account,
+							DisplayName: "",
+							Reporter:    "cloud-connector",
+							SystemProfile: domain.SystemProfile{
+								RHCID:    "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
+								RHCState: "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
+							},
+						},
+					},
 				)
 			} else {
 				cmServiceMock.AssertNotCalled(t, "GetAccountState")

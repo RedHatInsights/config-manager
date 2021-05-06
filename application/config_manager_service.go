@@ -2,6 +2,7 @@ package application
 
 import (
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence/dispatcher"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -13,6 +14,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ConfigManagerInterface interface {
+	GetAccountState(id string) (*domain.AccountState, error)
+	ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error)
+	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
+}
+
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
 	Cfg                *viper.Viper
@@ -20,7 +27,7 @@ type ConfigManagerService struct {
 	StateArchiveRepo   domain.StateArchiveRepository
 	CloudConnectorRepo domain.CloudConnectorClient
 	InventoryRepo      domain.InventoryClient
-	DispatcherRepo     domain.DispatcherClient
+	DispatcherRepo     dispatcher.DispatcherClient
 	PlaybookGenerator  Generator
 }
 
@@ -123,10 +130,10 @@ func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
 	clients []domain.Host,
-) ([]domain.DispatcherResponse, error) {
+) ([]dispatcher.RunCreated, error) {
 	var err error
-	var results []domain.DispatcherResponse
-	var inputs []domain.DispatcherInput
+	var results []dispatcher.RunCreated
+	var inputs []dispatcher.RunInput
 
 	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
 	if err != nil {
@@ -137,13 +144,15 @@ func (s *ConfigManagerService) ApplyState(
 	for i, client := range clients {
 		if connected[client.SystemProfile.RHCID] {
 			log.Println(fmt.Sprintf("Client %s is connected - dispatching work", client.SystemProfile.RHCID))
-			input := domain.DispatcherInput{
+			input := dispatcher.RunInput{
 				Recipient: client.SystemProfile.RHCID,
 				Account:   acc.AccountID,
-				URL:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
-				Labels: map[string]string{
-					"state_id": acc.StateID.String(),
-					"id":       client.ID,
+				Url:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
+				Labels: &dispatcher.RunInput_Labels{
+					AdditionalProperties: map[string]string{
+						"state_id": acc.StateID.String(),
+						"id":       client.ID,
+					},
 				},
 			}
 

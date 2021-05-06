@@ -1,4 +1,4 @@
-package internal
+package dispatcher
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 type DispatcherClient interface {
-	Dispatch(ctx context.Context, inputs []RunInput) (*RunsCreated, error)
+	Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error)
 }
 
 type dispatcherClientImpl struct {
@@ -45,7 +45,7 @@ func NewDispatcherClient(cfg *viper.Viper) DispatcherClient {
 	return NewDispatcherClientWithDoer(cfg, client)
 }
 
-func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput) (*RunsCreated, error) {
+func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error) {
 	res, err := dc.client.ApiInternalRunsCreateWithResponse(ctx, inputs)
 	if err != nil {
 		return nil, err
@@ -55,34 +55,5 @@ func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput)
 		return nil, fmt.Errorf("Unexpected error code %d received", res.HTTPResponse.StatusCode)
 	}
 
-	return res.JSON207, nil
+	return *res.JSON207, nil
 }
-
-// func (dc *dispatcherClientImpl) GetRuns(ctx context.Context) (*Runs, error) {
-// 	service := ServiceNullable("config_manager")
-// 	params := &ApiRunsListParams{
-// 		Filter: &RunsFilter{
-// 			Service: &service,
-// 		},
-// 	}
-
-// 	res, err := dc.client.ApiRunsListWithResponse(ctx, params)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	switch res.HTTPResponse.StatusCode {
-// 	case 400:
-// 		return nil, fmt.Errorf("400: %s", res.JSON400.Message)
-// 	case 403:
-// 		return nil, fmt.Errorf("403: %s", res.JSON403.Message)
-// 	case 200:
-// 		return res.JSON200, nil
-// 	default:
-// 		return nil, fmt.Errorf("unexpected status code %d", res.HTTPResponse.StatusCode)
-// 	}
-// }
-
-// func (dc *dispatcherClientImpl) GetRunHosts(ctx context.Context) {
-
-// }

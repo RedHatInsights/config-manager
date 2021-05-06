@@ -5,6 +5,7 @@ import (
 	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
+	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/utils"
 	"database/sql"
 	"fmt"
@@ -36,7 +37,7 @@ type Container struct {
 	// Repositories
 	accountStateRepo   *persistence.AccountStateRepository
 	stateArchiveRepo   *persistence.StateArchiveRepository
-	dispatcherRepo     *persistence.DispatcherClient
+	dispatcherRepo     dispatcher.DispatcherClient
 	cloudConnectorRepo *persistence.CloudConnectorClient
 	inventoryRepo      *persistence.InventoryClient
 }
@@ -159,17 +160,22 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 }
 
 // DispatcherRepo enables interaction with the playbook dispatcher
-func (c *Container) DispatcherRepo() domain.DispatcherClient {
+func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		client := &http.Client{
-			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
-		}
+		// client := &http.Client{
+		// 	Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
+		// }
 
-		c.dispatcherRepo = &persistence.DispatcherClient{
-			DispatcherHost: c.Config.GetString("Dispatcher_Host"),
-			DispatcherPSK:  c.Config.GetString("Dispatcher_PSK"),
-			DispatcherImpl: c.Config.GetString("Dispatcher_Impl"),
-			Client:         client,
+		// c.dispatcherRepo = &persistence.DispatcherClient{
+		// 	DispatcherHost: c.Config.GetString("Dispatcher_Host"),
+		// 	DispatcherPSK:  c.Config.GetString("Dispatcher_PSK"),
+		// 	DispatcherImpl: c.Config.GetString("Dispatcher_Impl"),
+		// 	Client:         client,
+		// }
+		if c.Config.GetString("Dispatcher_Impl") == "mock" {
+			c.dispatcherRepo = dispatcher.NewDispatcherClientMock()
+		} else {
+			c.dispatcherRepo = dispatcher.NewDispatcherClient(c.Config)
 		}
 	}
 
