@@ -162,16 +162,6 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 // DispatcherRepo enables interaction with the playbook dispatcher
 func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		// client := &http.Client{
-		// 	Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Dispatcher_Timeout")),
-		// }
-
-		// c.dispatcherRepo = &persistence.DispatcherClient{
-		// 	DispatcherHost: c.Config.GetString("Dispatcher_Host"),
-		// 	DispatcherPSK:  c.Config.GetString("Dispatcher_PSK"),
-		// 	DispatcherImpl: c.Config.GetString("Dispatcher_Impl"),
-		// 	Client:         client,
-		// }
 		if c.Config.GetString("Dispatcher_Impl") == "mock" {
 			c.dispatcherRepo = dispatcher.NewDispatcherClientMock()
 		} else {
