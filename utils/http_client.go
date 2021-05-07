@@ -28,6 +28,9 @@ func SetupMockHTTPClient(expectedResponse string, status int) *ClientMock {
 			return &http.Response{
 				StatusCode: status,
 				Body:       r,
+				Header: http.Header{
+					"Content-Type": []string{"application/json"},
+				},
 			}, nil
 		},
 	}

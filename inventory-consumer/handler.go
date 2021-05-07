@@ -1,6 +1,7 @@
 package inventoryconsumer
 
 import (
+	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/domain/message"
 	kafkaUtils "config-manager/infrastructure/kafka"
@@ -12,7 +13,7 @@ import (
 )
 
 type handler struct {
-	ConfigManagerService domain.ConfigManagerInterface
+	ConfigManagerService application.ConfigManagerInterface
 }
 
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {

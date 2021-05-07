@@ -2,6 +2,7 @@ package application
 
 import (
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence/dispatcher"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -13,6 +14,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ConfigManagerInterface interface {
+	GetAccountState(id string) (*domain.AccountState, error)
+	ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error)
+	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
+}
+
 // ConfigManagerService enables communication between the api and other resources (db + other apis)
 type ConfigManagerService struct {
 	Cfg                *viper.Viper
@@ -20,7 +27,7 @@ type ConfigManagerService struct {
 	StateArchiveRepo   domain.StateArchiveRepository
 	CloudConnectorRepo domain.CloudConnectorClient
 	InventoryRepo      domain.InventoryClient
-	DispatcherRepo     domain.DispatcherClient
+	DispatcherRepo     dispatcher.DispatcherClient
 	PlaybookGenerator  Generator
 }
 
@@ -94,7 +101,7 @@ func (s *ConfigManagerService) DeleteAccount(id string) error {
 	return nil
 }
 
-// GetConnectorClients Retrieve clients from cloud-connector
+// GetConnectedClients Retrieve clients from cloud-connector
 func (s *ConfigManagerService) GetConnectedClients(ctx context.Context, id string) (map[string]bool, error) {
 	connected := make(map[string]bool)
 
@@ -119,15 +126,14 @@ func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int
 }
 
 // ApplyState applies the current state to selected clients
-// TODO: Separate application function for automatic applications via kafka?
 func (s *ConfigManagerService) ApplyState(
 	ctx context.Context,
 	acc *domain.AccountState,
 	clients []domain.Host,
-) ([]domain.DispatcherResponse, error) {
+) ([]dispatcher.RunCreated, error) {
 	var err error
-	var results []domain.DispatcherResponse
-	var inputs []domain.DispatcherInput
+	var results []dispatcher.RunCreated
+	var inputs []dispatcher.RunInput
 
 	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
 	if err != nil {
@@ -138,13 +144,15 @@ func (s *ConfigManagerService) ApplyState(
 	for i, client := range clients {
 		if connected[client.SystemProfile.RHCID] {
 			log.Println(fmt.Sprintf("Client %s is connected - dispatching work", client.SystemProfile.RHCID))
-			input := domain.DispatcherInput{
+			input := dispatcher.RunInput{
 				Recipient: client.SystemProfile.RHCID,
 				Account:   acc.AccountID,
-				URL:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
-				Labels: map[string]string{
-					"state_id": acc.StateID.String(),
-					"id":       client.ID,
+				Url:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
+				Labels: &dispatcher.RunInput_Labels{
+					AdditionalProperties: map[string]string{
+						"state_id": acc.StateID.String(),
+						"id":       client.ID,
+					},
 				},
 			}
 
@@ -183,8 +191,6 @@ func (s *ConfigManagerService) GetStateChanges(accountID string, limit, offset i
 }
 
 // GetSingleStateChange gets a single state archive by state_id
-// TODO: Function to get current state?
-// State archives contain additional information over the AccountState so this could be useful
 func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.StateArchive, error) {
 	id, err := uuid.Parse(stateID)
 	if err != nil {
@@ -200,6 +206,7 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 	return state, err
 }
 
+// GetPlaybook gets a playbook by state_id
 func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 	id, err := uuid.Parse(stateID)
 	if err != nil {
