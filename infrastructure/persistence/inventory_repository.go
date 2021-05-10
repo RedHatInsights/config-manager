@@ -22,7 +22,7 @@ type InventoryClient struct {
 func (c *InventoryClient) buildURL(page int) string {
 	Url, err := url.Parse(c.InventoryHost)
 	if err != nil {
-		fmt.Println("Couldn't parse inventory host")
+		log.Println("Couldn't parse inventory host")
 		return ""
 	}
 	Url.Path += "/api/inventory/v1/hosts"
@@ -53,14 +53,14 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.buildURL(page), nil)
 	if err != nil {
-		fmt.Println("Error constructing request to inventory: ", err)
+		log.Println("Error constructing request to inventory: ", err)
 		return results, err
 	}
 	req.Header.Add("X-Rh-Identity", ctx.Value("X-Rh-Identity").(string)) //TODO: Re-evaluate header forwarding
 
 	res, err := c.Client.Do(req)
 	if err != nil {
-		fmt.Println("Error during request to inventory: ", err)
+		log.Println("Error during request to inventory: ", err)
 		return results, err
 	}
 	defer res.Body.Close()

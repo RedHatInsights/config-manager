@@ -7,6 +7,7 @@ import (
 	inventoryConsumer "config-manager/inventory-consumer"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,7 +29,7 @@ type startModuleFn = func(
 func run(cmd *cobra.Command, args []string) error {
 	modules, err := cmd.Flags().GetStringSlice("module")
 	if err != nil {
-		fmt.Println("Error getting modules: ", err)
+		log.Println("Error getting modules: ", err)
 		return err
 	}
 
@@ -69,15 +70,15 @@ func run(cmd *cobra.Command, args []string) error {
 		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("Metrics_Port")))
 	}()
 
-	fmt.Println("Config Manager started")
+	log.Println("Config Manager started")
 
 	// stop on signal or error, whatever comes first
 	select {
 	case signal := <-signals:
-		fmt.Println("Shutting down due to signal: ", signal)
+		log.Println("Shutting down due to signal: ", signal)
 		return nil
 	case error := <-errors:
-		fmt.Println("Shutting down due to error: ", error)
+		log.Println("Shutting down due to error: ", error)
 		return error
 	}
 }

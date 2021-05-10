@@ -49,7 +49,7 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 }
 
 func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*domain.AccountState, error) {
-	fmt.Println("Creating new account entry with default values")
+	log.Println("Creating new account entry with default values")
 	err := s.AccountStateRepo.CreateAccountState(acc)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (s *ConfigManagerService) ApplyState(
 
 	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
 	if err != nil {
-		fmt.Println("Couldn't get currently connected clients from cloud-connector: ", err)
+		log.Println("Couldn't get currently connected clients from cloud-connector: ", err)
 		return results, err
 	}
 
@@ -163,7 +163,7 @@ func (s *ConfigManagerService) ApplyState(
 			if inputs != nil {
 				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
 				if err != nil {
-					fmt.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+					log.Println(err) // TODO what happens if a message can't be dispatched? Retry?
 				}
 
 				results = append(results, res...)

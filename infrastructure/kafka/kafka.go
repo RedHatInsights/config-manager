@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"log"
 
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
@@ -52,7 +53,7 @@ func NewConsumerEventLoop(
 		for {
 			m, err := consumer.ReadMessage(ctx)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				errors <- err
 			}
 			handler(ctx, m)
