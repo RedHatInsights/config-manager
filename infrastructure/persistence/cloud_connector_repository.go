@@ -5,7 +5,6 @@ import (
 	"config-manager/utils"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,7 +28,7 @@ func (c *CloudConnectorClient) GetConnections(
 	ctx context.Context,
 	accountID string,
 ) ([]string, error) {
-	fmt.Println("Sending request to cloud connector")
+	log.Println("Sending request to cloud connector")
 
 	if c.CloudConnectorImpl == "mock" {
 		expectedResponse := []byte(`{
@@ -42,7 +41,7 @@ func (c *CloudConnectorClient) GetConnections(
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.CloudConnectorHost+"/api/cloud-connector/v1/connection/"+accountID, nil)
 	if err != nil {
-		fmt.Println("Error constructing request to cloud-connector: ", err)
+		log.Println("Error constructing request to cloud-connector: ", err)
 		return nil, err
 	}
 	req.Header.Set(headerCloudConnectorClientID, c.CloudConnectorClientID)
@@ -51,7 +50,7 @@ func (c *CloudConnectorClient) GetConnections(
 
 	res, err := c.Client.Do(req)
 	if err != nil {
-		fmt.Println("Error during request to cloud-connector: ", err)
+		log.Println("Error during request to cloud-connector: ", err)
 		return nil, err
 	}
 	defer res.Body.Close()
