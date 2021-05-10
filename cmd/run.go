@@ -47,7 +47,7 @@ func run(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() //TODO context.WithCancel
 
 	for _, module := range modules {
-		fmt.Printf("Starting module %s\n", module)
+		log.Printf("Starting module %s\n", module)
 
 		var startModule startModuleFn
 
@@ -65,7 +65,7 @@ func run(cmd *cobra.Command, args []string) error {
 		startModule(ctx, cfg, errors)
 	}
 
-	fmt.Printf("Listening on service port %d\n", cfg.GetInt("Metrics_Port"))
+	log.Printf("Listening on service port %d\n", cfg.GetInt("Metrics_Port"))
 	go func() {
 		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("Metrics_Port")))
 	}()

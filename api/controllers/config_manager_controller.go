@@ -5,7 +5,6 @@ import (
 	"config-manager/domain"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -173,7 +172,7 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 // (GET /states/{id})
 func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID StateIDParam) error {
 	id := identity.Get(ctx.Request().Context())
-	fmt.Printf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
+	log.Printf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	state, err := cmc.ConfigManagerService.GetSingleStateChange(string(stateID))
 	if err != nil {
@@ -187,7 +186,7 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 // (GET /states/{id}/playbook)
 func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID StateIDParam) error {
 	id := identity.Get(ctx.Request().Context())
-	fmt.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
+	log.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
 	if err != nil {
@@ -201,7 +200,7 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 // (GET /states/preview)
 func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
 	id := identity.Get(ctx.Request().Context())
-	fmt.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
+	log.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
 
 	payload := &domain.StateMap{}
 	bytes, err := ioutil.ReadAll(ctx.Request().Body)
