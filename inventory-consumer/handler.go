@@ -37,15 +37,21 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				log.Println("Error retrieving state for account: ", value.Host.Account)
 			}
 
-			client := []domain.Host{value.Host}
+			log.Printf("Cloud-connector inventory message received: %+v", value)
 
-			// TODO: Switch on event type. Once config-manager is updating rhc_config_state in inventory
-			// a check can be made on the rhc_config_state id to determine if work should be done.
-			responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
-			if err != nil {
-				log.Println("Error applying state: ", err)
+			if value.Host.SystemProfile.RHCState != accState.StateID.String() {
+				log.Printf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
+					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.StateID.String(), accState.AccountID)
+				client := []domain.Host{value.Host}
+				responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
+				if err != nil {
+					log.Println("Error applying state: ", err)
+				}
+				log.Println("Message sent to the dispatcher. Results: ", responses)
+			} else {
+				log.Printf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
+					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.AccountID)
 			}
-			log.Println("Message sent to the dispatcher. Results: ", responses)
 		}
 	}
 }

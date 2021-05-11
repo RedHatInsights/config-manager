@@ -3,10 +3,13 @@ package inventoryconsumer
 import (
 	"config-manager/application"
 	"config-manager/domain"
+	"config-manager/domain/message"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -29,11 +32,12 @@ func newKafkaHeaders(eventType string) []kafka.Header {
 }
 
 var tests = []struct {
-	name       string
-	eventType  string
-	data       []byte
-	account    string
-	validEvent bool
+	name         string
+	eventType    string
+	data         []byte
+	account      string
+	currentState string
+	validEvent   bool
 }{
 	{
 		"cloud-connector event: created",
@@ -45,12 +49,12 @@ var tests = []struct {
 				"account": "0000001",
 				"reporter": "cloud-connector",
 				"system_profile": {
-					"rhc_client_id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
-					"rhc_config_state": "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"
+					"rhc_client_id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"
 				}
 			}
 		}`),
 		"0000001",
+		"74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
 		true,
 	},
 	{
@@ -69,6 +73,7 @@ var tests = []struct {
 			}
 		}`),
 		"0000002",
+		"74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
 		true,
 	},
 	{
@@ -80,6 +85,7 @@ var tests = []struct {
 			"account": "0000001"
 		}`),
 		"0000001",
+		"74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
 		false,
 	},
 	{
@@ -98,6 +104,7 @@ var tests = []struct {
 			}
 		}`),
 		"0000001",
+		"74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
 		false,
 	},
 }
@@ -109,27 +116,27 @@ func TestInventoryMessageHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var cmServiceMock = new(application.ConfigManagerServiceMock)
 
+			stateUUID, _ := uuid.Parse(tt.currentState)
+
+			invData := &message.InventoryEvent{}
+			_ = json.Unmarshal(tt.data, invData)
+
 			cmServiceMock.On(
 				"GetAccountState",
 				tt.account,
-			).Return(&domain.AccountState{AccountID: tt.account}, nil)
+			).Return(&domain.AccountState{
+				AccountID: tt.account,
+				StateID:   stateUUID,
+			}, nil)
 
 			cmServiceMock.On(
 				"ApplyState",
 				ctx,
-				&domain.AccountState{AccountID: tt.account},
-				[]domain.Host{
-					domain.Host{
-						ID:          "1234",
-						Account:     tt.account,
-						DisplayName: "",
-						Reporter:    "cloud-connector",
-						SystemProfile: domain.SystemProfile{
-							RHCID:    "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
-							RHCState: "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
-						},
-					},
+				&domain.AccountState{
+					AccountID: tt.account,
+					StateID:   stateUUID,
 				},
+				[]domain.Host{invData.Host},
 			).Return([]dispatcher.RunCreated{}, nil)
 
 			handler := &handler{
@@ -140,24 +147,20 @@ func TestInventoryMessageHandler(t *testing.T) {
 
 			if tt.validEvent {
 				cmServiceMock.AssertCalled(t, "GetAccountState", tt.account)
-				cmServiceMock.AssertCalled(
-					t,
-					"ApplyState",
-					ctx,
-					&domain.AccountState{AccountID: tt.account},
-					[]domain.Host{
-						domain.Host{
-							ID:          "1234",
-							Account:     tt.account,
-							DisplayName: "",
-							Reporter:    "cloud-connector",
-							SystemProfile: domain.SystemProfile{
-								RHCID:    "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
-								RHCState: "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4",
-							},
+				if invData.Host.SystemProfile.RHCState != tt.currentState {
+					cmServiceMock.AssertCalled(
+						t,
+						"ApplyState",
+						ctx,
+						&domain.AccountState{
+							AccountID: tt.account,
+							StateID:   stateUUID,
 						},
-					},
-				)
+						[]domain.Host{invData.Host},
+					)
+				} else {
+					cmServiceMock.AssertNotCalled(t, "ApplyState")
+				}
 			} else {
 				cmServiceMock.AssertNotCalled(t, "GetAccountState")
 				cmServiceMock.AssertNotCalled(t, "ApplyState")
