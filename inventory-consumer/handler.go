@@ -19,7 +19,7 @@ type handler struct {
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
 	if err != nil {
-		log.Println("Error getting header: ", err)
+		log.Println("Error getting event_type: ", err)
 		return
 	}
 
@@ -37,7 +37,13 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				log.Println("Error retrieving state for account: ", value.Host.Account)
 			}
 
-			log.Printf("Cloud-connector inventory message received: %+v", value)
+			reqID, err := kafkaUtils.GetHeader(msg, "request_id")
+			if err != nil {
+				log.Println("Error getting request_id: ", err)
+				return
+			}
+
+			log.Printf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
 
 			if value.Host.SystemProfile.RHCState != accState.StateID.String() {
 				log.Printf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
