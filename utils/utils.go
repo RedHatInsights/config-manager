@@ -2,10 +2,12 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -53,4 +55,20 @@ func FilesIntoMap(dir, pattern string) map[string][]byte {
 	}
 
 	return filesMap
+}
+
+func VerifyStatePayload(currentState, payload map[string]string) error {
+	if reflect.DeepEqual(currentState, payload) {
+		return fmt.Errorf("Provided payload %+v is equal to current state %+v", payload, currentState)
+	}
+
+	if payload["insights"] == "disabled" {
+		for k, v := range payload {
+			if v != "disabled" {
+				return fmt.Errorf("Service %s must be disabled if insights is disabled", k)
+			}
+		}
+	}
+
+	return nil
 }

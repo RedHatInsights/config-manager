@@ -3,6 +3,7 @@ package controllers
 import (
 	"config-manager/application"
 	"config-manager/domain"
+	"config-manager/utils"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -131,6 +132,12 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	}
 
 	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
+
+	err = utils.VerifyStatePayload(currentState.State, *payload)
+	if err != nil {
+		log.Printf("Payload verification error: %s", err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
 	if err != nil {
