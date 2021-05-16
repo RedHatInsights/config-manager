@@ -37,8 +37,9 @@ func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
 // TODO: Again I don't like this.. Come up with a better solution for validating params (middleware?)
 func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	p := map[string]interface{}{
-		"limit":  50,
-		"offset": 0,
+		"limit":   50,
+		"offset":  0,
+		"sort_by": "created_at:desc",
 	}
 
 	if params.Limit != nil {
@@ -46,6 +47,9 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	}
 	if params.Offset != nil {
 		p["offset"] = int(*params.Offset)
+	}
+	if params.SortBy != nil {
+		p["sort_by"] = string(*params.SortBy)
 	}
 
 	return p
@@ -104,6 +108,7 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 	// Add filter and sort-by
 	states, err := cmc.ConfigManagerService.GetStateChanges(
 		id.Identity.AccountNumber,
+		p["sort_by"].(string),
 		p["limit"].(int),
 		p["offset"].(int),
 	)

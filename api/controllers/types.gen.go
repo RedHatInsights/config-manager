@@ -72,6 +72,16 @@ type Limit int
 // Offset defines model for Offset.
 type Offset int
 
+// SortBy defines model for SortBy.
+type SortBy string
+
+// List of SortBy
+const (
+	SortBy_created_at      SortBy = "created_at"
+	SortBy_created_at_asc  SortBy = "created_at:asc"
+	SortBy_created_at_desc SortBy = "created_at:desc"
+)
+
 // StateIDParam defines model for StateIDParam.
 type StateIDParam StateID
 
@@ -83,6 +93,7 @@ type GetStatesParams struct {
 
 	// Indicates the starting position of the query relative to the complete set of items that match the query
 	Offset *Offset `json:"offset,omitempty"`
+	SortBy *SortBy `json:"sort_by,omitempty"`
 }
 
 // UpdateStatesJSONBody defines parameters for UpdateStates.
@@ -96,4 +107,3 @@ type UpdateStatesJSONRequestBody UpdateStatesJSONBody
 
 // GetPlaybookPreviewJSONRequestBody defines body for GetPlaybookPreview for application/json ContentType.
 type GetPlaybookPreviewJSONRequestBody GetPlaybookPreviewJSONBody
-
