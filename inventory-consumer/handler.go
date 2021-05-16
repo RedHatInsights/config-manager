@@ -9,12 +9,15 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
 )
 
 type handler struct {
 	ConfigManagerService application.ConfigManagerInterface
 }
+
+type requestIDkey string
 
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
@@ -35,12 +38,16 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
 			if err != nil {
 				log.Println("Error retrieving state for account: ", value.Host.Account)
+				return
 			}
 
 			reqID, err := kafkaUtils.GetHeader(msg, "request_id")
 			if err != nil {
 				log.Println("Error getting request_id: ", err)
-				return
+				k := requestIDkey("request_id")
+				reqID = uuid.New().String()
+				log.Println("Creating new request_id and adding to context: ", reqID)
+				ctx = context.WithValue(ctx, k, reqID)
 			}
 
 			log.Printf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
