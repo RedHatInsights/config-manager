@@ -3,6 +3,8 @@ package persistence
 import (
 	"config-manager/domain"
 	"database/sql"
+	"fmt"
+	"strings"
 )
 
 type StateArchiveRepository struct {
@@ -16,15 +18,20 @@ func (r *StateArchiveRepository) GetStateArchive(s *domain.StateArchive) (*domai
 	return s, err
 }
 
-func (r *StateArchiveRepository) GetAllStateArchives(accountID string, limit, offset int) (*domain.StateArchives, error) {
+func (r *StateArchiveRepository) GetAllStateArchives(accountID, sortBy string, limit, offset int) (*domain.StateArchives, error) {
 	var total int
 	err := r.DB.QueryRow("SELECT COUNT(*) FROM state_archive WHERE account_id=$1", accountID).Scan(&total)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := r.DB.Query("SELECT account_id, state_id, label, initiator, created_at, state "+
-		"FROM state_archive WHERE account_id=$1 LIMIT $2 OFFSET $3", accountID, limit, offset)
+	sort := strings.Join(strings.Split(sortBy, ":"), " ")
+
+	qtext := fmt.Sprintf("SELECT account_id, state_id, label, initiator, created_at, state "+
+		"FROM state_archive WHERE account_id='%s' ORDER BY %s LIMIT %d OFFSET %d",
+		accountID, sort, limit, offset)
+
+	rows, err := r.DB.Query(qtext)
 
 	if err != nil {
 		return nil, err

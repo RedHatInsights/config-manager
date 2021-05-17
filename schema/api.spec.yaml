@@ -18,6 +18,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Offset'
+      - $ref: '#/components/parameters/SortBy'
       responses:
         '200':
           description: OK
