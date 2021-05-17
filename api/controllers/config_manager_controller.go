@@ -59,6 +59,7 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 	//TODO There's probably a better way to do this
 	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
 	var clients []domain.Host
+	inventoryRHCIDs := make(map[string]bool)
 	var err error
 
 	// workaround: If insights is disabled - get clients from cloud-connector instead of inventory
@@ -69,6 +70,9 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 			return nil, err
 		}
 		clients = append(clients, res.Results...)
+		for _, client := range res.Results {
+			inventoryRHCIDs[client.SystemProfile.RHCID] = true
+		}
 
 		for len(clients) < res.Total {
 			page := res.Page + 1
@@ -77,14 +81,19 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 				return nil, err
 			}
 			clients = append(clients, res.Results...)
+			for _, client := range res.Results {
+				inventoryRHCIDs[client.SystemProfile.RHCID] = true
+			}
 		}
-	} else {
-		res, err := cmc.ConfigManagerService.GetConnectedClients(ctxWithID, currentState.AccountID)
-		if err != nil {
-			return nil, err
-		}
+	}
 
-		for clientID := range res {
+	res, err := cmc.ConfigManagerService.GetConnectedClients(ctxWithID, currentState.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	for clientID := range res {
+		if !inventoryRHCIDs[clientID] {
 			clients = append(clients, domain.Host{
 				Account: currentState.AccountID,
 				SystemProfile: domain.SystemProfile{
