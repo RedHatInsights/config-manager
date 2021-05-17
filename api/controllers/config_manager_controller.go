@@ -55,7 +55,7 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 	//TODO There's probably a better way to do this
 	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
 	var clients []domain.Host
-	var inventoryRHCIDs map[string]bool
+	inventoryRHCIDs := make(map[string]bool)
 	var err error
 
 	// workaround: If insights is disabled - get clients from cloud-connector instead of inventory
