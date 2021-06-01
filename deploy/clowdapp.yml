@@ -18,7 +18,6 @@ objects:
     client-id: ${ID_CLOUD_CONNECTOR}
     client-psk: ${PSK_CLOUD_CONNECTOR}
 
-
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdApp
   metadata:
@@ -261,8 +260,8 @@ parameters:
 
 # Used for testing in ephemeral environments only.
 - name: PSK_CONFIG_MANAGER
-  value: dispatcher
+  value: mock
 - name: ID_CLOUD_CONNECTOR
-  value: playbook-dispatcher
+  value: mock
 - name: PSK_CLOUD_CONNECTOR
-  value: cloud_connector
+  value: mock
