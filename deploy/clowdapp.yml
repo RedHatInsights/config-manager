@@ -3,6 +3,21 @@ kind: Template
 metadata:
   name: config-manager
 objects:
+# The below secrets are used for testing in ephemeral environments only.
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: psk-playbook-dispatcher
+  stringData:
+    key: ${PSK_DISPATCHER}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: psk-cloud-connector
+  stringData:
+    client-id: ${ID_CLOUD_CONNECTOR}
+    client-psk: ${PSK_CLOUD_CONNECTOR}
+
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdApp
   metadata:
@@ -242,3 +257,11 @@ parameters:
 
 - name: CM_PLAYBOOK_HOST
   required: true
+
+# Used for testing in ephemeral environments only.
+- name: PSK_CONFIG_MANAGER
+  value: mock
+- name: ID_CLOUD_CONNECTOR
+  value: mock
+- name: PSK_CLOUD_CONNECTOR
+  value: mock
