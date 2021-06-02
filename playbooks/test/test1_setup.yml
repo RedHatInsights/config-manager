@@ -27,4 +27,4 @@
   tasks:
     - name: Print 1 setup
       debug:
-        msg: "1 setup"
+        msg: "1 setup the best of the best"
