@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"config-manager/api/instrumentation"
 	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/utils"
@@ -67,6 +68,7 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 	if currentState.State["insights"] == "enabled" {
 		res, err := cmc.ConfigManagerService.GetInventoryClients(ctxWithID, 1)
 		if err != nil {
+			instrumentation.InventoryRequestError()
 			return nil, err
 		}
 		clients = append(clients, res.Results...)
@@ -78,6 +80,7 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 			page := res.Page + 1
 			res, err = cmc.ConfigManagerService.GetInventoryClients(ctxWithID, page)
 			if err != nil {
+				instrumentation.InventoryRequestError()
 				return nil, err
 			}
 			clients = append(clients, res.Results...)
@@ -89,6 +92,7 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context, currentState do
 
 	res, err := cmc.ConfigManagerService.GetConnectedClients(ctxWithID, currentState.AccountID)
 	if err != nil {
+		instrumentation.CloudConnectorRequestError()
 		return nil, err
 	}
 
@@ -122,6 +126,7 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 		p["offset"].(int),
 	)
 	if err != nil {
+		instrumentation.GetStateChangesError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -150,11 +155,13 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	err = utils.VerifyStatePayload(currentState.State, *payload)
 	if err != nil {
 		log.Printf("Payload verification error: %s", err.Error())
+		instrumentation.PayloadVerificationError()
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
 	if err != nil {
+		instrumentation.UpdateAccountStateError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -167,6 +174,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
 	if err != nil {
+		instrumentation.PlaybookDispatcherRequestError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -183,6 +191,7 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 
 	acc, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
 	if err != nil {
+		instrumentation.GetAccountStateError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -211,9 +220,11 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 
 	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
 	if err != nil {
+		instrumentation.PlaybookRequestError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	instrumentation.PlaybookRequestOK()
 	return ctx.String(http.StatusOK, playbook)
 }
 
@@ -236,6 +247,7 @@ func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
 
 	playbook, err := cmc.ConfigManagerService.PlaybookGenerator.GeneratePlaybook(*payload)
 	if err != nil {
+		instrumentation.PlaybookRequestError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

@@ -12,8 +12,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	echoPrometheus "github.com/globocom/echo-prometheus"
-
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -41,7 +39,6 @@ func run(cmd *cobra.Command, args []string) error {
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
-	metricsServer.Use(echoPrometheus.MetricsMiddleware())
 	metricsServer.GET(cfg.GetString("Metrics_Path"), echo.WrapHandler(promhttp.Handler()))
 
 	ctx := context.Background() //TODO context.WithCancel
