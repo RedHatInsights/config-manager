@@ -11,6 +11,7 @@ var verifyPayloadTests = []struct {
 	name         string
 	currentState map[string]string
 	payload      map[string]string
+	equal        bool
 	errorThrown  bool
 }{
 	{
@@ -26,6 +27,7 @@ var verifyPayloadTests = []struct {
 			"compliance_openscap": "disabled",
 		},
 		false,
+		false,
 	},
 	{
 		"payload equal to current state",
@@ -40,6 +42,7 @@ var verifyPayloadTests = []struct {
 			"compliance_openscap": "enabled",
 		},
 		true,
+		false,
 	},
 	{
 		"additional services enabled when insights is disabled",
@@ -53,6 +56,7 @@ var verifyPayloadTests = []struct {
 			"remediations":        "enabled",
 			"compliance_openscap": "enabled",
 		},
+		false,
 		true,
 	},
 }
@@ -60,11 +64,17 @@ var verifyPayloadTests = []struct {
 func TestVerifyStatePayload(t *testing.T) {
 	for _, tt := range verifyPayloadTests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := utils.VerifyStatePayload(tt.currentState, tt.payload)
+			equal, err := utils.VerifyStatePayload(tt.currentState, tt.payload)
 			if tt.errorThrown {
 				assert.NotNil(t, err)
 			} else {
 				assert.Nil(t, err)
+			}
+
+			if tt.equal {
+				assert.True(t, equal)
+			} else {
+				assert.False(t, equal)
 			}
 		})
 	}

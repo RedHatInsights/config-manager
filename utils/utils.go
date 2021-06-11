@@ -57,18 +57,20 @@ func FilesIntoMap(dir, pattern string) map[string][]byte {
 	return filesMap
 }
 
-func VerifyStatePayload(currentState, payload map[string]string) error {
+func VerifyStatePayload(currentState, payload map[string]string) (bool, error) {
+	equal := false
 	if reflect.DeepEqual(currentState, payload) {
-		return fmt.Errorf("Provided payload %+v is equal to current state %+v", payload, currentState)
+		equal = true
+		return equal, nil
 	}
 
 	if payload["insights"] == "disabled" {
 		for k, v := range payload {
 			if v != "disabled" {
-				return fmt.Errorf("Service %s must be disabled if insights is disabled", k)
+				return equal, fmt.Errorf("Service %s must be disabled if insights is disabled", k)
 			}
 		}
 	}
 
-	return nil
+	return equal, nil
 }
