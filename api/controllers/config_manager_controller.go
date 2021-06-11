@@ -152,11 +152,15 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
 
-	err = utils.VerifyStatePayload(currentState.State, *payload)
+	equal, err := utils.VerifyStatePayload(currentState.State, *payload)
 	if err != nil {
 		log.Printf("Payload verification error: %s", err.Error())
 		instrumentation.PayloadVerificationError()
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if equal {
+		log.Printf("Provided payload %+v is equal to current state %+v. Not updating\n", payload, currentState)
+		return ctx.JSON(http.StatusOK, currentState)
 	}
 
 	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
