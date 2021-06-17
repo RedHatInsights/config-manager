@@ -14,37 +14,37 @@ const (
 
 var (
 	internalErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "api_error_total",
+		Name: "config_manager_api_error_total",
 		Help: "The total number of errors",
 	}, []string{"type", "subtype"})
 
 	requestVerificationErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_request_payload_verification_error",
+		Name: "config_manager_api_request_payload_verification_error",
 		Help: "The total number of errors verifying request payloads",
 	})
 
 	dispatcherErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_playbook_dispatcher_error_total",
+		Name: "config_manager_api_playbook_dispatcher_error_total",
 		Help: "The total number of errors talking to playbook dispatcher",
 	})
 
 	connectorErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_cloud_connector_error_total",
+		Name: "config_manager_api_cloud_connector_error_total",
 		Help: "The total number of errors talking to cloud connector",
 	})
 
 	inventoryErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_inventory_error_total",
+		Name: "config_manager_api_inventory_error_total",
 		Help: "The total number of errors talking to inventory",
 	})
 
 	playbookRequestOKTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_playbooks_requested_ok_total",
+		Name: "config_manager_api_playbooks_requested_ok_total",
 		Help: "The total number of playbooks returned via the api",
 	})
 
 	playbookRequestErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_playbooks_requested_error_total",
+		Name: "config_manager_api_playbooks_requested_error_total",
 		Help: "The total number of errors when generating playbooks",
 	})
 )
