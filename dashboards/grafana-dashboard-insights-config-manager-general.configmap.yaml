@@ -54,12 +54,12 @@ data:
           "id": 6,
           "options": {
             "colorMode": "value",
-            "graphMode": "area",
+            "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "mean"
+                "last"
               ],
               "fields": "",
               "values": false
@@ -69,7 +69,7 @@ data:
           "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(config_manager_api_playbooks_requested_error_total[5m]))",
+              "expr": "sum(increase(config_manager_api_playbooks_requested_error_total[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -112,12 +112,12 @@ data:
           "id": 4,
           "options": {
             "colorMode": "value",
-            "graphMode": "area",
+            "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "mean"
+                "last"
               ],
               "fields": "",
               "values": false
@@ -127,7 +127,7 @@ data:
           "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(config_manager_api_playbooks_requested_ok_total[5m]))",
+              "expr": "sum(increase(config_manager_api_playbooks_requested_ok_total[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -170,12 +170,12 @@ data:
           "id": 8,
           "options": {
             "colorMode": "value",
-            "graphMode": "area",
+            "graphMode": "none",
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "mean"
+                "last"
               ],
               "fields": "",
               "values": false
@@ -185,7 +185,7 @@ data:
           "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(config_manager_api_request_payload_verification_error[5m]))",
+              "expr": "sum(increase(config_manager_api_request_payload_verification_error[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -322,13 +322,31 @@ data:
         {
           "aliasColors": {},
           "bars": false,
+          "cacheTimeout": null,
           "dashLength": 10,
           "dashes": false,
           "datasource": "$datasource",
           "description": "Errors returned by connectors",
           "fieldConfig": {
             "defaults": {
-              "custom": {}
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
             },
             "overrides": []
           },
@@ -342,6 +360,7 @@ data:
           },
           "hiddenSeries": false,
           "id": 10,
+          "interval": null,
           "legend": {
             "avg": false,
             "current": false,
@@ -353,6 +372,7 @@ data:
           },
           "lines": true,
           "linewidth": 1,
+          "links": [],
           "nullPointMode": "null",
           "options": {
             "alertThreshold": true
@@ -456,7 +476,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-6h",
+        "from": "now-3h",
         "to": "now"
       },
       "timepicker": {},
