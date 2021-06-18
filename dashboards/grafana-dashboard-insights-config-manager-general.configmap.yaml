@@ -18,11 +18,12 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 2,
+      "id": 179,
+      "iteration": 1624022631074,
       "links": [],
       "panels": [
         {
-          "datasource": "Prometheus",
+          "datasource": "$datasource",
           "description": "Errors returned while generating playbooks",
           "fieldConfig": {
             "defaults": {
@@ -65,10 +66,10 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(api_playbooks_requested_error_total[$__range]))",
+              "expr": "sum(increase(config_manager_api_playbooks_requested_error_total[5m]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -80,7 +81,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "$datasource",
           "description": "number of playbooks provided",
           "fieldConfig": {
             "defaults": {
@@ -123,12 +124,12 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(api_playbooks_requested_ok_total[$__range]))",
+              "expr": "sum(increase(config_manager_api_playbooks_requested_ok_total[5m]))",
               "interval": "",
-              "legendFormat": "Playbooks",
+              "legendFormat": "",
               "refId": "A"
             }
           ],
@@ -138,7 +139,7 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": "$datasource",
           "description": "Verification errors when updating account state",
           "fieldConfig": {
             "defaults": {
@@ -181,10 +182,10 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "sum(increase(api_request_payload_verification_error[$__range]))",
+              "expr": "sum(increase(config_manager_api_request_payload_verification_error[5m]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -200,7 +201,7 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "Prometheus",
+          "datasource": "$datasource",
           "description": "500 error returned by config-manager",
           "fieldConfig": {
             "defaults": {
@@ -248,7 +249,7 @@ data:
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.2.1",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -258,20 +259,19 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(increase(api_error_total{subtype=\"get_account_state\",type=\"db\"}[$__range]))",
-              "instant": false,
+              "expr": "sum(increase(config_manager_api_error_total{subtype=\"get_account_state\",type=\"db\"}[5m]))",
               "interval": "",
               "legendFormat": "Get Account State",
               "refId": "A"
             },
             {
-              "expr": "sum(increase(api_error_total{subtype=\"get_state_changes\",type=\"db\"}[$__range]))",
+              "expr": "sum(increase(config_manager_api_error_total{subtype=\"get_state_changes\",type=\"db\"}[5m]))",
               "interval": "",
               "legendFormat": "Get State Changes",
               "refId": "B"
             },
             {
-              "expr": "sum(increase(api_error_total{subtype=\"update_account_state\",type=\"db\"}[$__range]))",
+              "expr": "sum(increase(config_manager_api_error_total{subtype=\"update_account_state\",type=\"db\"}[5m]))",
               "interval": "",
               "legendFormat": "Update Account State",
               "refId": "C"
@@ -324,7 +324,7 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "$datasource",
           "description": "Errors returned by connectors",
           "fieldConfig": {
             "defaults": {
@@ -358,7 +358,7 @@ data:
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.6",
+          "pluginVersion": "7.2.1",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -368,19 +368,19 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(increase(api_cloud_connector_error_total[$__range]))",
+              "expr": "sum(increase(config_manager_api_cloud_connector_error_total[5m]))",
               "interval": "",
               "legendFormat": "Cloud Connector",
               "refId": "A"
             },
             {
-              "expr": "sum(increase(api_inventory_error_total[$__range]))",
+              "expr": "sum(increase(config_manager_api_inventory_error_total[5m]))",
               "interval": "",
               "legendFormat": "Inventory",
               "refId": "B"
             },
             {
-              "expr": "sum(increase(api_playbook_dispatcher_error_total[$__range]))",
+              "expr": "sum(increase(config_manager_api_playbook_dispatcher_error_total[5m]))",
               "interval": "",
               "legendFormat": "Playbook Dispatcher",
               "refId": "C"
@@ -433,7 +433,27 @@ data:
       "style": "dark",
       "tags": [],
       "templating": {
-        "list": []
+        "list": [
+          {
+            "current": {
+              "selected": true,
+              "text": "crcs02ue1-prometheus",
+              "value": "crcs02ue1-prometheus"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Datasource",
+            "multi": false,
+            "name": "datasource",
+            "options": [],
+            "query": "prometheus",
+            "queryValue": "",
+            "refresh": 1,
+            "regex": "crc[0-9a-z]*-prometheus",
+            "skipUrlSync": false,
+            "type": "datasource"
+          }
+        ]
       },
       "time": {
         "from": "now-6h",
