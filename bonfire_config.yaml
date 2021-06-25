@@ -1,0 +1,18 @@
+envName: env-config-manager
+apps:
+- name: config-manager
+  components:
+  - name: config-manager
+    host: local
+    repo: ./deploy
+    path: clowdapp.yml
+    parameters:
+      IMAGE: localhost:5000/config-manager
+      CM_DISPATCHER_IMPL: mock
+      CM_DISPATCHER_HOST: test
+      CM_INVENTORY_IMPL: mock
+      CM_INVENTORY_HOST: test
+      CM_CLOUD_CONNECTOR_IMPL: mock
+      CM_CLOUD_CONNECTOR_HOST: test
+      CM_PLAYBOOK_HOST: localhost
+      REPLICAS: 1
