@@ -29,18 +29,74 @@ The REST interface can be used to view and update the current configuration for 
 
 See the [OpenAPI Schema](./schema/api.spec.yaml) for details on interacting with the REST interface.
 
+## Event interface
+
+Config-manager consumes and produces kafka messages based on various events.
+
+In topics:
+- platform.inventory.events
+- platform.playbook-dispatcher.runs
+
+Out topics:
+- platform.inventory.system-profile
+
+Event based workflow:
+1. Consume new connection event from inventory
+2. If connection is reported via cloud-connector check rhc_state_id of host
+3. If rhc_state_id is out of date apply current state to host
+4. Consume run events from playbook-dispatcher
+5. If run event is successful write new rhc_state_id to host via the system-profile kafka topic.
+
 ## Development
 
-### Prerequisities
+### Dependencies
 
 - Golang >= 1.13
+- Minikube (see [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html#_install_minikube))
+- oc cli (see [here](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands))
+- Bonfire (see [here](https://github.com/RedHatInsights/bonfire#installation))
 
-### Running the service
+### Deploying locally
 
-Run `podman-compose up --build -d` to start the service and its dependencies
+Config-manager is managed by [Clowder](https://github.com/RedHatInsights/clowder) and can be deployed locally onto a [Minikube](https://minikube.sigs.k8s.io/docs/start/) instance using [Bonfire](https://github.com/RedHatInsights/bonfire).
 
-The API can be accessed locally on port 8081, and this port can be adjusted by setting the CM_WEBPORT environment variable.
+The following steps (detailed [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html)) should be performed before attempting to build and deploy a new instance of config-manager:
 
+1. Start minikube (check [here](https://github.com/RedHatInsights/clowder/blob/master/docs/macos.md) for MacOS instructions)
 ```sh
-curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJpbnRlcm5hbCI6eyJvcmdfaWQiOiI1MzE4MjkwIn0sImFjY291bnRfbnVtYmVyIjoiOTAxNTc4IiwidXNlciI6e30sInR5cGUiOiJVc2VyIn19Cg==" http://localhost:8081/states/current
+minikube start --cpus 4 --disk-size 36GB --memory 8000MB --addons=registry --driver=kvm2
 ```
+
+2. Install Clowder CRDs
+```sh
+curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_setup.sh -o kube_setup.sh && chmod +x kube_setup.sh
+./kube_setup.sh
+```
+
+3. Install Clowder (replace version with [latest](https://github.com/RedHatInsights/clowder/releases/latest))
+```sh
+minikube kubectl -- apply -f https://github.com/RedHatInsights/clowder/releases/download/0.15.0/clowder-manifest-0.15.0.yaml --validate=false
+```
+
+4. Create a namespace for config-manager
+```sh
+minikube kubectl -- create ns config-manager
+```
+
+5. Deploy ClowdEnvironment
+```sh
+bonfire deploy-env -n config-manager
+```
+
+6. Deploy config-manager
+```sh
+./bonfire_deploy.sh
+```
+
+7. Access config-manager
+```sh
+oc port-forward svc/config-manager-service -n config-manager 8000 &
+curl -v -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:8000/api/config-manager/v1/states/current
+```
+
+Once prerequisite steps 1-5 have been completed steps 6-7 can be repeated as needed to deploy new changes to the local environment. 
