@@ -29,6 +29,24 @@ The REST interface can be used to view and update the current configuration for 
 
 See the [OpenAPI Schema](./schema/api.spec.yaml) for details on interacting with the REST interface.
 
+## Event interface
+
+Config-manager consumes and produces kafka messages based on various events.
+
+In topics:
+- platform.inventory.events
+- platform.playbook-dispatcher.runs
+
+Out topics:
+- platform.inventory.system-profile
+
+Event based workflow:
+1. Consume new connection event from inventory
+2. If connection is reported via cloud-connector check rhc_state_id of host
+3. If rhc_state_id is out of date apply current state to host
+4. Consume run events from playbook-dispatcher
+5. If run event is successful write new rhc_state_id to host via the system-profile kafka topic.
+
 ## Development
 
 ### Dependencies
