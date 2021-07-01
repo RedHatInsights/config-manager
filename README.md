@@ -34,6 +34,9 @@ See the [OpenAPI Schema](./schema/api.spec.yaml) for details on interacting with
 ### Dependencies
 
 - Golang >= 1.13
+- Minikube (see [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html#_install_minikube))
+- oc cli (see [here](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands))
+- Bonfire (see [here](https://github.com/RedHatInsights/bonfire#installation))
 
 ### Deploying locally
 
@@ -41,31 +44,30 @@ Config-manager is managed by [Clowder](https://github.com/RedHatInsights/clowder
 
 The following steps (detailed [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html)) should be performed before attempting to build and deploy a new instance of config-manager:
 
-1. Install minikube
-```sh
-$ curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-latest.x86_64.rpm
-$ sudo rpm -ivh minikube-latest.x86_64.rpm
-```
-
-2. Start minikube (check [here](https://github.com/RedHatInsights/clowder/blob/master/docs/macos.md) for MacOS instructions)
+1. Start minikube (check [here](https://github.com/RedHatInsights/clowder/blob/master/docs/macos.md) for MacOS instructions)
 ```sh
 minikube start --cpus 4 --disk-size 36GB --memory 8000MB --addons=registry --driver=kvm2
 ```
 
-3. Install Clowder CRDs
+2. Install Clowder CRDs
 ```sh
-curl  https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_setup.sh -o kube_setup.sh  && chmod +x kube_setup.sh
+curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_setup.sh -o kube_setup.sh && chmod +x kube_setup.sh
 ./kube_setup.sh
 ```
 
-4. Install Clowder (replace version with [latest](https://github.com/RedHatInsights/clowder/releases/latest))
+3. Install Clowder (replace version with [latest](https://github.com/RedHatInsights/clowder/releases/latest))
 ```sh
 minikube kubectl -- apply -f https://github.com/RedHatInsights/clowder/releases/download/0.15.0/clowder-manifest-0.15.0.yaml --validate=false
 ```
 
-5. Create a namespace for config-manager
+4. Create a namespace for config-manager
 ```sh
-kubectl create ns config-manager
+minikube kubectl -- create ns config-manager
+```
+
+5. Deploy ClowdEnvironment
+```sh
+bonfire deploy-env -n config-manager
 ```
 
 6. Deploy config-manager
