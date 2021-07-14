@@ -28,6 +28,11 @@ func newKafkaHeaders(eventType string) []kafka.Header {
 		Value: []byte(eventType),
 	})
 
+	headers = append(headers, kafka.Header{
+		Key:   "request_id",
+		Value: []byte("01"),
+	})
+
 	return headers
 }
 
