@@ -1,7 +1,7 @@
 ---
-# This playbook will take care of all steps required to remove
+# This playbook will take care of all steps required to disable
 # Insights Client
-- name: Insights Remove
+- name: Insights Disable
   hosts: localhost
   become: yes
   vars:
@@ -28,5 +28,5 @@
       bHVkemxsVFQwS1BVa3hZMjhLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
       PQ==
   tasks:
-    - name: Unregister the insights-client
-      command: insights-client --unregister
+    - name: Disable the insights-client
+      command: insights-client --disable-schedule
