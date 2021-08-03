@@ -23,6 +23,9 @@ objects:
   metadata:
     name: config-manager
   spec:
+    testing:
+      iqePlugin: rhc
+
     envName: ${ENV_NAME}
 
     database:
