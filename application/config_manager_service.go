@@ -135,29 +135,21 @@ func (s *ConfigManagerService) ApplyState(
 	var results []dispatcher.RunCreated
 	var inputs []dispatcher.RunInput
 
-	connected, err := s.GetConnectedClients(ctx, acc.AccountID)
-	if err != nil {
-		log.Println("Couldn't get currently connected clients from cloud-connector: ", err)
-		return results, err
-	}
-
 	for i, client := range clients {
-		if connected[client.SystemProfile.RHCID] {
-			log.Println(fmt.Sprintf("Client %s is connected - dispatching work", client.SystemProfile.RHCID))
-			input := dispatcher.RunInput{
-				Recipient: client.SystemProfile.RHCID,
-				Account:   acc.AccountID,
-				Url:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
-				Labels: &dispatcher.RunInput_Labels{
-					AdditionalProperties: map[string]string{
-						"state_id": acc.StateID.String(),
-						"id":       client.ID,
-					},
+		log.Println(fmt.Sprintf("Dispatching work for client %s", client.SystemProfile.RHCID))
+		input := dispatcher.RunInput{
+			Recipient: client.SystemProfile.RHCID,
+			Account:   acc.AccountID,
+			Url:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
+			Labels: &dispatcher.RunInput_Labels{
+				AdditionalProperties: map[string]string{
+					"state_id": acc.StateID.String(),
+					"id":       client.ID,
 				},
-			}
-
-			inputs = append(inputs, input)
+			},
 		}
+
+		inputs = append(inputs, input)
 
 		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
 			if inputs != nil {
