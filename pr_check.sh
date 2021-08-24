@@ -16,7 +16,7 @@ readonly IMAGE="quay.io/cloudservices/config-manager"
 
 # See ${CICD_ROOT}/cji_smoke_test.sh
 readonly IQE_CJI_TIMEOUT="10m"
-IQE_MARKER_EXPRESSION="config_manager"  # writable because cji_smoke_test.sh uses var=${var:=val}
+readonly IQE_MARKER_EXPRESSION="config_manager"
 readonly IQE_PLUGINS="rhc"
 
 # Install bonfire into a venv and clone the bonfire repo. Export APP_ROOT, BONFIRE_ROOT, etc.
