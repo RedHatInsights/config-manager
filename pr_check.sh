@@ -16,8 +16,7 @@ readonly IMAGE="quay.io/cloudservices/config-manager"
 
 # See ${CICD_ROOT}/cji_smoke_test.sh
 readonly IQE_CJI_TIMEOUT="10m"
-readonly IQE_MARKER_EXPRESSION="config_manager"
-readonly IQE_PLUGINS="rhc"
+readonly IQE_PLUGINS="config-manager"
 
 # Install bonfire into a venv and clone the bonfire repo. Export APP_ROOT, BONFIRE_ROOT, etc.
 source <(curl -s https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd/bootstrap.sh)

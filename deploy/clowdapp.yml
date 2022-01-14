@@ -24,7 +24,7 @@ objects:
     name: config-manager
   spec:
     testing:
-      iqePlugin: rhc
+      iqePlugin: config-manager
 
     envName: ${ENV_NAME}
 
