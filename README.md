@@ -48,7 +48,7 @@ Event based workflow:
 ### Dependencies
 
 - Golang >= 1.13
-- Minikube (see [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html#_install_minikube))
+- Minikube (see [here](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_install_minikube))
 - oc cli (see [here](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands))
 - Bonfire (see [here](https://github.com/RedHatInsights/bonfire#installation))
 
@@ -56,7 +56,7 @@ Event based workflow:
 
 Config-manager is managed by [Clowder](https://github.com/RedHatInsights/clowder) and can be deployed locally onto a [Minikube](https://minikube.sigs.k8s.io/docs/start/) instance using [Bonfire](https://github.com/RedHatInsights/bonfire).
 
-The following steps (detailed [here](https://clouddot.pages.redhat.com/docs/dev/getting-started/backend-local.html)) should be performed before attempting to build and deploy a new instance of config-manager:
+The following steps (detailed [here](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html)) should be performed before attempting to build and deploy a new instance of config-manager:
 
 1. Start minikube (check [here](https://github.com/RedHatInsights/clowder/blob/master/docs/macos.md) for MacOS instructions)
 ```sh
