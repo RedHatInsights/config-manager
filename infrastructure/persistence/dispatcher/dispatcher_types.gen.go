@@ -121,4 +121,3 @@ func (a RunInput_Labels) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(object)
 }
-
