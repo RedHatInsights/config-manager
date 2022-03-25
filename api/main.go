@@ -17,6 +17,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Start creates a new Echo HTTP server, sets up route handlers, and starts
+// listening for HTTP requests. It is the module entrypoint for the REST API,
+// conforming to the startModuleFn type definition in config-manager/cmd.
 func Start(ctx context.Context, cfg *viper.Viper, errors chan<- error) {
 	config := config.Get()
 

@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Start creates a new Kafka consumer and producer, sets up a message handler
+// and starts running the consumer on a goroutine, reading messages from the
+// consumer. It is the module entrypoint for the dispatcher Kafka consumer,
+// conforming to the startModuleFn type definition in config-manager/cmd.
 func Start(
 	ctx context.Context,
 	cfg *viper.Viper,

@@ -13,14 +13,18 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
+// handler is a kafka message handler, designed to handle messages read from a
+// platform.playbook-dispatcher.runs topic and produce messages on a
+// platform.inventory.system-profile topic.
 type handler struct {
 	producer      kafkaUtils.KafkaWriterInterface
 	uuidGenerator func() uuid.UUID
 }
 
-// This message to inventory is constructed using data from provided labels. This will change
-// once this information can be consumed from the run_hosts topic.
+// buildMessage creates a message.InventoryUpdate structure, populated from
+// values in payload. The message is then marshaled into JSON and returned.
 func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]byte, error) {
+	// This will change once this information can be consumed from the run_hosts topic.
 	msg := message.InventoryUpdate{
 		Operation: "add_host",
 		Metadata:  message.PlatformMetadata{RequestID: reqID.String()},
@@ -42,6 +46,8 @@ func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]by
 	return bMsg, err
 }
 
+// onMessage is the handler function that is called during the consumer event
+// loop.
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventService, err := kafkaUtils.GetHeader(msg, "service")
 	if err != nil {

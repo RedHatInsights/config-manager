@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// HTTPClient is an abstraction of the http.Do method.
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }

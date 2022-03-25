@@ -1,10 +1,14 @@
 package message
 
+// DispatcherEvent represents a message read off the playbook-dispatcher.runs
+// topic.
 type DispatcherEvent struct {
 	Type    string                 `json:"event_type"`
 	Payload DispatcherEventPayload `json:"payload"`
 }
 
+// DispatcherEventPayload represents the payload field of the
+// DispatcherEvent.
 type DispatcherEventPayload struct {
 	ID            string            `json:"id"`
 	Account       string            `json:"account"`

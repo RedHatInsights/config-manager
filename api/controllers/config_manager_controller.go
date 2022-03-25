@@ -19,7 +19,9 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
-// ConfigManagerController implements ServerInterface
+// ConfigManagerController is the main component of the API module. It
+// implements all the HTTP request handlers by implementing the openapi
+// ServerInterface interface.
 type ConfigManagerController struct {
 	ConfigManagerService *application.ConfigManagerService
 	Server               *echo.Echo
@@ -35,8 +37,10 @@ func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
 	RegisterHandlers(sub, cmc)
 }
 
-// TODO: Again I don't like this.. Come up with a better solution for validating params (middleware?)
+// translateStatesParams transforms params into a map, preconfigured with
+// default values.
 func translateStatesParams(params GetStatesParams) map[string]interface{} {
+	// TODO: Again I don't like this.. Come up with a better solution for validating params (middleware?)
 	p := map[string]interface{}{
 		"limit":   50,
 		"offset":  0,
@@ -56,6 +60,8 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 	return p
 }
 
+// getClients queries the Inventory service proxy all hosts known to the account
+// ID extracted from the X-Rh-Identity header.
 func (cmc *ConfigManagerController) getClients(ctx echo.Context) ([]domain.Host, error) {
 	//TODO There's probably a better way to do this
 	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
@@ -82,8 +88,8 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context) ([]domain.Host,
 	return clients, err
 }
 
-// GetStates get the archive of state changes for requesting account
-// (GET /states)
+// GetStates gets the archive of state changes for the requesting account.
+// It is the handler for HTTP `GET /states` requests.
 func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStatesParams) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Println("Getting state changes for account: ", id.Identity.AccountNumber)
@@ -105,8 +111,10 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 	return ctx.JSON(http.StatusOK, states)
 }
 
-// UpdateStates updates the configuration state for requesting account
-// (POST /states)
+// UpdateStates updates the active configuration state for the requesting
+// account, persisting it into the database before applying the state to all
+// identified clients.
+// It is the handler for HTTP `POST /states` requests.
 func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Println("Updating and applying state for account: ", id.Identity.AccountNumber)
@@ -159,8 +167,9 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, acc)
 }
 
-// GetCurrentState gets the current configuration state for requesting account
-// (GET /states/current)
+// GetCurrentState gets the current configuration state for the requesting
+// account.
+// It is the handler for HTTP `GET /states/current` requests.
 func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Println("Getting current state for account: ", id.Identity.AccountNumber)
@@ -174,8 +183,9 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, acc)
 }
 
-// GetStateById gets a single configuration state for requesting account
-// (GET /states/{id})
+// GetStateById gets a single configuration state from the state archive for the
+// requesting account.
+// It is the handler for HTTP `GET /states/{id}` requests.
 func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID StateIDParam) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Printf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
@@ -188,8 +198,9 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 	return ctx.JSON(http.StatusOK, state)
 }
 
-// GetPlaybookById generates and returns a playbook to a requesting client via a state ID
-// (GET /states/{id}/playbook)
+// GetPlaybookById generates a playbook constructed from the state archive
+// identified by the given stateID and returns it.
+// It is the handler for HTTP `GET /states/{id}/playbook` requests.
 func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID StateIDParam) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
@@ -204,8 +215,9 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 	return ctx.String(http.StatusOK, playbook)
 }
 
-// GetPlaybookPreview generates and returns a playbook preview to a requesting client
-// (GET /states/preview)
+// GetPlaybookPreview generates a playbook from the data provided in the request
+// body and returns it.
+// It is the handler for HTTP `GET /states/preview` requests.
 func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
 	id := identity.Get(ctx.Request().Context())
 	log.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
