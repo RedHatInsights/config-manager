@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// StateArchive represents both a state_archive database record and JSON API
+// object.
 type StateArchive struct {
 	AccountID string    `db:"account_id" json:"account"`
 	StateID   uuid.UUID `db:"state_id" json:"id"`
@@ -15,6 +17,8 @@ type StateArchive struct {
 	State     StateMap  `db:"state" json:"state"`
 }
 
+// StateArchives represents the collection of archives retrieved from the
+// database.
 type StateArchives struct {
 	Count  int            `json:"count"`
 	Limit  int            `json:"limit"`
@@ -23,6 +27,8 @@ type StateArchives struct {
 	States []StateArchive `json:"results"`
 }
 
+// StateArchiveRepository is an abstraction of the CRUD API methods for
+// accessing state archive information.
 type StateArchiveRepository interface {
 	GetStateArchive(s *StateArchive) (*StateArchive, error)
 	GetAllStateArchives(accountID, sortBy string, limit, offset int) (*StateArchives, error)

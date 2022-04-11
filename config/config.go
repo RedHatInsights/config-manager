@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Get creates a Viper configuration registry with keys and default values,
+// loads values from the environment automatically, and returns it.
 func Get() *viper.Viper {
 	options := viper.New()
 

@@ -23,6 +23,7 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 	return args.Error(0)
 }
 
+// NewConsumer creates a configured kafka.Reader.
 func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     cfg.GetStringSlice("Kafka_Brokers"),
@@ -34,6 +35,7 @@ func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
 	return consumer
 }
 
+// NewProducer creates a configured kafka.Writer.
 func NewProducer(cfg *viper.Viper, topic string) *kafka.Writer {
 	producer := &kafka.Writer{
 		Addr:  kafka.TCP(cfg.GetStringSlice("Kafka_Brokers")[0]),
@@ -43,6 +45,9 @@ func NewProducer(cfg *viper.Viper, topic string) *kafka.Writer {
 	return producer
 }
 
+// NewConsumerEventLoop returns a function handler (start) that can be called to
+// return a function handler that can be called to start reading messages from
+// consumer. For every message read, handler is called.
 func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Reader,
@@ -61,6 +66,8 @@ func NewConsumerEventLoop(
 	}
 }
 
+// GetHeader loops over the message headers, returning the value of key, if
+// found.
 func GetHeader(msg kafka.Message, key string) (string, error) {
 	for _, value := range msg.Headers {
 		if value.Key == key {

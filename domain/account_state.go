@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// AccountState represents both an account_state database record and JSON API
+// object.
 type AccountState struct {
 	AccountID string    `db:"account_id" json:"account"`
 	State     StateMap  `db:"state" json:"state"`
@@ -15,6 +17,8 @@ type AccountState struct {
 	Label     string    `db:"label" json:"label"`
 }
 
+// AccountStateRepository is an abstraction of the CRUD API methods for
+// accessing account state information.
 type AccountStateRepository interface {
 	GetAccountState(acc *AccountState) (*AccountState, error)
 	UpdateAccountState(acc *AccountState) error

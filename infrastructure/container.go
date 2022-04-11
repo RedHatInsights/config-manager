@@ -21,7 +21,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Container holds application resources
+// Container is the primary application structure. It holds references to the
+// various API controllers, service managers and external data repositories. It
+// provides a collection of accessor methods to retrieve handles to each
+// application component.
 type Container struct {
 	Config *viper.Viper
 	db     *sql.DB
@@ -42,7 +45,8 @@ type Container struct {
 	inventoryRepo      *persistence.InventoryClient
 }
 
-// Database configures and opens a db connection
+// Database lazily initializes an sql.DB, performs any necessary migrations, and
+// returns it.
 func (c *Container) Database() *sql.DB {
 	if c.db == nil {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
@@ -87,7 +91,7 @@ func (c *Container) Database() *sql.DB {
 	return c.db
 }
 
-// Server initializes a new echo server
+// Server lazily initializes a new Echo HTTP server and returns it.
 func (c *Container) Server() *echo.Echo {
 	if c.server == nil {
 		c.server = echo.New()
@@ -96,7 +100,8 @@ func (c *Container) Server() *echo.Echo {
 	return c.server
 }
 
-// CMService provides access to various application resources
+// CMService lazily initializes a new application.ConfigManagerService and
+// returns it.
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
@@ -113,6 +118,8 @@ func (c *Container) CMService() *application.ConfigManagerService {
 	return c.cmService
 }
 
+// PlaybookGenerator lazily initializes a new application.Generator and returns
+// it.
 func (c *Container) PlaybookGenerator() *application.Generator {
 	if c.playbookGenerator == nil {
 		templates := utils.FilesIntoMap(c.Config.GetString("Playbook_Files"), "*.yml")
@@ -124,7 +131,8 @@ func (c *Container) PlaybookGenerator() *application.Generator {
 	return c.playbookGenerator
 }
 
-// CMController sets up handlers for api routes
+// CMController lazily initializes a new controllers.ConfigManagerController and
+// returns it.
 func (c *Container) CMController() *controllers.ConfigManagerController {
 	if c.cmController == nil {
 		c.cmController = &controllers.ConfigManagerController{
@@ -137,7 +145,8 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 	return c.cmController
 }
 
-// AccountStateRepo enables interaction with the account_states db table
+// AccountStateRepo lazily initializes a new persistence.AccountStateRepository
+// and returns it.
 func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	if c.accountStateRepo == nil {
 		c.accountStateRepo = &persistence.AccountStateRepository{
@@ -148,7 +157,8 @@ func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	return c.accountStateRepo
 }
 
-// StateArchiveRepo enables interaction with the state_archives db table
+// StateArchiveRepo lazily initializes a new persistence.StateArchiveRepository
+// and returns it.
 func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	if c.stateArchiveRepo == nil {
 		c.stateArchiveRepo = &persistence.StateArchiveRepository{
@@ -159,7 +169,8 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	return c.stateArchiveRepo
 }
 
-// DispatcherRepo enables interaction with the playbook dispatcher
+// DispatcherRepo lazily initializes a new dispatcher.DispatcherClient and
+// returns it.
 func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 	if c.dispatcherRepo == nil {
 		if c.Config.GetString("Dispatcher_Impl") == "mock" {
@@ -172,7 +183,8 @@ func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 	return c.dispatcherRepo
 }
 
-// CloudConnectorRepo enables interaction with the cloud connector
+// CloudConnectorRepo lazily initializes a new persistence.CloundConnectorClient
+// and returns it.
 func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 	if c.cloudConnectorRepo == nil {
 		client := &http.Client{
@@ -191,7 +203,8 @@ func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
 	return c.cloudConnectorRepo
 }
 
-// InventoryRepo enables interaction with inventory
+// InventoryRepo lazily initializes a new persistence.InventoryClient and
+// returns it.
 func (c *Container) InventoryRepo() domain.InventoryClient {
 	if c.inventoryRepo == nil {
 		client := &http.Client{

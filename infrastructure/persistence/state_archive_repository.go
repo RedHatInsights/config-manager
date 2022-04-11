@@ -7,10 +7,15 @@ import (
 	"strings"
 )
 
+// StateArchiveRepository provides a CRUD API to the "state_archive" local
+// database table.
 type StateArchiveRepository struct {
 	DB *sql.DB
 }
 
+// GetStateArchive performs an SQL query to look up a state archive for the
+// given state archive. The results are scanned into the provided StateArchive
+// structure and returned.
 func (r *StateArchiveRepository) GetStateArchive(s *domain.StateArchive) (*domain.StateArchive, error) {
 	err := r.DB.QueryRow("SELECT account_id, label, initiator, created_at, state FROM state_archive WHERE state_id=$1",
 		s.StateID).Scan(&s.AccountID, &s.Label, &s.Initiator, &s.CreatedAt, &s.State)
@@ -18,6 +23,9 @@ func (r *StateArchiveRepository) GetStateArchive(s *domain.StateArchive) (*domai
 	return s, err
 }
 
+// GetAllStateArchives performs an SQL query to look up all state archive
+// records associated with the given accountID. sortBy must be a colon-separated
+// list of column names.
 func (r *StateArchiveRepository) GetAllStateArchives(accountID, sortBy string, limit, offset int) (*domain.StateArchives, error) {
 	var total int
 	err := r.DB.QueryRow("SELECT COUNT(*) FROM state_archive WHERE account_id=$1", accountID).Scan(&total)
@@ -61,12 +69,16 @@ func (r *StateArchiveRepository) GetAllStateArchives(accountID, sortBy string, l
 	return archives, err
 }
 
+// DeleteStateArchive performs an SQL query to delete the given state archive
+// record.
 func (r *StateArchiveRepository) DeleteStateArchive(s *domain.StateArchive) error {
 	_, err := r.DB.Exec("DELETE FROM state_archive WHERE state_id=$1", s.StateID)
 
 	return err
 }
 
+// CreateStateArchive performs an SQL query to insert the given state archive
+// into the storage table.
 func (r *StateArchiveRepository) CreateStateArchive(s *domain.StateArchive) error {
 	_, err := r.DB.Exec("INSERT INTO State_archive(state_id, account_id, label, initiator, created_at, state) VALUES($1, $2, $3, $4, $5, $6)",
 		s.StateID, s.AccountID, s.Label, s.Initiator, s.CreatedAt, s.State)

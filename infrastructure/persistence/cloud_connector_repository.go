@@ -16,6 +16,8 @@ const (
 	headerCloudConnectorPSK      = "x-rh-cloud-connector-psk"
 )
 
+// CloudConnectorClient provides REST client API methods to interact with the
+// platform cloud-connector application.
 type CloudConnectorClient struct {
 	CloudConnectorHost     string
 	CloudConnectorClientID string
@@ -24,6 +26,10 @@ type CloudConnectorClient struct {
 	CloudConnectorImpl     string
 }
 
+// GetConnections sends an HTTP GET request to the cloud-connector service for
+// the given accountID, marshals the response into a
+// domain.CloudConnectorConnections structure, and returns a string slice
+// containing all the connections for the client.
 func (c *CloudConnectorClient) GetConnections(
 	ctx context.Context,
 	accountID string,

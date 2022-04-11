@@ -12,6 +12,8 @@ import (
 	"net/url"
 )
 
+// InventoryClient provides REST client API methods to interact with the
+// platform Inventory application.
 type InventoryClient struct {
 	InventoryHost string
 	InventoryImpl string
@@ -35,6 +37,9 @@ func (c *InventoryClient) buildURL(page int) string {
 	return Url.String()
 }
 
+// GetInventoryClients sends an HTTP GET request to the Inventory service,
+// marshals the response into a domain.InventoryResponse structure and returns
+// it.
 func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
 	var results domain.InventoryResponse
 

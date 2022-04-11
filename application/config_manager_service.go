@@ -14,13 +14,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ConfigManagerInterface is an abstraction around a subset of the
+// ConfigManagerService methods.
 type ConfigManagerInterface interface {
 	GetAccountState(id string) (*domain.AccountState, error)
 	ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error)
 	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
 }
 
-// ConfigManagerService enables communication between the api and other resources (db + other apis)
+// ConfigManagerService provides an API for interacting with backend services
+// such as the local storage database, inventory, cloud-connector, and
+// playbook-dispatcher.
 type ConfigManagerService struct {
 	Cfg                *viper.Viper
 	AccountStateRepo   domain.AccountStateRepository

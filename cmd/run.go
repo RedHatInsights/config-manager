@@ -18,6 +18,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+// startModuleFn is a function definition that a module must implement in order
+// be started by the run command.
 type startModuleFn = func(
 	ctx context.Context,
 	cfg *viper.Viper,

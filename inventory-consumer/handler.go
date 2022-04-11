@@ -13,12 +13,17 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
+// handler is a kafka message handler, designed to handle messages read from a
+// platform.inventory.events topic.
 type handler struct {
 	ConfigManagerService application.ConfigManagerInterface
 }
 
 type requestIDkey string
 
+// onMessage is the handler function that is called during the consumer event
+// loop. It unmarshals the received message and evaluates whether state should
+// be applied for the identified host, applying as needed.
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
 	if err != nil {

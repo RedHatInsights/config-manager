@@ -22,14 +22,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+// DispatcherClient provides REST client API methods to interact with the
+// platform playbook-dispatcher application.
 type DispatcherClient interface {
 	Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error)
 }
 
+// dispatcherClientImpl implements DispatcherClient interface.
 type dispatcherClientImpl struct {
 	client ClientWithResponsesInterface
 }
 
+// NewDispatcherClientWithDoer returns a DispatchClient by constructing a
+// dispatcher.Client, configured with request headers and host information.
 func NewDispatcherClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) DispatcherClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
@@ -50,6 +55,7 @@ func NewDispatcherClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) Dispatc
 	}
 }
 
+// NewDispatcherClient creates a new DispatcherClient.
 func NewDispatcherClient(cfg *viper.Viper) DispatcherClient {
 	client := &http.Client{
 		Timeout: time.Duration(int(time.Second) * cfg.GetInt("Dispatcher_Timeout")),
@@ -58,6 +64,8 @@ func NewDispatcherClient(cfg *viper.Viper) DispatcherClient {
 	return NewDispatcherClientWithDoer(cfg, client)
 }
 
+// Dispatch performs the CreateWithResponse API method of the
+// playbook-dispatcher service.
 func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error) {
 	res, err := dc.client.ApiInternalRunsCreateWithResponse(ctx, inputs)
 	if err != nil {

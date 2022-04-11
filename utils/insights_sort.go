@@ -1,5 +1,7 @@
 package utils
 
+// InsightsFirst is a string slice that, when sorted, puts "insights" first if
+// found.
 type InsightsFirst []string
 
 func (a InsightsFirst) Len() int      { return len(a) }
