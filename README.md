@@ -51,6 +51,7 @@ Event based workflow:
 - Minikube (see [here](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_install_minikube))
 - oc cli (see [here](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands))
 - Bonfire (see [here](https://github.com/RedHatInsights/bonfire#installation))
+- Quay Pull Secret (see [here](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_get_your_quay_pull_secret))
 
 ### Deploying locally
 
@@ -79,20 +80,26 @@ minikube kubectl -- apply -f https://github.com/RedHatInsights/clowder/releases/
 minikube kubectl -- create ns config-manager
 ```
 
-5. Deploy ClowdEnvironment
+5. Download your quay secret if you haven't already, and add it to the
+   config-manager namespace
 ```sh
-bonfire deploy-env -n config-manager
+minikube kubectl -- create $USER-secret.yml --namespace config-manager
 ```
 
-6. Deploy config-manager
+6. Deploy ClowdEnvironment
+```sh
+bonfire deploy-env -n config-manager -u $USER
+```
+
+7. Deploy config-manager
 ```sh
 ./bonfire_deploy.sh
 ```
 
-7. Access config-manager
+8. Access config-manager
 ```sh
 oc port-forward svc/config-manager-service -n config-manager 8000 &
 curl -v -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:8000/api/config-manager/v1/states/current
 ```
 
-Once prerequisite steps 1-5 have been completed steps 6-7 can be repeated as needed to deploy new changes to the local environment. 
+Once prerequisite steps 1-6 have been completed steps 7-8 can be repeated as needed to deploy new changes to the local environment. 
