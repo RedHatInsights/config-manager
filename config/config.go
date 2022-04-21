@@ -25,7 +25,7 @@ func Get() *viper.Viper {
 	if os.Getenv("CLOWDER_ENABLED") == "true" {
 		cfg := clowder.LoadedConfig
 
-		options.SetDefault("Web_Port", cfg.WebPort)
+		options.SetDefault("Web_Port", cfg.PublicPort)
 		options.SetDefault("Metrics_Port", cfg.MetricsPort)
 		options.SetDefault("Metrics_Path", cfg.MetricsPath)
 

@@ -12,6 +12,8 @@ import (
 	"net/url"
 )
 
+var IdentityKey = struct{}{}
+
 // InventoryClient provides REST client API methods to interact with the
 // platform Inventory application.
 type InventoryClient struct {
@@ -61,7 +63,7 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 		log.Println("Error constructing request to inventory: ", err)
 		return results, err
 	}
-	req.Header.Add("X-Rh-Identity", ctx.Value("X-Rh-Identity").(string)) //TODO: Re-evaluate header forwarding
+	req.Header.Add("X-Rh-Identity", ctx.Value(IdentityKey).(string)) //TODO: Re-evaluate header forwarding
 
 	res, err := c.Client.Do(req)
 	if err != nil {
