@@ -86,7 +86,7 @@ var tests = []struct {
 
 func TestGetClients(t *testing.T) {
 	id := base64.StdEncoding.EncodeToString([]byte(`{ "identity": {"account_number": "540155", "type": "user", "internal": { "org_id": "1979710" } } }`))
-	ctx := context.WithValue(context.Background(), "X-Rh-Identity", id)
+	ctx := context.WithValue(context.Background(), persistence.IdentityKey, id)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

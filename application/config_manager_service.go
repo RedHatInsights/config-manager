@@ -61,7 +61,9 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 
 	defaultState := s.Cfg.GetString("Service_Config")
 	state := domain.StateMap{}
-	json.Unmarshal([]byte(defaultState), &state)
+	if err := json.Unmarshal([]byte(defaultState), &state); err != nil {
+		return nil, err
+	}
 	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state)
 
 	return acc, err
