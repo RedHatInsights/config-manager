@@ -53,3 +53,22 @@ func TestGetConnectionsAccountNotFound(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, len(results), 0, "results should exist, but there should be no connections")
 }
+
+func TestSendMessageSuccess(t *testing.T) {
+	response := `{"id": "0afbfb55-a2af-43f2-84da-a0896f03f067"}`
+
+	conf := config.Get()
+	conf.Set("Cloud_Connector_Host", "test")
+	conf.Set("Cloud_Connector_Client_ID", "test")
+	conf.Set("Cloud_Connector_PSK", "test")
+
+	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 201))
+	if err != nil {
+		t.Error(err)
+	}
+
+	results, err := connector.SendMessage(context.Background(), "0000001", "test", []byte(`"test"`), nil, "test")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "0afbfb55-a2af-43f2-84da-a0896f03f067", results, "the id from the response should be 0afbfb55-a2af-43f2-84da-a0896f03f067")
+}
