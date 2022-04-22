@@ -6,5 +6,5 @@ IP=$(minikube ip)
 
 podman build -t "$IMAGE:$TAG" -f Dockerfile
 podman push $IMAGE:"$TAG" "$IP":5000/config-manager:"$TAG" --tls-verify=false
-bonfire deploy -c ./bonfire_config.yaml --get-dependencies --namespace config-manager -p config-manager/config-manager/"$IMAGE_TAG"="$TAG" config-manager -i $IMAGE="$TAG"
+bonfire deploy -c ./bonfire_config.yaml --get-dependencies --namespace config-manager --set-parameter config-manager/config-manager/"$IMAGE"_"$TAG"="$TAG" --set-image-tag $IMAGE="$TAG" config-manager
 echo "$TAG"
