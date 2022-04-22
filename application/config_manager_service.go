@@ -2,6 +2,7 @@ package application
 
 import (
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"context"
 	"database/sql"
@@ -29,7 +30,7 @@ type ConfigManagerService struct {
 	Cfg                *viper.Viper
 	AccountStateRepo   domain.AccountStateRepository
 	StateArchiveRepo   domain.StateArchiveRepository
-	CloudConnectorRepo domain.CloudConnectorClient
+	CloudConnectorRepo cloudconnector.CloudConnectorClient
 	InventoryRepo      domain.InventoryClient
 	DispatcherRepo     dispatcher.DispatcherClient
 	PlaybookGenerator  Generator

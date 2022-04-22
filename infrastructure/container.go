@@ -5,6 +5,7 @@ import (
 	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
+	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/utils"
 	"database/sql"
@@ -41,7 +42,7 @@ type Container struct {
 	accountStateRepo   *persistence.AccountStateRepository
 	stateArchiveRepo   *persistence.StateArchiveRepository
 	dispatcherRepo     dispatcher.DispatcherClient
-	cloudConnectorRepo *persistence.CloudConnectorClient
+	cloudConnectorRepo cloudconnector.CloudConnectorClient
 	inventoryRepo      *persistence.InventoryClient
 }
 
@@ -185,18 +186,16 @@ func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 
 // CloudConnectorRepo lazily initializes a new persistence.CloundConnectorClient
 // and returns it.
-func (c *Container) CloudConnectorRepo() domain.CloudConnectorClient {
+func (c *Container) CloudConnectorRepo() cloudconnector.CloudConnectorClient {
 	if c.cloudConnectorRepo == nil {
-		client := &http.Client{
-			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Cloud_Connector_Timeout")),
-		}
-
-		c.cloudConnectorRepo = &persistence.CloudConnectorClient{
-			CloudConnectorHost:     c.Config.GetString("Cloud_Connector_Host"),
-			CloudConnectorClientID: c.Config.GetString("Cloud_Connector_Client_ID"),
-			CloudConnectorPSK:      c.Config.GetString("Cloud_Connector_PSK"),
-			CloudConnectorImpl:     c.Config.GetString("Cloud_Connector_Impl"),
-			Client:                 client,
+		if c.Config.GetString("Cloud_Connector_Impl") == "mock" {
+			c.cloudConnectorRepo = cloudconnector.NewCloudConnectorClientMock()
+		} else {
+			client, err := cloudconnector.NewCloudConnectorClient(c.Config)
+			if err != nil {
+				log.Fatalf("cannot create cloud connector client: %v", err)
+			}
+			c.cloudConnectorRepo = client
 		}
 	}
 
