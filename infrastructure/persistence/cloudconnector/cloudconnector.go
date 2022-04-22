@@ -1,7 +1,9 @@
 package cloudconnector
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,6 +17,7 @@ import (
 // interact with the platform cloud-connector application.
 type CloudConnectorClient interface {
 	GetConnections(ctx context.Context, accountID string) ([]string, error)
+	SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error)
 }
 
 // cloudConnectorClientImpl implements the CloudConnectorClient interface by
@@ -68,4 +71,45 @@ func (c *cloudConnectorClientImpl) GetConnections(ctx context.Context, accountID
 	}
 
 	return nil, nil
+}
+
+func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error) {
+	body := struct {
+		Account   string            `json:"account"`
+		Directive string            `json:"directive"`
+		Metadata  map[string]string `json:"metadata"`
+		Payload   json.RawMessage   `json:"payload"`
+		Recipient string            `json:"recipient"`
+	}{
+		Account:   accountID,
+		Directive: directive,
+		Metadata:  metadata,
+		Payload:   payload,
+		Recipient: recipient,
+	}
+	data, err := json.Marshal(body)
+	if err != nil {
+		return "", err
+	}
+	// Using PostMessageWithBody here because the MessageRequest is incorrectly
+	// typed as *string rather than interface{}. Perhaps a newer version of the
+	// OpenAPI spec will correct that, and PostMessage with a MessageRequest
+	// struct can be used instead.
+	resp, err := c.PostMessageWithBody(ctx, "application/json", bytes.NewReader(data), func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("x-rh-cloud-connector-account", accountID)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	response, err := ParsePostMessageResponse(resp)
+	if err != nil {
+		return "", err
+	}
+
+	if response.JSON201 != nil {
+		return *response.JSON201.Id, nil
+	}
+
+	return "", nil
 }
