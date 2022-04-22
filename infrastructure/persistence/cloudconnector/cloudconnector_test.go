@@ -1,7 +1,7 @@
-package persistence_test
+package cloudconnector
 
 import (
-	"config-manager/infrastructure/persistence"
+	"config-manager/config"
 	"config-manager/utils"
 	"context"
 	"testing"
@@ -14,11 +14,14 @@ func TestGetConnectionsSuccess(t *testing.T) {
 		"connections": ["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]
 	}`
 
-	connector := &persistence.CloudConnectorClient{
-		CloudConnectorHost:     "test",
-		CloudConnectorClientID: "test",
-		CloudConnectorPSK:      "test",
-		Client:                 utils.SetupMockHTTPClient(response, 200),
+	conf := config.Get()
+	conf.Set("Cloud_Connector_Host", "test")
+	conf.Set("Cloud_Connector_Client_ID", "test")
+	conf.Set("Cloud_Connector_PSK", "test")
+
+	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	if err != nil {
+		t.Error(err)
 	}
 
 	results, err := connector.GetConnections(context.Background(), "0000001")
@@ -35,11 +38,14 @@ func TestGetConnectionsAccountNotFound(t *testing.T) {
 		"connections": []
 	}`
 
-	connector := &persistence.CloudConnectorClient{
-		CloudConnectorHost:     "test",
-		CloudConnectorClientID: "test",
-		CloudConnectorPSK:      "test",
-		Client:                 utils.SetupMockHTTPClient(response, 200),
+	conf := config.Get()
+	conf.Set("Cloud_Connector_Host", "test")
+	conf.Set("Cloud_Connector_Client_ID", "test")
+	conf.Set("Cloud_Connector_PSK", "test")
+
+	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	if err != nil {
+		t.Error(err)
 	}
 
 	results, err := connector.GetConnections(context.Background(), "0000001")
