@@ -14,6 +14,7 @@ import (
 	"config-manager/api/instrumentation"
 	"config-manager/application"
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence"
 	"config-manager/utils"
 	"context"
 	"encoding/json"
@@ -74,7 +75,7 @@ func translateStatesParams(params GetStatesParams) map[string]interface{} {
 // ID extracted from the X-Rh-Identity header.
 func (cmc *ConfigManagerController) getClients(ctx echo.Context) ([]domain.Host, error) {
 	//TODO There's probably a better way to do this
-	ctxWithID := context.WithValue(ctx.Request().Context(), "X-Rh-Identity", ctx.Request().Header["X-Rh-Identity"][0])
+	ctxWithID := context.WithValue(ctx.Request().Context(), persistence.IdentityKey, ctx.Request().Header["X-Rh-Identity"][0])
 	var clients []domain.Host
 	var err error
 
