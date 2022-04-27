@@ -17,6 +17,7 @@ import (
 // interact with the platform cloud-connector application.
 type CloudConnectorClient interface {
 	GetConnections(ctx context.Context, accountID string) ([]string, error)
+	GetConnectionStatus(ctx context.Context, accountID string, recipient string) (string, map[string]interface{}, error)
 	SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error)
 }
 
@@ -112,4 +113,39 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 	}
 
 	return "", nil
+}
+
+func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, accountID string, recipient string) (string, map[string]interface{}, error) {
+	body := ConnectionStatusRequest{
+		Account: &accountID,
+		NodeId:  &recipient,
+	}
+	resp, err := c.PostConnectionStatus(ctx, PostConnectionStatusJSONRequestBody(body), func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("x-rh-cloud-connector-account", accountID)
+		return nil
+	})
+	if err != nil {
+		return "unknown", nil, err
+	}
+	response, err := ParsePostConnectionStatusResponse(resp)
+	if err != nil {
+		return "unknown", nil, err
+	}
+
+	if response.JSON200 != nil {
+		var status string
+		var dispatchers map[string]interface{}
+
+		if response.JSON200.Status != nil {
+			status = string(*response.JSON200.Status)
+		}
+
+		if response.JSON200.Dispatchers != nil {
+			dispatchers = map[string]interface{}(*response.JSON200.Dispatchers)
+		}
+
+		return status, dispatchers, nil
+	}
+
+	return "unknown", map[string]interface{}{}, nil
 }

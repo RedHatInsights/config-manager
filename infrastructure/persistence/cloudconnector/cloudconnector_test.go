@@ -72,3 +72,23 @@ func TestSendMessageSuccess(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "0afbfb55-a2af-43f2-84da-a0896f03f067", results, "the id from the response should be 0afbfb55-a2af-43f2-84da-a0896f03f067")
 }
+
+func TestGetConnectionStatus(t *testing.T) {
+	response := `{"status":"connected","dispatchers": {"rhc-worker-playbook": {}}}`
+
+	conf := config.Get()
+	conf.Set("Cloud_Connector_Host", "test")
+	conf.Set("Cloud_Connector_Client_ID", "test")
+	conf.Set("Cloud_Connector_PSK", "test")
+
+	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	if err != nil {
+		t.Error(err)
+	}
+
+	status, results, err := connector.GetConnectionStatus(context.Background(), "0000001", "test")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "connected", status, "status should be connected")
+	assert.Equal(t, map[string]interface{}{"rhc-worker-playbook": map[string]interface{}{}}, results, "the dispatchers from the response should contain rhc-worker-playbook")
+}
