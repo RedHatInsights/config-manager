@@ -40,6 +40,16 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		}
 
 		if value.Host.Reporter == "cloud-connector" {
+			if eventType == "created" {
+				log.Printf("New host detected; setting up for playbook execution")
+				messageID, err := this.ConfigManagerService.SetupHost(ctx, value.Host)
+				if err != nil {
+					log.Printf("Error setting up host: %v: %v", value.Host, err)
+					return
+				}
+				log.Printf("Cloud-connector setup host message id: %v", messageID)
+			}
+
 			accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
 			if err != nil {
 				log.Println("Error retrieving state for account: ", value.Host.Account)
