@@ -26,3 +26,8 @@ func (m *ConfigManagerServiceMock) GetSingleStateChange(id string) (*domain.Stat
 	args := m.Called(id)
 	return args.Get(0).(*domain.StateArchive), args.Error(1)
 }
+
+func (m *ConfigManagerServiceMock) SetupHost(ctx context.Context, host domain.Host) (string, error) {
+	args := m.Called(ctx, host)
+	return args.Get(0).(string), args.Error(1)
+}
