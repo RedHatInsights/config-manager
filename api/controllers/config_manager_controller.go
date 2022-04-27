@@ -142,6 +142,9 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	}
 
 	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	equal, err := utils.VerifyStatePayload(currentState.State, *payload)
 	if err != nil {
