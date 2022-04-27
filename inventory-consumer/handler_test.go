@@ -144,6 +144,12 @@ func TestInventoryMessageHandler(t *testing.T) {
 				[]domain.Host{invData.Host},
 			).Return([]dispatcher.RunCreated{}, nil)
 
+			cmServiceMock.On(
+				"SetupHost",
+				ctx,
+				invData.Host,
+			).Return("", nil)
+
 			handler := &handler{
 				ConfigManagerService: cmServiceMock,
 			}
@@ -152,6 +158,11 @@ func TestInventoryMessageHandler(t *testing.T) {
 
 			if tt.validEvent {
 				cmServiceMock.AssertCalled(t, "GetAccountState", tt.account)
+				if tt.eventType == "created" {
+					cmServiceMock.AssertCalled(t, "SetupHost", ctx, invData.Host)
+				} else {
+					cmServiceMock.AssertNotCalled(t, "SetupHost")
+				}
 				if invData.Host.SystemProfile.RHCState != tt.currentState {
 					cmServiceMock.AssertCalled(
 						t,
@@ -169,6 +180,7 @@ func TestInventoryMessageHandler(t *testing.T) {
 			} else {
 				cmServiceMock.AssertNotCalled(t, "GetAccountState")
 				cmServiceMock.AssertNotCalled(t, "ApplyState")
+				cmServiceMock.AssertNotCalled(t, "SetupHost")
 			}
 		})
 	}
