@@ -21,6 +21,7 @@ type ConfigManagerInterface interface {
 	GetAccountState(id string) (*domain.AccountState, error)
 	ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error)
 	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
+	SetupHost(ctx context.Context, host domain.Host) (string, error)
 }
 
 // ConfigManagerService provides an API for interacting with backend services
@@ -224,4 +225,55 @@ func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 	}
 
 	return playbook, err
+}
+
+// SetupHost messages a host to install the rhc-worker-playbook RPM to enable it
+// to receive and execute playbooks from the playbook-dispatcher service.
+func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) (string, error) {
+	status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
+	if err != nil {
+		return "", err
+	}
+
+	if status != "connected" {
+		return "", fmt.Errorf("cannot set up host: host connection status = %v", status)
+	}
+
+	if _, has := dispatchers["package-manager"]; !has {
+		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SystemProfile.RHCID)
+	}
+
+	payload := struct {
+		Command string `json:"command"`
+		Name    string `json:"name"`
+	}{
+		Command: "install",
+		Name:    "rhc-worker-playbook",
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal payload: %v", err)
+	}
+
+	messageID, err := s.CloudConnectorRepo.SendMessage(ctx, host.Account, "package-manager", data, nil, host.SystemProfile.RHCID)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
+		if err != nil {
+			return "", err
+		}
+		if status == "disconnected" {
+			return messageID, fmt.Errorf("host disconnected while waiting for connection status")
+		}
+		if _, has := dispatchers["rhc-worker-playbook"]; has {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
+
+	return messageID, nil
+
 }
