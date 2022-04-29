@@ -1,27 +1,238 @@
-#docker compose for kafka, zookeeper, postgres, and config-manager
+# This docker-compose.yml file will start up config-manager's dependent services
+# locally, enabling config-manager to run locally within a debugger or manually
+# in a console. It is not meant for deployment environments.
+# It exposes a number of ports from the services locally, so the services can be
+# interacted with, such as kafka on 29092, mosquitto on 8883, and each module of
+# cloud-connector.
 
 version: "3.8"
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper
     environment:
-      - ZOOKEEPER_CLIENT_PORT=32181
-      - ZOOKEEPER_SERVER_ID=1
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_SERVER_ID: 1
+    healthcheck:
+      test: echo srvr | nc zookeeper 32181 || exit 1
+      retries: 20
+      interval: 10s
   kafka:
     image: confluentinc/cp-kafka
     ports:
       - "29092:29092"
     depends_on:
-       - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
-      - KAFKA_LISTENERS=INTERNAL://kafka:9092,EXTERNAL://kafka:29092
-      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:9092,EXTERNAL://localhost:29092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
-      - KAFKA_BROKER_ID=1
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
-      - KAFKA_MAX_REQUEST_SIZE=1048576
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_MAX_REQUEST_SIZE: 1048576
+    healthcheck:
+      test: kafka-topics --bootstrap-server kafka:9092 --list
+      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  cloud-connector-db:
+    image: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: insights
+      POSTGRES_USER: insights
+      POSTGRES_DB: cloud-connector
+  inventory-db:
+    image: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: insights
+      POSTGRES_USER: insights
+      POSTGRES_DB: inventory
+  mqtt-broker:
+    image: eclipse-mosquitto
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "/usr/sbin/mosquitto -c /mosquitto/mosquitto.conf"
+    volumes:
+      - "./dev/mosquitto:/mosquitto:Z"
+    ports:
+      - "1883:1883"
+  cloud-connector-migrate:
+    image: quay.io/cloudservices/cloud-connector
+    depends_on:
+      - cloud-connector-db
+    environment:
+      CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST: cloud-connector-db
+    entrypoint: /migrate_db upgrade
+  cloud-connector-kafka-consumer:
+    image: quay.io/cloudservices/cloud-connector
+    depends_on:
+      kafka:
+        condition: service_healthy
+      cloud-connector-migrate:
+        condition: service_completed_successfully
+      cloud-connector-mqtt-consumer:
+        condition: service_started
+    volumes:
+      - "./dev/kafka:/data:Z"
+    ports:
+      - "8083:8083"
+    environment:
+      CLOUD_CONNECTOR_MQTT_CLIENT_ID: kafka-consumer
+      CLOUD_CONNECTOR_AUTH_GATEWAY_URL: http://FAKE/
+      CLOUD_CONNECTOR_SOURCES_HTTO_CLIENT_TIMEOUT: 51
+      CLOUD_CONNECTOR_AUTH_GATEWAY_HTTP_CLIENT_TIMEOUT: 5
+      CLOUD_CONNECTOR_SLEEP_TIME_HACK: 0
+      CLOUD_CONNECTOR_SOURCES_RECORDER_IMPL: fake
+      CLOUD_CONNECTOR_CONNECTED_CLIENT_RECORDER_IMPL: inventory
+      CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY: "true"
+      CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_CONFIG_FILE: /data/client_id_to_account_id_map.json
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC: platform.inventory.host-ingress
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_BROKERS: kafka:9092
+      CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST: cloud-connector-db
+      CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS: tcp://mqtt-broker:1883
+      CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS: kafka:9092
+    entrypoint: /cloud-connector kafka_message_consumer -l 0.0.0.0:8083
+  cloud-connector-mqtt-consumer:
+    image: quay.io/cloudservices/cloud-connector
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_started
+      cloud-connector-db:
+        condition: service_completed_successfully
+    ports:
+      - "8082:8082"
+    environment:
+      CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BATCH_SIZE: 1
+      CLOUD_CONNECTOR_MQTT_MESSAGE_DISPATCHER_CONCURRENCY_LIMIT: 100
+      CLOUD_CONNECTOR_MQTT_CLIENT_ID: connector-service
+      CLOUD_CONNECTOR_AUTH_GATEWAY_URL: http://FAKE/
+      CLOUD_CONNECTOR_SOURCES_HTTP_CLIENT_TIMEOUT: 51
+      CLOUD_CONNECTOR_AUTH_GATEWAY_HTTP_CLIENT_TIMEOUT: 5
+      CLOUD_CONNECTOR_SOURCES_RECORDER_IMPL: fake
+      CLOUD_CONNECTOR_CONNECTED_CLIENT_RECORDER_IMPL: inventory
+      CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY: "true"
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC: platform.inventory.host-ingress
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_BROKERS: kafka:9092
+      CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST: cloud-connector-db
+      CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS: tcp://mqtt-broker:1883
+      CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS: kafka:9092
+    entrypoint: /cloud-connector mqtt_message_consumer -l 0.0.0.0:8082
+  cloud-connector-api:
+    image: quay.io/cloudservices/cloud-connector
+    depends_on:
+      - cloud-connector-db
+      - cloud-connector-kafka-consumer
+      - cloud-connector-mqtt-consumer
+    ports:
+      - "8081:8081"
+    environment:
+      CLOUD_CONNECTOR_SERVICE_TO_SERVICE_CREDENTIALS: "{\"config-manager\":\"swordfish\",\"playbook-dispatcher\":\"swordfish\"}"
+      CLOUD_CONNECTOR_MQTT_CLIENT_ID: api-service
+      CLOUD_CONNECTOR_SLEEP_TIME_HACK: 0
+      CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY: "true"
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC: platform.inventory.host-ingress
+      CLOUD_CONNECTOR_INVENTORY_KAFKA_BROKERS: kafka:9092
+      CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST: cloud-connector-db
+      CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS: tcp://mqtt-broker:1883
+    entrypoint: /cloud-connector api_server -l 0.0.0.0:8081
+  inventory-migrate:
+    image: quay.io/cloudservices/insights-inventory
+    depends_on:
+      - inventory-db
+    environment:
+      INVENTORY_DB_HOST: inventory-db
+      INVENTORY_DB_USER: insights
+      INVENTORY_DB_PASS: insights
+      INVENTORY_DB_NAME: inventory
+      INVENTORY_LOG_LEVEL: DEBUG
+      SQLALCHEMY_ENGINE_LOG_LEVEL: INFO
+    command: python manage.py db upgrade
+  inventory-api:
+    image: quay.io/cloudservices/insights-inventory
+    depends_on:
+      inventory-db:
+        condition: service_started
+      inventory-migrate:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+    environment:
+      PAYLOAD_TRACKER_ENABLED: "false"
+      INVENTORY_DB_HOST: inventory-db
+      INVENTORY_DB_USER: insights
+      INVENTORY_DB_PASS: insights
+      INVENTORY_DB_NAME: inventory
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INVENTORY_LOG_LEVEL: DEBUG
+      BYPASS_RBAC: "true"
+    ports:
+      - "8888:8888"
+    command: gunicorn -b :8888 run
+  inventory-mq:
+    image: quay.io/cloudservices/insights-inventory
+    depends_on:
+      inventory-db:
+        condition: service_started
+      inventory-migrate:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+    environment:
+      PAYLOAD_TRACKER_ENABLED: "false"
+      INVENTORY_DB_HOST: inventory-db
+      INVENTORY_DB_USER: insights
+      INVENTORY_DB_PASS: insights
+      INVENTORY_DB_NAME: inventory
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INVENTORY_LOG_LEVEL: DEBUG
+      BYPASS_RBAC: "true"
+      KAFKA_EVENT_TOPIC: platform.inventory.events
+    command: python inv_mq_service.py
+  playbook-dispatcher-db:
+    image: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_USER: insights
+      POSTGRES_PASSWORD: insights
+      POSTGRES_DB: insights
+  playbook-dispatcher-migrate:
+    image: quay.io/cloudservices/playbook-dispatcher
+    entrypoint: "/app migrate up"
+    depends_on:
+      - playbook-dispatcher-db
+    environment:
+      CLOWDER_ENABLED: "false"
+      DB_HOST: playbook-dispatcher-db
+  playbook-dispatcher:
+    image: quay.io/cloudservices/playbook-dispatcher
+    ports:
+      - "8000:8000"
+    entrypoint: "/app run"
+    depends_on:
+      playbook-dispatcher-migrate:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      CLOWDER_ENABLED: "false"
+      DB_HOST: playbook-dispatcher-db
+      PSK_AUTH_CONFIG_MANAGER: "swordfish"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CLOUD_CONNECTOR_IMPL: "impl"
+      CLOUD_CONNECTOR_HOST: cloud-connector-api
+      CLOUD_CONNECTOR_PORT: 8081
+      CLOUD_CONNECTOR_PSK: swordfish
+
   db:
     image: postgres
     restart: on-failure
@@ -31,17 +242,3 @@ services:
       POSTGRES_DB: insights
     ports:
       - "5432:5432"
-  config-manager:
-    image: config-manager-poc
-    build: .
-    ports:
-      - "8081:8081"
-    depends_on:
-      - kafka
-      - db
-    environment:
-      - CM_DB_HOST=db
-      - CM_DISPATCHER_IMPL=mock
-      - CM_CLOUD_CONNECTOR_IMPL=mock
-      - CM_INVENTORY_IMPL=mock
-      - CM_PLAYBOOK_HOST=localhost
