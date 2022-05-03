@@ -73,7 +73,7 @@ func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput)
 	}
 
 	if res.HTTPResponse.StatusCode != 207 {
-		return nil, fmt.Errorf("Unexpected error code %d received", res.HTTPResponse.StatusCode)
+		return nil, fmt.Errorf("Unexpected error code %d received: %v", res.HTTPResponse.StatusCode, string(res.Body))
 	}
 
 	return *res.JSON207, nil
