@@ -52,7 +52,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 			accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
 			if err != nil {
-				log.Println("Error retrieving state for account: ", value.Host.Account)
+				log.Printf("Error retrieving state for account: %v: %v", value.Host.Account, err)
 				return
 			}
 
