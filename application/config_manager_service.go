@@ -46,6 +46,9 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 		switch err {
 		case sql.ErrNoRows:
 			acc, err = s.setupDefaultState(acc)
+			if err != nil {
+				return nil, err
+			}
 		default:
 			return nil, err
 		}
