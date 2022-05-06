@@ -102,7 +102,10 @@ func (cmc *ConfigManagerController) getClients(ctx echo.Context) ([]domain.Host,
 // GetStates gets the archive of state changes for the requesting account.
 // It is the handler for HTTP `GET /states` requests.
 func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStatesParams) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Println("Getting state changes for account: ", id.Identity.AccountNumber)
 
 	p := translateStatesParams(params)
@@ -127,7 +130,10 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 // identified clients.
 // It is the handler for HTTP `POST /states` requests.
 func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Println("Updating and applying state for account: ", id.Identity.AccountNumber)
 
 	payload := &domain.StateMap{}
@@ -185,7 +191,10 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 // account.
 // It is the handler for HTTP `GET /states/current` requests.
 func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Println("Getting current state for account: ", id.Identity.AccountNumber)
 
 	acc, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
@@ -201,7 +210,10 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 // requesting account.
 // It is the handler for HTTP `GET /states/{id}` requests.
 func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID StateIDParam) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Printf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	state, err := cmc.ConfigManagerService.GetSingleStateChange(string(stateID))
@@ -216,7 +228,10 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 // identified by the given stateID and returns it.
 // It is the handler for HTTP `GET /states/{id}/playbook` requests.
 func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID StateIDParam) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
@@ -233,7 +248,10 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 // body and returns it.
 // It is the handler for HTTP `GET /states/preview` requests.
 func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
-	id := identity.Get(ctx.Request().Context())
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
 	log.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
 
 	payload := &domain.StateMap{}
