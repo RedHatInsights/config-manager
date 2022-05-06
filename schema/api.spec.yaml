@@ -136,6 +136,26 @@ paths:
           description: Bad Request
           content: {}
 
+  /manage:
+    post:
+      summary: Enable or disable automatic state management of remote hosts
+      description: |
+        Send an HTTP POST method to this path to enable or disable automatic
+        management of remote hosts. The request body must be set to either
+        `true` or `false`.
+      operationId: postManage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: boolean
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+
+
 components:
   schemas:
     Account:
@@ -174,6 +194,9 @@ components:
     Timestamp:
       type: string
       format: date-time
+    
+    ApplyState:
+      type: boolean
         
     AccountState:
       type: object
@@ -186,6 +209,8 @@ components:
           $ref: '#/components/schemas/StateID'
         label:
           $ref: '#/components/schemas/Label'
+        apply_state:
+          $ref: '#/components/schemas/ApplyState'
     
     StateArchive:
       type: object

@@ -12,11 +12,15 @@ type Account string
 
 // AccountState defines model for AccountState.
 type AccountState struct {
-	Account *Account `json:"account,omitempty"`
-	Id      *StateID `json:"id,omitempty"`
-	Label   *Label   `json:"label,omitempty"`
-	State   *State   `json:"state,omitempty"`
+	Account    *Account    `json:"account,omitempty"`
+	ApplyState *ApplyState `json:"apply_state,omitempty"`
+	Id         *StateID    `json:"id,omitempty"`
+	Label      *Label      `json:"label,omitempty"`
+	State      *State      `json:"state,omitempty"`
 }
+
+// ApplyState defines model for ApplyState.
+type ApplyState bool
 
 // Initiator defines model for Initiator.
 type Initiator string
@@ -85,6 +89,9 @@ const (
 // StateIDParam defines model for StateIDParam.
 type StateIDParam StateID
 
+// PostManageJSONBody defines parameters for PostManage.
+type PostManageJSONBody bool
+
 // GetStatesParams defines parameters for GetStates.
 type GetStatesParams struct {
 
@@ -101,6 +108,9 @@ type UpdateStatesJSONBody State
 
 // GetPlaybookPreviewJSONBody defines parameters for GetPlaybookPreview.
 type GetPlaybookPreviewJSONBody State
+
+// PostManageJSONRequestBody defines body for PostManage for application/json ContentType.
+type PostManageJSONRequestBody PostManageJSONBody
 
 // UpdateStatesJSONRequestBody defines body for UpdateStates for application/json ContentType.
 type UpdateStatesJSONRequestBody UpdateStatesJSONBody
