@@ -31,3 +31,8 @@ func (m *ConfigManagerServiceMock) SetupHost(ctx context.Context, host domain.Ho
 	args := m.Called(ctx, host)
 	return args.Get(0).(string), args.Error(1)
 }
+
+func (m *ConfigManagerServiceMock) SetApplyState(accountID string, applyState bool) error {
+	args := m.Called(accountID, applyState)
+	return args.Error(0)
+}

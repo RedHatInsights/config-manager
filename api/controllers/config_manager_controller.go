@@ -224,6 +224,35 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 	return ctx.JSON(http.StatusOK, state)
 }
 
+// PostManage sets the value of skip_apply_state on current account state record
+// for the account.
+// It is the handler for HTTP `POST /manage` requests.
+func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
+	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
+	if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
+	}
+
+	data, err := ioutil.ReadAll(ctx.Request().Body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer ctx.Request().Body.Close()
+
+	var enabled bool
+	if err := json.Unmarshal(data, &enabled); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	log.Printf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, !enabled)
+
+	if err := cmc.ConfigManagerService.SetApplyState(id.Identity.AccountNumber, enabled); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.String(http.StatusOK, "")
+}
+
 // GetPlaybookById generates a playbook constructed from the state archive
 // identified by the given stateID and returns it.
 // It is the handler for HTTP `GET /states/{id}/playbook` requests.

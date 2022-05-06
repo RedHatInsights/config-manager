@@ -146,6 +146,12 @@ func (s *ConfigManagerService) ApplyState(
 	var results []dispatcher.RunCreated
 	var inputs []dispatcher.RunInput
 
+	if acc.ApplyState.Valid && !acc.ApplyState.Bool {
+		log.Info().Msgf("account_state.apply_state is false; skipping configuration")
+		return []dispatcher.RunCreated{}, nil
+	}
+
+	log.Info().Msgf("applying state for %v clients: %v", len(clients), acc.State)
 	for i, client := range clients {
 		log.Println(fmt.Sprintf("Dispatching work for client %s", client.SystemProfile.RHCID))
 		input := dispatcher.RunInput{
@@ -207,6 +213,11 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 	}
 
 	return state, err
+}
+
+// SetApplyState sets the apply_state field to skipApplyState
+func (s *ConfigManagerService) SetApplyState(accountID string, applyState bool) error {
+	return s.AccountStateRepo.UpdateAccountStateApplyState(accountID, applyState)
 }
 
 // GetPlaybook gets a playbook by state_id

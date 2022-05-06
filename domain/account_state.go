@@ -12,11 +12,11 @@ import (
 // AccountState represents both an account_state database record and JSON APIq
 // object.
 type AccountState struct {
-	AccountID      string          `db:"account_id" json:"account"`
-	State          StateMap        `db:"state" json:"state"`
-	StateID        uuid.UUID       `db:"state_id" json:"id"`
-	Label          string          `db:"label" json:"label"`
-	SkipApplyState db.JSONNullBool `db:"skip_apply_state" json:"skip_apply_state"`
+	AccountID  string          `db:"account_id" json:"account"`
+	State      StateMap        `db:"state" json:"state"`
+	StateID    uuid.UUID       `db:"state_id" json:"id"`
+	Label      string          `db:"label" json:"label"`
+	ApplyState db.JSONNullBool `db:"apply_state" json:"apply_state"`
 }
 
 // AccountStateRepository is an abstraction of the CRUD API methods for
@@ -26,6 +26,7 @@ type AccountStateRepository interface {
 	UpdateAccountState(acc *AccountState) error
 	DeleteAccountState(acc *AccountState) error
 	CreateAccountState(acc *AccountState) error
+	UpdateAccountStateApplyState(accountID string, applyState bool) error
 }
 
 type StateMap map[string]string
