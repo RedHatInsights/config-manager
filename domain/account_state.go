@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"config-manager/internal/db"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
@@ -8,13 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// AccountState represents both an account_state database record and JSON API
+// AccountState represents both an account_state database record and JSON APIq
 // object.
 type AccountState struct {
-	AccountID string    `db:"account_id" json:"account"`
-	State     StateMap  `db:"state" json:"state"`
-	StateID   uuid.UUID `db:"state_id" json:"id"`
-	Label     string    `db:"label" json:"label"`
+	AccountID      string          `db:"account_id" json:"account"`
+	State          StateMap        `db:"state" json:"state"`
+	StateID        uuid.UUID       `db:"state_id" json:"id"`
+	Label          string          `db:"label" json:"label"`
+	SkipApplyState db.JSONNullBool `db:"skip_apply_state" json:"skip_apply_state"`
 }
 
 // AccountStateRepository is an abstraction of the CRUD API methods for
