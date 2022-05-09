@@ -153,7 +153,7 @@ func (s *ConfigManagerService) ApplyState(
 
 	log.Info().Msgf("applying state for %v clients: %v", len(clients), acc.State)
 	for i, client := range clients {
-		log.Println(fmt.Sprintf("Dispatching work for client %s", client.SystemProfile.RHCID))
+		log.Printf("Dispatching work for client %s", client.SystemProfile.RHCID)
 		input := dispatcher.RunInput{
 			Recipient: client.SystemProfile.RHCID,
 			Account:   acc.AccountID,
