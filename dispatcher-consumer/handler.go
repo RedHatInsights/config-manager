@@ -5,7 +5,6 @@ import (
 	kafkaUtils "config-manager/infrastructure/kafka"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -66,7 +65,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		switch status := value.Payload.Status; status {
 		case "success":
 			log.Println("Received success event for host ", value.Payload.Recipient)
-			log.Println(fmt.Sprintf("Message payload: %+v", value.Payload))
+			log.Printf("Message payload: %+v", value.Payload)
 
 			reqID := this.uuidGenerator()
 			updateMsg, err := buildMessage(value.Payload, reqID)
@@ -84,8 +83,8 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			if err != nil {
 				log.Println("Error producing message to system profile topic. request_id: ", reqID.String())
 			} else {
-				log.Println(fmt.Sprintf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
-					reqID.String(), value.Payload.Labels["id"], value.Payload.Account))
+				log.Printf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
+					reqID.String(), value.Payload.Labels["id"], value.Payload.Account)
 			}
 		case "running":
 			log.Println("Received running event for host ", value.Payload.Recipient)
