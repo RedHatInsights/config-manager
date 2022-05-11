@@ -41,8 +41,8 @@ func (r *AccountStateRepository) DeleteAccountState(acc *domain.AccountState) er
 // CreateAccountState peforms an SQL query to insert a the given account state
 // into the storage table.
 func (r *AccountStateRepository) CreateAccountState(acc *domain.AccountState) error {
-	_, err := r.DB.Exec("INSERT INTO account_states(account_id, state, state_id, label, apply_state) VALUES($1, $2, $3, $4, $5)",
-		acc.AccountID, acc.State, acc.StateID, acc.Label, acc.ApplyState)
+	_, err := r.DB.Exec("INSERT INTO account_states(account_id, state, state_id, label) VALUES($1, $2, $3, $4)",
+		acc.AccountID, acc.State, acc.StateID, acc.Label)
 
 	return err
 }
