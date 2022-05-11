@@ -4,6 +4,7 @@ import (
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
+	"config-manager/internal/db"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -69,20 +70,21 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 	if err := json.Unmarshal([]byte(defaultState), &state); err != nil {
 		return nil, err
 	}
-	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state)
+	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state, db.JSONNullBool{NullBool: sql.NullBool{Valid: true, Bool: true}})
 
 	return acc, err
 }
 
 // UpdateAccountState updates the current state for the account and creates a new state archive
-func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domain.StateMap) (*domain.AccountState, error) {
+func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domain.StateMap, applyState db.JSONNullBool) (*domain.AccountState, error) {
 	newStateID := uuid.New()
 	newLabel := id + "-" + uuid.New().String()
 	acc := &domain.AccountState{
-		AccountID: id,
-		State:     payload,
-		StateID:   newStateID,
-		Label:     newLabel,
+		AccountID:  id,
+		State:      payload,
+		StateID:    newStateID,
+		Label:      newLabel,
+		ApplyState: applyState,
 	}
 
 	err := s.AccountStateRepo.UpdateAccountState(acc)

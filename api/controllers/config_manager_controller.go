@@ -163,7 +163,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, currentState)
 	}
 
-	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload)
+	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload, currentState.ApplyState)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
