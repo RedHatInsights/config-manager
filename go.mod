@@ -5,14 +5,17 @@ go 1.16
 require (
 	github.com/aws/aws-sdk-go v1.44.36
 	github.com/deepmap/oapi-codegen v1.5.0
+	github.com/fergusstrange/embedded-postgres v1.16.0
 	github.com/getkin/kin-openapi v0.38.0
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
+	github.com/jackc/pgx/v4 v4.16.1
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.1.17
-	github.com/lib/pq v1.9.0
+	github.com/lib/pq v1.10.4
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.1.0
