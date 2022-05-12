@@ -155,6 +155,13 @@ func (s *ConfigManagerService) ApplyState(
 
 	log.Info().Msgf("applying state for %v clients: %v", len(clients), acc.State)
 	for i, client := range clients {
+		if client.Reporter == "cloud-connector" {
+			log.Printf("setting up host for playbook execution")
+			if _, err := s.SetupHost(context.Background(), client); err != nil {
+				log.Printf("error setting up host '%v': %v", client, err)
+			}
+		}
+
 		log.Printf("Dispatching work for client %s", client.SystemProfile.RHCID)
 		input := dispatcher.RunInput{
 			Recipient: client.SystemProfile.RHCID,
@@ -257,6 +264,10 @@ func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) 
 
 	if _, has := dispatchers["package-manager"]; !has {
 		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SystemProfile.RHCID)
+	}
+
+	if _, has := dispatchers["rhc-worker-playbook"]; has {
+		return "", nil
 	}
 
 	payload := struct {

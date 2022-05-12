@@ -176,13 +176,15 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	// TODO: Update ApplyState to return proper response data (dispatcher response code + id per client)
 
-	results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
-	if err != nil {
-		instrumentation.PlaybookDispatcherRequestError()
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	go func() {
+		results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
+		if err != nil {
+			instrumentation.PlaybookDispatcherRequestError()
+			log.Printf("error applying state: %v", err)
+		}
 
-	log.Println("Dispatcher results: ", results)
+		log.Println("Dispatcher results: ", results)
+	}()
 
 	return ctx.JSON(http.StatusOK, acc)
 }
