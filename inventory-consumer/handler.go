@@ -5,6 +5,8 @@ import (
 	"config-manager/domain"
 	"config-manager/domain/message"
 	kafkaUtils "config-manager/infrastructure/kafka"
+	"config-manager/internal/config"
+	"config-manager/internal/db"
 	"context"
 	"encoding/json"
 
@@ -18,6 +20,7 @@ import (
 // platform.inventory.events topic.
 type handler struct {
 	ConfigManagerService application.ConfigManagerInterface
+	DB                   *db.DB
 }
 
 type requestIDkey string
@@ -54,7 +57,12 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				logger.Info().Msgf("Cloud-connector setup host message id: %v", messageID)
 			}
 
-			accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
+			var defaultState map[string]string
+			if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
+				log.Printf("cannot unmarshal data: %v", err)
+				return
+			}
+			profile, err := this.DB.GetOrInsertCurrentProfile(value.Host.Account, db.NewProfile(value.Host.Account, defaultState))
 			if err != nil {
 				logger.Error().Err(err).Msgf("Error retrieving state for account: %v", value.Host.Account)
 				return
@@ -72,18 +80,18 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 			logger.Info().Msgf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
 
-			if value.Host.SystemProfile.RHCState != accState.StateID.String() {
+			if value.Host.SystemProfile.RHCState != profile.ID.String() {
 				logger.Info().Msgf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
-					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.StateID.String(), accState.AccountID)
+					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.ID.String(), profile.AccountID.String)
 				client := []domain.Host{value.Host}
-				responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
+				responses, err := this.ConfigManagerService.ApplyState(ctx, *profile, client)
 				if err != nil {
 					logger.Error().Err(err).Msg("error applying state")
 				}
 				logger.Info().Msgf("Message sent to the dispatcher. Results: %v", responses)
 			} else {
 				logger.Info().Msgf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
-					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.AccountID)
+					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.AccountID.String)
 			}
 		}
 	}

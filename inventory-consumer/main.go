@@ -18,7 +18,7 @@ func Start(ctx context.Context, errors chan<- error) {
 
 	cmService := container.CMService()
 
-	handler := &handler{ConfigManagerService: cmService}
+	handler := &handler{ConfigManagerService: cmService, Cfg: cfg, DB: container.Database()}
 
 	start := kafka.NewConsumerEventLoop(ctx, consumer, handler.onMessage, errors)
 
