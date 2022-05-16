@@ -8,8 +8,8 @@ import (
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/internal/config"
+	"config-manager/internal/db"
 	"config-manager/utils"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -18,8 +18,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	goMigrate "github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
@@ -28,7 +26,7 @@ import (
 // provides a collection of accessor methods to retrieve handles to each
 // application component.
 type Container struct {
-	db     *sql.DB
+	db     *db.DB
 	server *echo.Echo
 
 	// Config Manager Services
@@ -46,9 +44,9 @@ type Container struct {
 	inventoryRepo      *persistence.InventoryClient
 }
 
-// Database lazily initializes an sql.DB, performs any necessary migrations, and
+// Database lazily initializes a db.DB, performs any necessary migrations, and
 // returns it.
-func (c *Container) Database() *sql.DB {
+func (c *Container) Database() *db.DB {
 	if c.db == nil {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
 			config.DefaultConfig.DBUser,
@@ -57,33 +55,13 @@ func (c *Container) Database() *sql.DB {
 			config.DefaultConfig.DBHost,
 			config.DefaultConfig.DBPort)
 
-		db, err := sql.Open("postgres", connectionString)
+		db, err := db.Open("pgx", connectionString)
 		if err != nil {
 			log.Fatal().Err(err).Msg("cannot open database")
 		}
 
-		err = db.Ping()
-		if err != nil {
-			log.Fatal().Err(err).Msg("cannot ping database")
-		}
-
-		driver, err := postgres.WithInstance(db, &postgres.Config{})
-		if err != nil {
-			log.Fatal().Err(err).Msg("cannot create database driver")
-		}
-		m, err := goMigrate.NewWithDatabaseInstance(
-			"file://./db/migrations",
-			"postgres", driver)
-		if err != nil {
-			log.Fatal().Err(err).Msg("cannot create migration")
-		}
-		err = m.Up()
-		if err != nil {
-			if err != goMigrate.ErrNoChange {
-				log.Fatal().Err(err).Msg("cannot migrate database")
-			} else {
-				log.Info().Msg("no change")
-			}
+		if err := db.Migrate("file://./db/migrations", false); err != nil {
+			log.Fatal().Err(err).Msg("cannot migrate database")
 		}
 
 		c.db = db
@@ -139,6 +117,7 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 			ConfigManagerService: c.CMService(),
 			Server:               c.Server(),
 			URLBasePath:          config.DefaultConfig.URLBasePath(),
+			DB:                   c.Database(),
 		}
 	}
 
@@ -150,7 +129,7 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 	if c.accountStateRepo == nil {
 		c.accountStateRepo = &persistence.AccountStateRepository{
-			DB: c.Database(),
+			DB: c.Database().Handle(),
 		}
 	}
 
@@ -162,7 +141,7 @@ func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
 func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 	if c.stateArchiveRepo == nil {
 		c.stateArchiveRepo = &persistence.StateArchiveRepository{
-			DB: c.Database(),
+			DB: c.Database().Handle(),
 		}
 	}
 

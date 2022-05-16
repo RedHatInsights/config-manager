@@ -15,16 +15,20 @@ import (
 	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
+	"config-manager/internal/config"
+	"config-manager/internal/db"
 	"config-manager/utils"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/google/uuid"
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
@@ -39,6 +43,7 @@ type ConfigManagerController struct {
 	ConfigManagerService *application.ConfigManagerService
 	Server               *echo.Echo
 	URLBasePath          string
+	DB                   *db.DB
 }
 
 // Routes sets up middlewares and registers handlers for each route
@@ -48,29 +53,6 @@ func (cmc *ConfigManagerController) Routes(spec *openapi3.Swagger) {
 	sub.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	sub.Use(oapiMiddleware.OapiRequestValidator(spec))
 	RegisterHandlers(sub, cmc)
-}
-
-// translateStatesParams transforms params into a map, preconfigured with
-// default values.
-func translateStatesParams(params GetStatesParams) map[string]interface{} {
-	// TODO: Again I don't like this.. Come up with a better solution for validating params (middleware?)
-	p := map[string]interface{}{
-		"limit":   50,
-		"offset":  0,
-		"sort_by": "created_at:desc",
-	}
-
-	if params.Limit != nil {
-		p["limit"] = int(*params.Limit)
-	}
-	if params.Offset != nil {
-		p["offset"] = int(*params.Offset)
-	}
-	if params.SortBy != nil {
-		p["sort_by"] = string(*params.SortBy)
-	}
-
-	return p
 }
 
 // getClients queries the Inventory service proxy all hosts known to the account
@@ -110,21 +92,86 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 	}
 	log.Info().Msgf("Getting state changes for account: %v", id.Identity.AccountNumber)
 
-	p := translateStatesParams(params)
-
-	// Add filter and sort-by
-	states, err := cmc.ConfigManagerService.GetStateChanges(
-		id.Identity.AccountNumber,
-		p["sort_by"].(string),
-		p["limit"].(int),
-		p["offset"].(int),
+	var (
+		sortBy string
+		limit  int
+		offset int
 	)
+
+	if params.SortBy != nil {
+		sortBy = string(*params.SortBy)
+	}
+
+	if params.Limit != nil {
+		limit = int(*params.Limit)
+	}
+
+	if params.Offset != nil {
+		offset = int(*params.Offset)
+	}
+
+	total, err := cmc.DB.CountProfiles(id.Identity.AccountNumber)
+	if err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err)
+		log.Printf("%v", echoErr)
+		return echoErr
+	}
+
+	profiles, err := cmc.DB.GetProfiles(id.Identity.AccountNumber, sortBy, limit, offset)
+	if err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err)
+		log.Printf("%v", echoErr)
+		return echoErr
+	}
+
+	type state struct {
+		AccountID string            `json:"account_id"`
+		StateID   uuid.UUID         `json:"id"`
+		Label     string            `json:"label"`
+		Initiator string            `json:"initiator"`
+		CreatedAt time.Time         `json:"created_at"`
+		State     map[string]string `json:"state"`
+	}
+
+	type response struct {
+		Count   int     `json:"count"`
+		Limit   int     `json:"limit"`
+		Offset  int     `json:"offset"`
+		Total   int     `json:"total"`
+		Results []state `json:"results"`
+	}
+
+	states := make([]state, 0, len(profiles))
+
+	for _, profile := range profiles {
+		s := state{
+			AccountID: profile.AccountID.String,
+			StateID:   profile.ID,
+			Label:     profile.Label.String,
+			Initiator: profile.Creator.String,
+			CreatedAt: profile.CreatedAt,
+			State:     make(map[string]string),
+		}
+
+		s.State = profile.StateConfig()
+
+		states = append(states, s)
+	}
+
+	r := response{
+		Count:   len(profiles),
+		Limit:   limit,
+		Offset:  offset,
+		Total:   total,
+		Results: states,
+	}
+
 	if err != nil {
 		instrumentation.GetStateChangesError()
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return ctx.JSON(http.StatusOK, states)
+	return ctx.JSON(http.StatusOK, r)
 }
 
 // UpdateStates updates the active configuration state for the requesting
@@ -157,14 +204,15 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echoErr
 	}
 
-	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
+	currentProfile, err := cmc.DB.GetCurrentProfile(id.Identity.AccountNumber)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		logger.Error().Err(echoErr).Msg("failed to get account state")
+		logger.Error().Err(echoErr).Msg("failed to get current profile for account")
 		return echoErr
 	}
+	logger.Trace().Interface("currentProfile", currentProfile).Msg("found current profile")
 
-	equal, err := utils.VerifyStatePayload(currentState.State, *payload)
+	equal, err := utils.VerifyStatePayload(currentProfile.StateConfig(), *payload)
 	if err != nil {
 		instrumentation.PayloadVerificationError()
 		echoErr := echo.NewHTTPError(http.StatusBadRequest, err)
@@ -172,15 +220,23 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echoErr
 	}
 	if equal {
-		logger.Trace().Interface("payload", payload).Interface("currentState", currentState).Msg("payload is equal to current state; not updating")
-		return ctx.JSON(http.StatusOK, currentState)
+		logger.Info().Interface("newState", payload).Interface("currentState", currentProfile.StateConfig()).Msg("newState = currentState")
+
+		return ctx.JSON(http.StatusOK, formatAPIResponse(currentProfile))
 	}
 
-	acc, err := cmc.ConfigManagerService.UpdateAccountState(id.Identity.AccountNumber, "demo-user", *payload, currentState.ApplyState)
-	if err != nil {
+	newProfile := db.CopyProfile(*currentProfile)
+	newProfile.SetStateConfig(*payload)
+	if !newProfile.OrgID.Valid && id.Identity.OrgID != "" {
+		newProfile.OrgID.String = id.Identity.OrgID
+		newProfile.OrgID.Valid = true
+	}
+	logger.Trace().Interface("newProfile", newProfile).Msg("created new profile")
+
+	if err := cmc.DB.InsertProfile(newProfile); err != nil {
 		instrumentation.UpdateAccountStateError()
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		logger.Error().Err(echoErr).Msg("failed to update account state")
+		logger.Error().Err(echoErr).Msg("failed to insert profile")
 		return echoErr
 	}
 
@@ -194,7 +250,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	// TODO: Update ApplyState to return proper response data (dispatcher response code + id per client)
 
 	go func() {
-		results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
+		results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), newProfile, clients)
 		if err != nil {
 			instrumentation.PlaybookDispatcherRequestError()
 			logger.Error().Err(err).Msg("error applying state")
@@ -203,7 +259,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		logger.Info().Msgf("Dispatcher results: %v", results)
 	}()
 
-	return ctx.JSON(http.StatusOK, acc)
+	return ctx.JSON(http.StatusOK, formatAPIResponse(&newProfile))
 }
 
 // GetCurrentState gets the current configuration state for the requesting
@@ -216,13 +272,21 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 	}
 	log.Info().Msgf("Getting current state for account: %v", id.Identity.AccountNumber)
 
-	acc, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
+	var defaultState map[string]string
+	if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
+	}
+	profile, err := cmc.DB.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.AccountNumber, defaultState))
 	if err != nil {
 		instrumentation.GetAccountStateError()
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
 	}
 
-	return ctx.JSON(http.StatusOK, acc)
+	return ctx.JSON(http.StatusOK, formatAPIResponse(profile))
 }
 
 // GetStateById gets a single configuration state from the state archive for the
@@ -235,12 +299,32 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 	}
 	log.Info().Msgf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
-	state, err := cmc.ConfigManagerService.GetSingleStateChange(string(stateID))
+	profile, err := cmc.DB.GetProfile(string(stateID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
 	}
 
-	return ctx.JSON(http.StatusOK, state)
+	type response struct {
+		Account   string            `json:"account"`
+		ID        uuid.UUID         `json:"id"`
+		Label     string            `json:"label"`
+		Initiator string            `json:"initiator"`
+		CreatedAt time.Time         `json:"created_at"`
+		State     map[string]string `json:"state"`
+	}
+
+	r := response{
+		Account:   profile.AccountID.String,
+		ID:        profile.ID,
+		Label:     profile.Label.String,
+		Initiator: profile.Creator.String,
+		CreatedAt: profile.CreatedAt,
+		State:     profile.StateConfig(),
+	}
+
+	return ctx.JSON(http.StatusOK, r)
 }
 
 // PostManage sets the value of skip_apply_state on current account state record
@@ -265,8 +349,20 @@ func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
 
 	log.Info().Msgf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, enabled)
 
-	if err := cmc.ConfigManagerService.SetApplyState(id.Identity.AccountNumber, enabled); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	currentProfile, err := cmc.DB.GetCurrentProfile(id.Identity.AccountNumber)
+	if err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
+	}
+
+	newProfile := db.CopyProfile(*currentProfile)
+	newProfile.Active = enabled
+
+	if err := cmc.DB.InsertProfile(newProfile); err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
 	}
 
 	return ctx.String(http.StatusOK, "")
@@ -282,10 +378,19 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 	}
 	log.Info().Msgf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
-	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
+	profile, err := cmc.DB.GetProfile(string(stateID))
+	if err != nil {
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
+	}
+
+	playbook, err := cmc.ConfigManagerService.PlaybookGenerator.GeneratePlaybook(profile.StateConfig())
 	if err != nil {
 		instrumentation.PlaybookRequestError()
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Error().Err(echoErr)
+		return echoErr
 	}
 
 	instrumentation.PlaybookRequestOK()
@@ -320,4 +425,31 @@ func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
 	}
 
 	return ctx.String(http.StatusOK, playbook)
+}
+
+// formatAPIResponse converts profile into an AccountState, ready to be used in
+// API v1 responses.
+func formatAPIResponse(profile *db.Profile) AccountState {
+	var accountState AccountState
+
+	if profile.AccountID.Valid {
+		accountState.Account = (*Account)(&profile.AccountID.String)
+	}
+
+	accountState.ApplyState = (*ApplyState)(&profile.Active)
+
+	id := profile.ID.String()
+	accountState.Id = (*StateID)(&id)
+
+	if profile.Label.Valid {
+		accountState.Label = (*Label)(&profile.Label.String)
+	}
+
+	accountState.State = &State{
+		Insights:           profile.StateConfig()["insights"],
+		Remediations:       profile.StateConfig()["remediations"],
+		ComplianceOpenscap: profile.StateConfig()["compliance_openscap"],
+	}
+
+	return accountState
 }
