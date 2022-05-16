@@ -21,7 +21,7 @@ import (
 // ConfigManagerService methods.
 type ConfigManagerInterface interface {
 	GetAccountState(id string) (*domain.AccountState, error)
-	ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error)
+	ApplyState(ctx context.Context, profile db.Profile, clients []domain.Host) ([]dispatcher.RunCreated, error)
 	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
 	SetupHost(ctx context.Context, host domain.Host) (string, error)
 }
@@ -139,21 +139,17 @@ func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int
 }
 
 // ApplyState applies the current state to selected clients
-func (s *ConfigManagerService) ApplyState(
-	ctx context.Context,
-	acc *domain.AccountState,
-	clients []domain.Host,
-) ([]dispatcher.RunCreated, error) {
+func (s *ConfigManagerService) ApplyState(ctx context.Context, profile db.Profile, clients []domain.Host) ([]dispatcher.RunCreated, error) {
 	var err error
 	var results []dispatcher.RunCreated
 	var inputs []dispatcher.RunInput
 
-	if acc.ApplyState.Valid && !acc.ApplyState.Bool {
-		log.Info().Msg("account_state.apply_state is false; skipping configuration")
+	if !profile.Active {
+		log.Info().Msgf("account_state.apply_state is false; skipping configuration")
 		return []dispatcher.RunCreated{}, nil
 	}
 
-	log.Info().Interface("state", acc.State).Interface("clients", clients).Msgf("start applying state")
+	log.Info().Interface("state", profile.StateConfig()).Interface("clients", clients).Msgf("start applying state")
 	for i, client := range clients {
 		logger := log.With().Str("client_id", client.SystemProfile.RHCID).Interface("client", client).Logger()
 
@@ -168,11 +164,11 @@ func (s *ConfigManagerService) ApplyState(
 		logger.Info().Msg("dispatching work for client")
 		input := dispatcher.RunInput{
 			Recipient: client.SystemProfile.RHCID,
-			Account:   acc.AccountID,
-			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, acc.StateID),
+			Account:   profile.AccountID.String,
+			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
 			Labels: &dispatcher.RunInput_Labels{
 				AdditionalProperties: map[string]string{
-					"state_id": acc.StateID.String(),
+					"state_id": profile.ID.String(),
 					"id":       client.ID,
 				},
 			},

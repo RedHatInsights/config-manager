@@ -3,6 +3,7 @@ package application
 import (
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence/dispatcher"
+	"config-manager/internal/db"
 	"context"
 
 	"github.com/stretchr/testify/mock"
@@ -17,8 +18,8 @@ func (m *ConfigManagerServiceMock) GetAccountState(id string) (*domain.AccountSt
 	return args.Get(0).(*domain.AccountState), args.Error(1)
 }
 
-func (m *ConfigManagerServiceMock) ApplyState(ctx context.Context, acc *domain.AccountState, clients []domain.Host) ([]dispatcher.RunCreated, error) {
-	args := m.Called(ctx, acc, clients)
+func (m *ConfigManagerServiceMock) ApplyState(ctx context.Context, profile db.Profile, clients []domain.Host) ([]dispatcher.RunCreated, error) {
+	args := m.Called(ctx, profile, clients)
 	return args.Get(0).([]dispatcher.RunCreated), args.Error(1)
 }
 
