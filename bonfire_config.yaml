@@ -1,18 +1,14 @@
 envName: env-config-manager
 apps:
-- name: config-manager
-  components:
   - name: config-manager
-    host: local
-    repo: ./deploy
-    path: clowdapp.yml
-    parameters:
-      IMAGE: localhost:5000/config-manager
-      CM_DISPATCHER_IMPL: mock
-      CM_DISPATCHER_HOST: test
-      CM_INVENTORY_IMPL: mock
-      CM_INVENTORY_HOST: test
-      CM_CLOUD_CONNECTOR_IMPL: mock
-      CM_CLOUD_CONNECTOR_HOST: test
-      CM_PLAYBOOK_HOST: localhost
-      REPLICAS: 1
+    components:
+      - name: config-manager
+        host: local
+        repo: ./deploy
+        path: clowdapp.yml
+        parameters:
+          CM_DISPATCHER_HOST: http://playbook-dispatcher-api.config-manager.svc.cluster.local:8000/
+          CM_INVENTORY_HOST: http://host-inventory-service.config-manager.svc.cluster.local:8000/api/inventory/v1/
+          CM_CLOUD_CONNECTOR_HOST: http://cloud-connector.config-manager.svc.cluster.local:8080/api/cloud-connector/v1/
+          CM_PLAYBOOK_HOST: http://localhost:8080
+          REPLICAS: 1
