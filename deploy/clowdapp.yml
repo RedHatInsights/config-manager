@@ -9,7 +9,7 @@ objects:
   metadata:
     name: psk-playbook-dispatcher
   stringData:
-    key: ${PSK_DISPATCHER}
+    key: ${PSK_CONFIG_MANAGER}
 - apiVersion: v1
   kind: Secret
   metadata:
@@ -265,8 +265,8 @@ parameters:
 
 # Used for testing in ephemeral environments only.
 - name: PSK_CONFIG_MANAGER
-  value: mock
+  value: FLYdxYZGpq
 - name: ID_CLOUD_CONNECTOR
-  value: mock
+  value: config-manager
 - name: PSK_CLOUD_CONNECTOR
-  value: mock
+  value: swordfish
