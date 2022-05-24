@@ -139,12 +139,16 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	payload := &domain.StateMap{}
 	bytes, err := ioutil.ReadAll(ctx.Request().Body)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Println(echoErr)
+		return echoErr
 	}
 
 	err = json.Unmarshal(bytes, payload)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Println(echoErr)
+		return echoErr
 	}
 
 	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
@@ -171,7 +175,9 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	clients, err := cmc.getClients(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		log.Println(echoErr)
+		return echoErr
 	}
 
 	// TODO: Update ApplyState to return proper response data (dispatcher response code + id per client)
