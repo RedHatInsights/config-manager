@@ -9,8 +9,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
@@ -59,7 +60,7 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 }
 
 func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*domain.AccountState, error) {
-	log.Println("Creating new account entry with default values")
+	log.Info().Msgf("Creating new account entry with default values")
 	err := s.AccountStateRepo.CreateAccountState(acc)
 	if err != nil {
 		return nil, err
@@ -181,13 +182,13 @@ func (s *ConfigManagerService) ApplyState(
 			if inputs != nil {
 				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
 				if err != nil {
-					log.Println(err) // TODO what happens if a message can't be dispatched? Retry?
+					log.Error().Err(err) // TODO what happens if a message can't be dispatched? Retry?
 				}
 
 				results = append(results, res...)
 				inputs = nil
 			} else {
-				log.Println("Nothing sent to playbook dispatcher - no systems currently connected")
+				log.Info().Msg("Nothing sent to playbook dispatcher - no systems currently connected")
 			}
 		}
 	}

@@ -7,10 +7,11 @@ import (
 	inventoryConsumer "config-manager/inventory-consumer"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,7 +30,7 @@ type startModuleFn = func(
 func run(cmd *cobra.Command, args []string) error {
 	modules, err := cmd.Flags().GetStringSlice("module")
 	if err != nil {
-		log.Println("Error getting modules: ", err)
+		log.Error().Err(err).Msg("error getting modules")
 		return err
 	}
 
@@ -58,7 +59,7 @@ func run(cmd *cobra.Command, args []string) error {
 		case moduleInventoryConsumer:
 			startModule = inventoryConsumer.Start
 		default:
-			return fmt.Errorf("Unknown module %s", module)
+			return fmt.Errorf("unknown module %s", module)
 		}
 
 		startModule(ctx, cfg, errors)
@@ -69,15 +70,15 @@ func run(cmd *cobra.Command, args []string) error {
 		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("Metrics_Port")))
 	}()
 
-	log.Println("Config Manager started")
+	log.Info().Msg("Config Manager started")
 
 	// stop on signal or error, whatever comes first
 	select {
 	case signal := <-signals:
-		log.Println("Shutting down due to signal: ", signal)
+		log.Info().Msgf("Shutting down due to signal: ", signal)
 		return nil
 	case error := <-errors:
-		log.Println("Shutting down due to error: ", error)
+		log.Info().Msgf("Shutting down due to error: ", error)
 		return error
 	}
 }

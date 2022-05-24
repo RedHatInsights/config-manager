@@ -7,7 +7,8 @@ import (
 	kafkaUtils "config-manager/infrastructure/kafka"
 	"context"
 	"encoding/json"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
@@ -27,7 +28,7 @@ type requestIDkey string
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
 	if err != nil {
-		log.Println("Error getting event_type: ", err)
+		log.Error().Err(err).Msgf("Error getting event_type: ", err)
 		return
 	}
 
@@ -35,7 +36,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		value := &message.InventoryEvent{}
 
 		if err := json.Unmarshal(msg.Value, &value); err != nil {
-			log.Println("Couldn't unmarshal inventory event: ", err)
+			log.Error().Err(err).Msgf("Couldn't unmarshal inventory event: ", err)
 			return
 		}
 
@@ -58,10 +59,10 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 			reqID, err := kafkaUtils.GetHeader(msg, "request_id")
 			if err != nil {
-				log.Println("Error getting request_id: ", err)
+				log.Error().Err(err).Msgf("Error getting request_id: ", err)
 				k := requestIDkey("request_id")
 				reqID = uuid.New().String()
-				log.Println("Creating new request_id and adding to context: ", reqID)
+				log.Info().Msgf("Creating new request_id and adding to context: ", reqID)
 				ctx = context.WithValue(ctx, k, reqID)
 			}
 
@@ -73,9 +74,9 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				client := []domain.Host{value.Host}
 				responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
 				if err != nil {
-					log.Println("Error applying state: ", err)
+					log.Error().Err(err).Msgf("Error applying state: ", err)
 				}
-				log.Println("Message sent to the dispatcher. Results: ", responses)
+				log.Info().Msgf("Message sent to the dispatcher. Results: ", responses)
 			} else {
 				log.Printf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
 					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.AccountID)
