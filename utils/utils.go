@@ -10,8 +10,7 @@ import (
 	"reflect"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // StartHTTPServer creates an http.Server using handler as the request handler
@@ -23,9 +22,9 @@ func StartHTTPServer(addr, name string, handler *mux.Router) *http.Server {
 	}
 
 	go func() {
-		log.Infof("Starting %s server:  %s", name, addr)
+		log.Info().Msgf("starting %v server: %v", name, addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.WithFields(logrus.Fields{"error": err}).Fatalf("%s server error", name)
+			log.Error().Err(err).Msg(err.Error())
 		}
 	}()
 
@@ -35,9 +34,9 @@ func StartHTTPServer(addr, name string, handler *mux.Router) *http.Server {
 // ShutdownHTTPServer calls srv.Shutdown, logging an error should the shutdown
 // fail.
 func ShutdownHTTPServer(ctx context.Context, name string, srv *http.Server) {
-	log.Infof("Shutting down %s server", name)
+	log.Info().Msgf("stopping %s server", name)
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Infof("Error shutting down %s server: %e", name, err)
+		log.Error().Err(err).Msgf("%v: %v", name, err)
 	}
 }
 
@@ -48,14 +47,14 @@ func FilesIntoMap(dir, pattern string) map[string][]byte {
 
 	files, err := filepath.Glob(dir + pattern)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	for _, f := range files {
 		info, _ := os.Stat(f)
 		content, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err)
 		}
 		filesMap[info.Name()] = content
 	}
@@ -77,7 +76,7 @@ func VerifyStatePayload(currentState, payload map[string]string) (bool, error) {
 	if payload["insights"] == "disabled" {
 		for k, v := range payload {
 			if v != "disabled" {
-				return equal, fmt.Errorf("Service %s must be disabled if insights is disabled", k)
+				return equal, fmt.Errorf("service %s must be disabled if insights is disabled", k)
 			}
 		}
 	}

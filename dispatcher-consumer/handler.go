@@ -5,7 +5,8 @@ import (
 	kafkaUtils "config-manager/infrastructure/kafka"
 	"context"
 	"encoding/json"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
 
@@ -38,7 +39,7 @@ func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]by
 
 	bMsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Println("Error marshalling inventory update message")
+		log.Error().Err(err).Msg("error marshalling inventory update message")
 		return nil, err
 	}
 
@@ -50,7 +51,7 @@ func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]by
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventService, err := kafkaUtils.GetHeader(msg, "service")
 	if err != nil {
-		log.Println("Error getting header: ", err)
+		log.Error().Err(err).Msgf("Error getting header: ", err)
 		return
 	}
 
@@ -58,19 +59,19 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		value := &message.DispatcherEvent{}
 
 		if err := json.Unmarshal(msg.Value, value); err != nil {
-			log.Println("Couldn't unmarshal dispatcher event: ", err)
+			log.Error().Err(err).Msgf("Couldn't unmarshal dispatcher event: ", err)
 			return
 		}
 
 		switch status := value.Payload.Status; status {
 		case "success":
-			log.Println("Received success event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received success event for host ", value.Payload.Recipient)
 			log.Printf("Message payload: %+v", value.Payload)
 
 			reqID := this.uuidGenerator()
 			updateMsg, err := buildMessage(value.Payload, reqID)
 			if err != nil {
-				log.Println("Error building message for inventory update: ", err)
+				log.Error().Err(err).Msgf("Error building message for inventory update: ", err)
 				break
 			}
 
@@ -81,16 +82,16 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				},
 			)
 			if err != nil {
-				log.Println("Error producing message to system profile topic. request_id: ", reqID.String())
+				log.Info().Msgf("Error producing message to system profile topic. request_id: ", reqID.String())
 			} else {
 				log.Printf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
 					reqID.String(), value.Payload.Labels["id"], value.Payload.Account)
 			}
 		case "running":
-			log.Println("Received running event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received running event for host ", value.Payload.Recipient)
 			// TODO anything to do for running?
 		default:
-			log.Println("Received a failure event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received a failure event for host ", value.Payload.Recipient)
 			// TODO handle failure/timeout.. retry?
 		}
 	}

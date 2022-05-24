@@ -10,9 +10,10 @@ import (
 	"config-manager/utils"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 
@@ -59,30 +60,30 @@ func (c *Container) Database() *sql.DB {
 
 		db, err := sql.Open("postgres", connectionString)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err)
 		}
 
 		err = db.Ping()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err)
 		}
 
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err)
 		}
 		m, err := goMigrate.NewWithDatabaseInstance(
 			"file://./db/migrations",
 			"postgres", driver)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err)
 		}
 		err = m.Up()
 		if err != nil {
 			if err != goMigrate.ErrNoChange {
-				log.Fatal(err)
+				log.Fatal().Err(err)
 			} else {
-				log.Println("no change")
+				log.Info().Msg("no change")
 			}
 		}
 
@@ -193,7 +194,7 @@ func (c *Container) CloudConnectorRepo() cloudconnector.CloudConnectorClient {
 		} else {
 			client, err := cloudconnector.NewCloudConnectorClient(c.Config)
 			if err != nil {
-				log.Fatalf("cannot create cloud connector client: %v", err)
+				log.Fatal().Err(err).Msg("cannot create cloud connector client")
 			}
 			c.cloudConnectorRepo = client
 		}
