@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
@@ -39,6 +40,19 @@ func run(cmd *cobra.Command, args []string) error {
 	errors := make(chan error, 1)
 
 	cfg := config.Get()
+
+	level, err := zerolog.ParseLevel(cfg.GetString("Log_Level"))
+	if err != nil {
+		log.Error().Err(err)
+		return err
+	}
+
+	zerolog.SetGlobalLevel(level)
+
+	switch cfg.GetString("Log_Format") {
+	case "text":
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	}
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
