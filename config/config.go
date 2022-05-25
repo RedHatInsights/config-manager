@@ -93,6 +93,9 @@ func Get() *viper.Viper {
 		"remediations": "enabled"
 	}`)
 
+	options.SetDefault("Log_Level", "info")
+	options.SetDefault("Log_Format", "json")
+
 	options.SetEnvPrefix("CM")
 	options.AutomaticEnv()
 
