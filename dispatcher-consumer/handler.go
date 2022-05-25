@@ -66,7 +66,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		switch status := value.Payload.Status; status {
 		case "success":
 			log.Info().Msgf("Received success event for host ", value.Payload.Recipient)
-			log.Printf("Message payload: %+v", value.Payload)
+			log.Info().Msgf("Message payload: %+v", value.Payload)
 
 			reqID := this.uuidGenerator()
 			updateMsg, err := buildMessage(value.Payload, reqID)
@@ -84,7 +84,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			if err != nil {
 				log.Info().Msgf("Error producing message to system profile topic. request_id: ", reqID.String())
 			} else {
-				log.Printf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
+				log.Info().Msgf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
 					reqID.String(), value.Payload.Labels["id"], value.Payload.Account)
 			}
 		case "running":

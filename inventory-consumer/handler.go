@@ -42,18 +42,18 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 
 		if value.Host.Reporter == "cloud-connector" {
 			if eventType == "created" {
-				log.Printf("New host detected; setting up for playbook execution")
+				log.Info().Msgf("New host detected; setting up for playbook execution")
 				messageID, err := this.ConfigManagerService.SetupHost(ctx, value.Host)
 				if err != nil {
-					log.Printf("Error setting up host: %v: %v", value.Host, err)
+					log.Info().Msgf("Error setting up host: %v: %v", value.Host, err)
 					return
 				}
-				log.Printf("Cloud-connector setup host message id: %v", messageID)
+				log.Info().Msgf("Cloud-connector setup host message id: %v", messageID)
 			}
 
 			accState, err := this.ConfigManagerService.GetAccountState(value.Host.Account)
 			if err != nil {
-				log.Printf("Error retrieving state for account: %v: %v", value.Host.Account, err)
+				log.Info().Msgf("Error retrieving state for account: %v: %v", value.Host.Account, err)
 				return
 			}
 
@@ -66,10 +66,10 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				ctx = context.WithValue(ctx, k, reqID)
 			}
 
-			log.Printf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
+			log.Info().Msgf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
 
 			if value.Host.SystemProfile.RHCState != accState.StateID.String() {
-				log.Printf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
+				log.Info().Msgf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
 					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.StateID.String(), accState.AccountID)
 				client := []domain.Host{value.Host}
 				responses, err := this.ConfigManagerService.ApplyState(ctx, accState, client)
@@ -78,7 +78,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				}
 				log.Info().Msgf("Message sent to the dispatcher. Results: ", responses)
 			} else {
-				log.Printf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
+				log.Info().Msgf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
 					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, accState.AccountID)
 			}
 		}
