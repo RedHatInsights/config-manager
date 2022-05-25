@@ -37,6 +37,8 @@ func (c *InventoryClient) buildURL(page int) string {
 	params.Add("page", fmt.Sprintf("%d", page))
 	Url.RawQuery = params.Encode()
 
+	log.Debug().Msgf("built URL: %v", Url.String())
+
 	return Url.String()
 }
 

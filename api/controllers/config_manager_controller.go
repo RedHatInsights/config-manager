@@ -194,7 +194,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
 		if err != nil {
 			instrumentation.PlaybookDispatcherRequestError()
-			log.Printf("error applying state: %v", err)
+			log.Info().Msgf("error applying state: %v", err)
 		}
 
 		log.Info().Msgf("Dispatcher results: ", results)
@@ -230,7 +230,7 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
 	}
-	log.Printf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
+	log.Info().Msgf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	state, err := cmc.ConfigManagerService.GetSingleStateChange(string(stateID))
 	if err != nil {
@@ -260,7 +260,7 @@ func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	log.Printf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, !enabled)
+	log.Info().Msgf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, !enabled)
 
 	if err := cmc.ConfigManagerService.SetApplyState(id.Identity.AccountNumber, enabled); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -277,7 +277,7 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
 	}
-	log.Printf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
+	log.Info().Msgf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
 	playbook, err := cmc.ConfigManagerService.GetPlaybook(string(stateID))
 	if err != nil {
@@ -297,7 +297,7 @@ func (cmc *ConfigManagerController) GetPlaybookPreview(ctx echo.Context) error {
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
 	}
-	log.Printf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
+	log.Info().Msgf("Getting playbook preview for account: %s\n", id.Identity.AccountNumber)
 
 	payload := &domain.StateMap{}
 	bytes, err := ioutil.ReadAll(ctx.Request().Body)

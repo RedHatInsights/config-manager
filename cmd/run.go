@@ -61,7 +61,7 @@ func run(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() //TODO context.WithCancel
 
 	for _, module := range modules {
-		log.Printf("Starting module %s\n", module)
+		log.Info().Str("module", module).Msg("starting")
 
 		var startModule startModuleFn
 
@@ -79,12 +79,12 @@ func run(cmd *cobra.Command, args []string) error {
 		startModule(ctx, cfg, errors)
 	}
 
-	log.Printf("Listening on service port %d\n", cfg.GetInt("Metrics_Port"))
+	log.Info().Int("port", cfg.GetInt("Metrics_Port")).Str("service", "metrics").Msg("starting http server")
 	go func() {
 		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("Metrics_Port")))
 	}()
 
-	log.Info().Msg("Config Manager started")
+	log.Debug().Msg("Config Manager started")
 
 	// stop on signal or error, whatever comes first
 	select {
@@ -92,7 +92,7 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Info().Msgf("Shutting down due to signal: ", signal)
 		return nil
 	case error := <-errors:
-		log.Info().Msgf("Shutting down due to error: ", error)
+		log.Error().Msgf("Shutting down due to error: ", error)
 		return error
 	}
 }
