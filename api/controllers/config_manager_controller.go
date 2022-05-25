@@ -108,7 +108,7 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
 	}
-	log.Info().Msgf("Getting state changes for account: ", id.Identity.AccountNumber)
+	log.Info().Msgf("Getting state changes for account: %v", id.Identity.AccountNumber)
 
 	p := translateStatesParams(params)
 
@@ -132,32 +132,35 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 // identified clients.
 // It is the handler for HTTP `POST /states` requests.
 func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
+	logger := log.With().Str("method", ctx.Request().Method).Str("path", ctx.Path()).Logger()
+
 	id, ok := ctx.Request().Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
 		err := fmt.Errorf("unable to assert x-rh-identity header")
-		log.Error().Err(err).Msg("failed to get value from context")
+		logger.Error().Err(err).Msg("")
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	logger = logger.With().Str("account_number", id.Identity.AccountNumber).Logger()
 
 	payload := &domain.StateMap{}
 	bytes, err := ioutil.ReadAll(ctx.Request().Body)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		log.Error().Err(echoErr).Msg("failed to read HTTP request body")
+		logger.Error().Err(echoErr).Msg("failed to read HTTP request body")
 		return echoErr
 	}
 
 	err = json.Unmarshal(bytes, payload)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		log.Error().Err(echoErr).Msg("failed to unmarshal data")
+		logger.Error().Err(echoErr).Msg("failed to unmarshal data")
 		return echoErr
 	}
 
 	currentState, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		log.Error().Err(echoErr).Msg("failed to get account state")
+		logger.Error().Err(echoErr).Msg("failed to get account state")
 		return echoErr
 	}
 
@@ -165,11 +168,11 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	if err != nil {
 		instrumentation.PayloadVerificationError()
 		echoErr := echo.NewHTTPError(http.StatusBadRequest, err)
-		log.Error().Err(echoErr).Msg("failed to verify payload")
+		logger.Error().Err(echoErr).Msg("failed to verify payload")
 		return echoErr
 	}
 	if equal {
-		log.Trace().Interface("payload", payload).Interface("currentState", currentState).Msg("payload is equal to current state; not updating")
+		logger.Trace().Interface("payload", payload).Interface("currentState", currentState).Msg("payload is equal to current state; not updating")
 		return ctx.JSON(http.StatusOK, currentState)
 	}
 
@@ -177,14 +180,14 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		log.Error().Err(echoErr).Msg("failed to update account state")
+		logger.Error().Err(echoErr).Msg("failed to update account state")
 		return echoErr
 	}
 
 	clients, err := cmc.getClients(ctx)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		log.Error().Err(echoErr).Msg("failed to get clients")
+		logger.Error().Err(echoErr).Msg("failed to get clients")
 		return echoErr
 	}
 
@@ -194,10 +197,10 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		results, err := cmc.ConfigManagerService.ApplyState(ctx.Request().Context(), acc, clients)
 		if err != nil {
 			instrumentation.PlaybookDispatcherRequestError()
-			log.Info().Msgf("error applying state: %v", err)
+			logger.Error().Err(err).Msg("error applying state")
 		}
 
-		log.Info().Msgf("Dispatcher results: ", results)
+		logger.Info().Msgf("Dispatcher results: %v", results)
 	}()
 
 	return ctx.JSON(http.StatusOK, acc)
@@ -211,7 +214,7 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 	if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "unable to assert x-rh-identity header")
 	}
-	log.Info().Msgf("Getting current state for account: ", id.Identity.AccountNumber)
+	log.Info().Msgf("Getting current state for account: %v", id.Identity.AccountNumber)
 
 	acc, err := cmc.ConfigManagerService.GetAccountState(id.Identity.AccountNumber)
 	if err != nil {
