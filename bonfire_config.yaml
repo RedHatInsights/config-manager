@@ -1,4 +1,4 @@
-envName: env-config-manager
+envName: env-fog
 apps:
   - name: config-manager
     components:
@@ -7,8 +7,26 @@ apps:
         repo: ./deploy
         path: clowdapp.yml
         parameters:
-          CM_DISPATCHER_HOST: http://playbook-dispatcher-api.config-manager.svc.cluster.local:8000/
-          CM_INVENTORY_HOST: http://host-inventory-service.config-manager.svc.cluster.local:8000/api/inventory/v1/
-          CM_CLOUD_CONNECTOR_HOST: http://cloud-connector.config-manager.svc.cluster.local:8080/api/cloud-connector/v1/
+          CM_DISPATCHER_HOST: http://playbook-dispatcher-api.fog.svc.cluster.local:8000/
+          CM_INVENTORY_HOST: http://host-inventory-service.fog.svc.cluster.local:8000/
+          CM_CLOUD_CONNECTOR_HOST: http://cloud-connector.fog.svc.cluster.local:8080/api/cloud-connector/v1/
           CM_PLAYBOOK_HOST: http://localhost:8080
           REPLICAS: 1
+  - name: playbook-dispatcher
+    components:
+      - name: playbook-dispatcher
+        host: github
+        repo: RedHatInsights/playbook-dispatcher
+        path: deploy/clowdapp.yaml
+        parameters:
+          REPLICAS_API: 1
+          REPLICAS_RESPONSE_CONSUMER: 1
+          REPLICAS_VALIDATOR: 1
+          DB_SSLMODE: disable
+          RBAC_IMPL: mock
+          RBAC_HOST: mock
+          CLOUD_CONNECTOR_IMPL: impl
+          CLOUD_CONNECTOR_HOST: cloud-connector
+          PSK_AUTH_TEST: xwKhCUzgJ8
+          TENANT_TRANSLATOR_HOST: mock
+          TENANT_TRANSLATOR_IMPL: mock
