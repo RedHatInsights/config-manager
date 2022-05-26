@@ -55,9 +55,12 @@ Event based workflow:
 
 ### Deploying locally
 
-Config-manager is managed by [Clowder](https://github.com/RedHatInsights/clowder) and can be deployed locally onto a [Minikube](https://minikube.sigs.k8s.io/docs/start/) instance using [Bonfire](https://github.com/RedHatInsights/bonfire).
+Config-manager is managed by
+[Clowder](https://github.com/RedHatInsights/clowder) and can be deployed locally
+onto a [Minikube](https://minikube.sigs.k8s.io/docs/start/) instance using
+[Bonfire](https://github.com/RedHatInsights/bonfire).
 
-#### Setting up an ephemeral enviroment
+#### Setting up a local kubernetes cluster
 
 The following steps (detailed
 [here](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html))
@@ -76,36 +79,42 @@ curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_
 
 3. Install Clowder (replace version with [latest](https://github.com/RedHatInsights/clowder/releases/latest))
 ```sh
-minikube kubectl -- apply -f https://github.com/RedHatInsights/clowder/releases/download/0.15.0/clowder-manifest-0.15.0.yaml --validate=false
+minikube kubectl -- apply -f https://github.com/RedHatInsights/clowder/releases/download/0.30.0/clowder-manifest-0.30.0.yaml --validate=false
 ```
 
-4. Create a namespace for config-manager
+4. Create a namespace for config-manager ("fog" -- get it? local cloud? fog?)
 ```sh
-minikube kubectl -- create ns config-manager
+minikube kubectl -- create ns fog
 ```
 
-5. Download your quay secret if you haven't already, and add it to the
-   config-manager namespace
+5. Download your quay secret if you haven't already, and add it to the fog
+   namespace. Some deployment specs look for the hard-coded value
+   'quay-cloudservices-pull' secret, so copy your personal pull secret and
+   create both.
 ```sh
 cp $USER-secret.yml quay-cloudservices-pull.yml
 sed -ie "s/$USER-pull-secret/quay-cloudservices-pull/" quay-cloudservices-pull.yml
-minikube kubectl -- create $USER-secret.yml --namespace config-manager
-minikube kubectl -- create quay-cloudservices-pull.yml --namespace config-manager
+kubectl --namespace fog create --filename $USER-secret.yml
+kubectl --namespace fog create --filename quay-cloudservices-pull.yml
 ```
 
 6. Deploy ClowdEnvironment
 ```sh
-bonfire deploy-env -n config-manager -u $USER
+bonfire deploy-env --namespace fog --quay-user $USER
 ```
 
 7. Deploy apps config-manager depends on
 ```
-bonfire deploy -n config-manager cloud-connector host-inventory playbook-dispatcher
+bonfire deploy -n fog cloud-connector host-inventory playbook-dispatcher
 ```
 
-#### Deploy config-manager into the ephemeral environment
+At this point, your local cluster can be stopped and started (with `minikube
+stop` and `minikube start`) as desired. There is no need to redo these steps
+every time.
 
-It is possible to deploy config-manager into the environment as a container
+#### Deploy config-manager into the local cluster
+
+It is possible to deploy config-manager into the local cluster as a container
 image and run it. This method mostly closely mimics the environment under which
 config-manager runs in stage and production, but makes development slightly more
 difficult. See [Running config-manager locally](#Running-config-manager-locally)
@@ -119,31 +128,9 @@ cluster services.
 ./bonfire_deploy.sh
 ```
 
-2. Forward ports from localhost into the services in the cluster. Change ports
-   or services as necessary.
+2. Access config-manager
 ```sh
-kubectl -n config-manager port-forward --address 0.0.0.0 svc/mosquitto 1883
-kubectl -n config-manager port-forward                   svc/config-manager-db 5432:5432
-kubectl -n config-manager port-forward                   svc/host-inventory-db 5433:5432
-kubectl -n config-manager port-forward                   svc/cloud-connector-db 5434:5432
-kubectl -n config-manager port-forward                   svc/config-manager-service 8000:8000
-kubectl -n config-manager port-forward                   svc/playbook-dispatcher-api 8001:8000
-kubectl -n config-manager port-forward                   svc/host-inventory-service 8002:8000
-kubectl -n config-manager port-forward                   svc/cloud-connector 8003:8080
-```
-
-To access Kafka message topics, run a `kcat` container directly in the cluster
-is most effective:
-
-```
-# Identify the environment name and export it
-export CONFIG_MANAGER_ENV=$(kubectl -n config-manager get svc -l env=env-config-manager,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-kubectl -n config-manager run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.config-manager.svc.cluster.local:9092 -t platform.inventory.events
-```
-
-3. Access config-manager
-```sh
-oc port-forward svc/config-manager-service -n config-manager 8000 &
+kubectl --namespace fog port-forward svc/config-manager-service 8000 &
 curl -v -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:8000/api/config-manager/v1/states/current
 ```
 
@@ -154,20 +141,17 @@ running services while running it locally. This can enable visual debugging or
 other tracing practices that are made slightly more difficult through the
 abstraction layer created by minikube and kubernetes.
 
-This technique is an adaptation of the method described in the [CONTRIBUTING
-guide](CONTRIBUTING.md).
-
-Perform all the steps as described in [Setting up an ephemeral enviroment]().
+Perform all the steps as described in [Setting up a local kubernetes cluster]().
 Once the dependent services are running, forward the following ports from
 localhost to the appropriate kubernetes service resources:
 
 ```
-export CONFIG_MANAGER_ENV=$(kubectl -n config-manager get svc -l env=env-config-manager,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-kubectl -n config-manager port-forward --address 0.0.0.0 svc/mosquitto 1883                                  &
-kubectl -n config-manager port-forward                   svc/playbook-dispatcher-api 8001:8000               &
-kubectl -n config-manager port-forward                   svc/host-inventory-service 8002:8000                &
-kubectl -n config-manager port-forward                   svc/cloud-connector 8003:8080                       &
-kubectl -n config-manager port-forward                   svc/${CONFIG_MANAGER_ENV}-kafka-bootstrap 9094:9094 &
+export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-config-manager,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+kubectl -n fog port-forward --address 0.0.0.0 svc/mosquitto 1883                                  &
+kubectl -n fog port-forward                   svc/playbook-dispatcher-api 8001:8000               &
+kubectl -n fog port-forward                   svc/host-inventory-service 8002:8000                &
+kubectl -n fog port-forward                   svc/cloud-connector 8003:8080                       &
+kubectl -n fog port-forward                   svc/${CONFIG_MANAGER_ENV}-kafka-bootstrap 9094:9094 &
 ```
 
 Because we've skipped deploying config-manager into the cluster, we need to run
@@ -182,13 +166,26 @@ Next, run config-manager like so:
 ```
 LOG_LEVEL=debug \
 CM_DISPATCHER_HOST=http://localhost:8001/ \
-CM_DISPATCHER_PSK=$(kubectl -n config-manager get secrets/psk-playbook-dispatcher -o json | jq '.data.key' -r | base64 -d) \
+CM_DISPATCHER_PSK=$(kubectl -n fog get secrets/psk-playbook-dispatcher -o json | jq '.data.key' -r | base64 -d) \
 CM_INVENTORY_HOST=http://localhost:8002/ \
 CM_CLOUD_CONNECTOR_HOST=http://localhost:8003/api/cloud-connector/v1/ \
-CM_CLOUD_CONNECTOR_PSK=$(kubectl -n config-manager get secrets/psk-cloud-connector -o json | jq '.data["client-psk"]' -r | base64 -d) \
+CM_CLOUD_CONNECTOR_PSK=$(kubectl -n fog get secrets/psk-cloud-connector -o json | jq '.data["client-psk"]' -r | base64 -d) \
 CM_WEB_PORT=8080 \
 CM_DB_USER=insights \
 CM_DB_PASS=insights \
 CM_DB_NAME=insights \
 go run . run
+```
+
+### Debugging
+
+#### Kafka Topics
+
+To access Kafka topics, running a `kcat` container directly in the cluster is
+most effective:
+
+```
+# Identify the environment name and export it
+export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-config-manager,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+kubectl -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.config-manager.svc.cluster.local:9092 -t platform.inventory.events
 ```
