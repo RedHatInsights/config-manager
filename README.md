@@ -146,12 +146,7 @@ Once the dependent services are running, forward the following ports from
 localhost to the appropriate kubernetes service resources:
 
 ```
-export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-config-manager,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-kubectl -n fog port-forward --address 0.0.0.0 svc/mosquitto 1883                                  &
-kubectl -n fog port-forward                   svc/playbook-dispatcher-api 8001:8000               &
-kubectl -n fog port-forward                   svc/host-inventory-service 8002:8000                &
-kubectl -n fog port-forward                   svc/cloud-connector 8003:8080                       &
-kubectl -n fog port-forward                   svc/${CONFIG_MANAGER_ENV}-kafka-bootstrap 9094:9094 &
+bash scripts/kube-port-forward.sh
 ```
 
 Because we've skipped deploying config-manager into the cluster, we need to run
