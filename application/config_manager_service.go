@@ -160,6 +160,7 @@ func (s *ConfigManagerService) ApplyState(
 			log.Debug().Msgf("setting up host %v for playbook execution", client.DisplayName)
 			if _, err := s.SetupHost(context.Background(), client); err != nil {
 				log.Info().Msgf("error setting up host '%v': %v", client, err)
+				continue
 			}
 		}
 
