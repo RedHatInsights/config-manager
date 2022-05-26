@@ -1,65 +1,223 @@
 # Getting Started
 
-If you're not logged into quay.io already, make sure you follow the
-[instructions for generating a quay pull
+These instructions will result in an (almost) fully function development
+environment for config-manager using minikube to run kubernetes and bonfire to
+deploy the dependent platform applications into the cluster.
+
+## Prerequisites
+
+### quay.io
+
+Follow the [instructions for generating a quay pull
 secret](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_get_your_quay_pull_secret),
-but instead of downloading a pull secret file, copy the "docker login"
-insructions.
-The file `podman-compose.yml` has been written to start all services that
-config-manager requires in containers. `config-manager` itself is intentionally
-excluded. It is expected that you will run config-manager directly, to make
-attaching a debugger easier.
+but addition to downloading a pull secret file, copy the "docker login"
+insructions and log in, replacing 'docker' with 'podman'.
 
-The services started and managed by podman-compose are:
+### `minikube`
 
-* kafka & zookeeper
-* cloud-connector
-* mosquitto
-* postgres
-* inventory
-* playbook-dispatcher
+Follow the [instructions on installing
+minikube](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_install_minikube).
 
-Running `podman-compose up --detach` will start all the services above, and
-export ports on the local system so the services can be interacted with.
+### `oc`
 
-| service             | port  |
-| ------------------- | ----- |
-| kafka               | 29092 |
-| cloud-connector-api | 8081  |
-| mosquitto           | 1883  |
-| postgres            | 5432  |
-| inventory           | 8888  |
-| playbook-dispatcher | 8000  |
+Follow the [instructions on installing
+oc](https://docs.openshift.com/container-platform/4.2/cli_reference/openshift_cli/getting-started-cli.html#cli-installing-cli_cli-developer-commands).
 
-Next, run  config-manager:
+### `bonfire`
 
+Follow the [instructions on installing
+bonfire](https://github.com/RedHatInsights/bonfire#installation).
+
+## Set up a kubernetes cluster using minikube
+
+You only need to do this once.
+
+### Start `minikube`
+
+```sh
+minikube start --cpus 8 --disk-size 36GB --memory 16GB --addons=registry --driver=kvm2
 ```
+
+### Install Clowder Custom Resource Definitions
+
+```sh
+curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_setup.sh | bash
+```
+
+### Install Clowder
+
+```sh
+kubectl apply --filename $(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq '.assets[0].browser_download_url' -r)
+```
+
+### Create a namespace
+
+Choose a namespace to deploy applications into. The name you choose doesn't
+matter, but you'll be typing it a lot. Pick something short. I like 'fog'
+(because fog is a cloud on the ground... get it?).
+
+```sh
+kubectl create namespace fog
+```
+
+### Create Pull Secrets
+
+Some deployments are hard-coded to use a secret named `quay-cloudservices-pull`,
+so copy the pull secret you downloaded [above](#create-pull-secrets) and rename
+it:
+
+```sh
+cp $USER-secret.yml quay-cloudservices-pull.yml
+sed -ie "s/$USER-pull-secret/quay-cloudservices-pull/" quay-cloudservices-pull.yml
+```
+
+Now create the secrets in your new namespace:
+
+```sh
+kubectl --namespace fog create --filename $USER-secret.yml
+kubectl --namespace fog create --filename quay-cloudservices-pull.yml
+```
+
+### Deploy ClowdEnvironment
+
+```sh
+bonfire deploy-env --namespace fog --quay-user $USER
+```
+
+### Deploy Applications
+
+```sh
+bonfire deploy --namespace fog --local-config-path ./bonfire_config.yaml \
+    cloud-connector \
+    host-inventory \
+    playbook-dispatcher
+```
+
+## Run config-manager
+
+There are two ways to run config-manager: directly on localhost or deployed into
+the minikube cluster. Both have advantages and drawbacks, so both are presented
+equally here.
+
+### Run directly on localhost
+
+Running directly on localhost allows for a more rapid edit/execute/debug
+development cycle, but requires forwarding ports from localhost into the cluster
+services.
+
+#### Forward ports
+
+The included `kube-port-forward.sh` script will forward ports from localhost to
+all the necessary services in the cluster.
+
+```sh
+bash scripts/kube-port-forward.sh
+```
+
+| service                 | local port | cluster port |
+| ----------------------- | ---------- | ------------ |
+| mosquitto               | 1883       | 1883         |
+| playbook-dispatcher-api | 8001       | 8000         |
+| host-inventory-service  | 8002       | 8000         |
+| cloud-connector         | 8003       | 8080         |
+
+#### Run database
+
+```sh
+podman run --env POSTGRES_PASSWORD=insights --env POSTGRES_USER=insights --env POSTGRES_DB=insights --publish 5432:5432 --name config-manager-db --detach postgres
+```
+
+#### Run config-manager
+
+```sh
 LOG_LEVEL=debug \
-CM_DISPATCHER_HOST=http://localhost:8000/api/playbook-dispatcher/v1/ \
-CM_DISPATCHER_PSK=swordfish \
-CM_INVENTORY_HOST=http://localhost:8888/api/inventory/v1/ \
-CM_CLOUD_CONNECTOR_HOST=http://localhost:8081/api/cloud-connector/v1/ \
-CM_CLOUD_CONNECTOR_PSK=swordfish \
+CM_DISPATCHER_HOST=http://localhost:8001/ \
+CM_DISPATCHER_PSK=$(kubectl -n fog get secrets/psk-playbook-dispatcher -o json | jq '.data.key' -r | base64 -d) \
+CM_INVENTORY_HOST=http://localhost:8002/ \
+CM_CLOUD_CONNECTOR_HOST=http://localhost:8003/api/cloud-connector/v1/ \
+CM_CLOUD_CONNECTOR_PSK=$(kubectl -n fog get secrets/psk-cloud-connector -o json | jq '.data["client-psk"]' -r | base64 -d) \
 CM_WEB_PORT=8080 \
+CM_DB_USER=insights \
+CM_DB_PASS=insights \
+CM_DB_NAME=insights \
 go run . run
 ```
 
-Now you can interact with config-manager on port 8080:
+### Deployed into the cluster
 
+Running config-manager in the cluster more accurately simulates the environment
+in which config-manager runs in the production and stage environments. It more
+seamlessly interacts with other applications (such as cloud-connector and
+playbook-dispatcher), but makes for a much slower development cycle. Every time
+a code change is made, a new image has to be built, pushed and deployed.
+
+There is a convenient script to do this for you, but the manual steps are
+presented here for educational purposes.
+
+#### Create a container image
+
+Create a container image and tag it with a unique value by concatentating the
+short SHA hash of the HEAD commit and a UNIX timestamp diff. This image is then
+pushed into the local cluster's registry.
+
+```sh
+HEAD_UNIX=$(date --date="$(git show --no-patch --format='%cI' HEAD)" +%s)
+NOW_UNIX=$(date +%s)
+SECDIFF=$(("${NOW_UNIX}" - "${HEAD_UNIX}"))
+TAG="$(git rev-parse --short HEAD)-${SECDIFF}"
+IMAGE="config-manager"
+IP=$(minikube ip)
+
+podman build -t "${IMAGE}:${TAG}" -f Dockerfile
+podman push "${IMAGE}:${TAG}" "${IP}:5000/${IMAGE}:${TAG}" --tls-verify=false
 ```
-curl -v -H "x-rh-identity:eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:8080/api/config-manager/v1/states/current
+
+#### Deploy the image
+
+Using bonfire, deploy config-manager, overriding the image and tag values to use
+the image from the local registry instead of the images from quay.io.
+
+```sh
+bonfire deploy \
+    --local-config-path ./bonfire_config.yaml \
+    --get-dependencies \
+    --namespace config-manager \
+    --set-parameter "config-manager/CM_PLAYBOOK_HOST=http://${IP}/" \
+    --set-parameter "config-manager/IMAGE=localhost:5000/${IMAGE}" \
+    --set-parameter "config-manager/IMAGE_TAG=${TAG}" \
+    --set-image-tag "quay.io/cloudservices/config-manager=${TAG}" \
+    config-manager
 ```
 
-# Simulate a Kafka Inventory event
+### Forward the port
 
-Start a kafka consumer if you want to monitor traffic on a topic:
-
-```
-kcat -C -b localhost:29092 -t platform.inventory.events
+```sh
+kubectl --namespace fog port-forward --address 0.0.0.0 svc/config-manager-api 8080:8080 &
 ```
 
-Then produce a message on the topic:
+## Send HTTP requests
 
+It should now be possible to interact with config-manager's HTTP API using
+`curl` or `ht`.
+
+```sh
+ht GET http://localhost:8080/api/config-manager/v1/states/current x-rh-identity:$(xrhidgen user | base64 -w0)
 ```
-jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | kcat -b localhost:29092 -P -t platform.inventory.events -H event_type=created
+
+# Debugging
+
+## Monitoring Kafka topics
+
+```sh
+# Identify the environment name and export it
+export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+kubectl -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events
+```
+
+## Produce an Inventory Event Kafka message
+
+```sh
+# Identify the environment name and export it
+export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | kubectl -n fog run -i --rm --image=edenhill/kcat:1.7.1 $(mktemp XXXXXX) -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events -P -H event_type=created 
 ```
