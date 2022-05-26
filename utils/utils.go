@@ -47,14 +47,14 @@ func FilesIntoMap(dir, pattern string) map[string][]byte {
 
 	files, err := filepath.Glob(dir + pattern)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msg("cannot match file glob")
 	}
 
 	for _, f := range files {
 		info, _ := os.Stat(f)
 		content, err := ioutil.ReadFile(f)
 		if err != nil {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Str("filename", f).Msg("cannot read file")
 		}
 		filesMap[info.Name()] = content
 	}
