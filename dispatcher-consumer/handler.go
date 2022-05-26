@@ -51,7 +51,7 @@ func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]by
 func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	eventService, err := kafkaUtils.GetHeader(msg, "service")
 	if err != nil {
-		log.Error().Err(err).Msgf("Error getting header: ", err)
+		log.Error().Err(err).Msg("error getting header")
 		return
 	}
 
@@ -59,19 +59,19 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		value := &message.DispatcherEvent{}
 
 		if err := json.Unmarshal(msg.Value, value); err != nil {
-			log.Error().Err(err).Msgf("Couldn't unmarshal dispatcher event: ", err)
+			log.Error().Err(err).Msg("couldn't unmarshal dispatcher event")
 			return
 		}
 
 		switch status := value.Payload.Status; status {
 		case "success":
-			log.Info().Msgf("Received success event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received success event for host %v", value.Payload.Recipient)
 			log.Info().Msgf("Message payload: %+v", value.Payload)
 
 			reqID := this.uuidGenerator()
 			updateMsg, err := buildMessage(value.Payload, reqID)
 			if err != nil {
-				log.Error().Err(err).Msgf("Error building message for inventory update: ", err)
+				log.Error().Err(err).Msg("error building message for inventory update")
 				break
 			}
 
@@ -82,16 +82,16 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				},
 			)
 			if err != nil {
-				log.Info().Msgf("Error producing message to system profile topic. request_id: ", reqID.String())
+				log.Info().Msgf("Error producing message to system profile topic. request_id: %v", reqID.String())
 			} else {
 				log.Info().Msgf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
 					reqID.String(), value.Payload.Labels["id"], value.Payload.Account)
 			}
 		case "running":
-			log.Info().Msgf("Received running event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received running event for host %v", value.Payload.Recipient)
 			// TODO anything to do for running?
 		default:
-			log.Info().Msgf("Received a failure event for host ", value.Payload.Recipient)
+			log.Info().Msgf("Received a failure event for host %v", value.Payload.Recipient)
 			// TODO handle failure/timeout.. retry?
 		}
 	}

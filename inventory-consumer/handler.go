@@ -29,7 +29,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	log.Trace().Str("module", "inventory-consumer").Msg("received message")
 	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
 	if err != nil {
-		log.Error().Err(err).Msgf("Error getting event_type: ", err)
+		log.Error().Err(err).Msg("error getting event_type")
 		return
 	}
 	log.Trace().Str("module", "inventory-consumer").Msgf("event_type = %v", eventType)
