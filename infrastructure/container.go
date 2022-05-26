@@ -60,28 +60,28 @@ func (c *Container) Database() *sql.DB {
 
 		db, err := sql.Open("postgres", connectionString)
 		if err != nil {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Msg("cannot open database")
 		}
 
 		err = db.Ping()
 		if err != nil {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Msg("cannot ping database")
 		}
 
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Msg("cannot create database driver")
 		}
 		m, err := goMigrate.NewWithDatabaseInstance(
 			"file://./db/migrations",
 			"postgres", driver)
 		if err != nil {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Msg("cannot create migration")
 		}
 		err = m.Up()
 		if err != nil {
 			if err != goMigrate.ErrNoChange {
-				log.Fatal().Err(err)
+				log.Fatal().Err(err).Msg("cannot migrate database")
 			} else {
 				log.Info().Msg("no change")
 			}
