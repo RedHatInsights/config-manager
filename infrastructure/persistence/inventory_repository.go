@@ -63,14 +63,14 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.buildURL(page), nil)
 	if err != nil {
-		log.Error().Err(err).Msgf("Error constructing request to inventory: ", err)
+		log.Error().Err(err).Msg("error constructing request to inventory")
 		return results, err
 	}
 	req.Header.Add("X-Rh-Identity", ctx.Value(IdentityKey).(string)) //TODO: Re-evaluate header forwarding
 
 	res, err := c.Client.Do(req)
 	if err != nil {
-		log.Error().Err(err).Msgf("Error during request to inventory: ", err)
+		log.Error().Err(err).Msg("error during request to inventory")
 		return results, err
 	}
 	defer res.Body.Close()
@@ -78,7 +78,7 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 	err = json.NewDecoder(res.Body).Decode(&results)
 	if err != nil {
 		body, _ := ioutil.ReadAll(res.Body)
-		log.Error().Err(err).Msgf("Error decoding inventory response: ", string(body))
+		log.Error().Err(err).Msgf("error decoding inventory response: %v", string(body))
 	}
 	return results, nil
 }

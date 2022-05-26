@@ -89,10 +89,10 @@ func run(cmd *cobra.Command, args []string) error {
 	// stop on signal or error, whatever comes first
 	select {
 	case signal := <-signals:
-		log.Info().Msgf("Shutting down due to signal: ", signal)
+		log.Info().Msgf("Shutting down due to signal: %v", signal)
 		return nil
-	case error := <-errors:
-		log.Error().Msgf("Shutting down due to error: ", error)
-		return error
+	case err := <-errors:
+		log.Error().Err(err).Msg("shutting down due to error")
+		return err
 	}
 }
