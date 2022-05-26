@@ -105,7 +105,10 @@ bonfire deploy-env --namespace fog --quay-user $USER
 
 7. Deploy apps config-manager depends on
 ```
-bonfire deploy -n fog cloud-connector host-inventory playbook-dispatcher
+bonfire deploy --namespace fog --local-config-path ./bonfire_config.yml \
+   cloud-connector \
+   host-inventory \
+   playbook-dispatcher
 ```
 
 At this point, your local cluster can be stopped and started (with `minikube
