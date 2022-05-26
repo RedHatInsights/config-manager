@@ -157,7 +157,7 @@ func (s *ConfigManagerService) ApplyState(
 	log.Info().Msgf("applying state for %v clients: %v", len(clients), acc.State)
 	for i, client := range clients {
 		if client.Reporter == "cloud-connector" {
-			log.Info().Msgf("setting up host for playbook execution")
+			log.Debug().Msgf("setting up host %v for playbook execution", client.DisplayName)
 			if _, err := s.SetupHost(context.Background(), client); err != nil {
 				log.Info().Msgf("error setting up host '%v': %v", client, err)
 			}
