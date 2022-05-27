@@ -17,7 +17,7 @@ declare -A SERVICES=(
 
 for SERVICE in "${!SERVICES[@]}"; do
     PORT_MAP="${SERVICES[$SERVICE]}"
-    kubectl -n fog port-forward --address 0.0.0.0 svc/"${SERVICE}" "${PORT_MAP}" &
+    minikube kubectl -- -n fog port-forward --address 0.0.0.0 svc/"${SERVICE}" "${PORT_MAP}" &
     CHILD_PIDS+=($!)
 done
 

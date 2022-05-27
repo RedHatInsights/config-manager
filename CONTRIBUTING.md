@@ -53,7 +53,7 @@ curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_
 ### Install Clowder
 
 ```sh
-kubectl apply --filename $(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq '.assets[0].browser_download_url' -r)
+minikube kubectl -- apply --filename $(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq '.assets[0].browser_download_url' -r)
 ```
 
 ### Create a namespace
@@ -63,7 +63,7 @@ matter, but you'll be typing it a lot. Pick something short. I like 'fog'
 (because fog is a cloud on the ground... get it?).
 
 ```sh
-kubectl create namespace fog
+minikube kubectl -- create namespace fog
 ```
 
 ### Create Pull Secrets
@@ -80,8 +80,8 @@ sed -ie "s/$USER-pull-secret/quay-cloudservices-pull/" quay-cloudservices-pull.y
 Now create the secrets in your new namespace:
 
 ```sh
-kubectl --namespace fog create --filename $USER-secret.yml
-kubectl --namespace fog create --filename quay-cloudservices-pull.yml
+minikube kubectl -- --namespace fog create --filename $USER-secret.yml
+minikube kubectl -- --namespace fog create --filename quay-cloudservices-pull.yml
 ```
 
 ### Deploy ClowdEnvironment
@@ -198,7 +198,7 @@ bonfire deploy \
 ### Forward the port
 
 ```sh
-kubectl --namespace fog port-forward --address 0.0.0.0 svc/config-manager-api 8080:8080 &
+minikube kubectl -- --namespace fog port-forward --address 0.0.0.0 svc/config-manager-api 8080:8080 &
 ```
 
 ## Send HTTP requests
@@ -217,7 +217,7 @@ ht GET http://localhost:8080/api/config-manager/v1/states/current x-rh-identity:
 ```sh
 # Identify the environment name and export it
 export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-kubectl -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events
+minikube kubectl -- -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events
 ```
 
 ## Produce an Inventory Event Kafka message
@@ -225,5 +225,5 @@ kubectl -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAG
 ```sh
 # Identify the environment name and export it
 export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | kubectl -n fog run -i --rm --image=edenhill/kcat:1.7.1 $(mktemp XXXXXX) -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events -P -H event_type=created 
+jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | minikube kubectl -- -n fog run -i --rm --image=edenhill/kcat:1.7.1 $(mktemp XXXXXX) -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events -P -H event_type=created 
 ```
