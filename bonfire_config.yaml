@@ -1,4 +1,3 @@
-envName: env-fog
 apps:
   - name: config-manager
     components:
@@ -7,13 +6,8 @@ apps:
         repo: ./deploy
         path: clowdapp.yml
         parameters:
-          CM_DISPATCHER_HOST: http://playbook-dispatcher-api.fog.svc.cluster.local:8000/
-          CM_INVENTORY_HOST: http://host-inventory-service.fog.svc.cluster.local:8000/
-          CM_CLOUD_CONNECTOR_HOST: http://cloud-connector.fog.svc.cluster.local:8080/api/cloud-connector/v1/
-          CM_PLAYBOOK_HOST: http://localhost:8080
-          REPLICAS: 1
-          LOG_LEVEL: debug
-          LOG_FORMAT: text
+          CM_LOG_LEVEL: debug
+          CM_LOG_FORMAT: text
   - name: playbook-dispatcher
     components:
       - name: playbook-dispatcher
