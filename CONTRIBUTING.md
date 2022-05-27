@@ -202,7 +202,7 @@ bonfire deploy \
 ### Forward the port
 
 ```sh
-minikube kubectl -- --namespace fog port-forward --address 0.0.0.0 svc/config-manager-api 8080:8080 &
+minikube kubectl -- --namespace fog port-forward --address 0.0.0.0 svc/config-manager-service 8080:8000 &
 minikube kubectl -- --namepscae fog port-forward --address 0.0.0.0 svc/mosquitto 1883 &
 ```
 
