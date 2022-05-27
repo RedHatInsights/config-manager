@@ -263,7 +263,7 @@ func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	log.Info().Msgf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, !enabled)
+	log.Info().Msgf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, enabled)
 
 	if err := cmc.ConfigManagerService.SetApplyState(id.Identity.AccountNumber, enabled); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
