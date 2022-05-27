@@ -10,8 +10,14 @@ deploy the dependent platform applications into the cluster.
 
 Follow the [instructions for generating a quay pull
 secret](https://consoledot.pages.redhat.com/docs/dev/getting-started/local/environment.html#_get_your_quay_pull_secret),
-but addition to downloading a pull secret file, copy the "docker login"
-insructions and log in, replacing 'docker' with 'podman'.
+but addition to downloading a pull secret file, copy the "podman login"
+instructions and log in.
+
+You must have access to the
+[quay.io/cloudservices](https://quay.io/organization/cloudservices?tab=teams)
+repository. In your app-interface user file, make sure `quay_username` is set to
+your quay.io username and that you are a member of the `insights-engineers.yml`
+role.
 
 ### `minikube`
 
