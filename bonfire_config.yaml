@@ -12,6 +12,8 @@ apps:
           CM_CLOUD_CONNECTOR_HOST: http://cloud-connector.fog.svc.cluster.local:8080/api/cloud-connector/v1/
           CM_PLAYBOOK_HOST: http://localhost:8080
           REPLICAS: 1
+          LOG_LEVEL: debug
+          LOG_FORMAT: text
   - name: playbook-dispatcher
     components:
       - name: playbook-dispatcher
