@@ -201,9 +201,12 @@ bonfire deploy \
 
 ### Forward the port
 
+The included `kube-port-forward.sh` script will forward ports from localhost to
+all the necessary services in the cluster, including the config-manager-service
+if detected.
+
 ```sh
-minikube kubectl -- --namespace fog port-forward --address 0.0.0.0 svc/config-manager-service 8080:8000 &
-minikube kubectl -- --namepscae fog port-forward --address 0.0.0.0 svc/mosquitto 1883 &
+bash scripts/kube-port-forward.sh
 ```
 
 ## Send HTTP requests
