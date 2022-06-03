@@ -6,6 +6,9 @@ _term() {
 
 trap _term SIGTERM
 
+NS_NAME=$(minikube kubectl -- get env -o json | jq '.items[0].spec.targetNamespace' -r)
+ENV_NAME=$(minikube kubectl -- --namespace "${NS_NAME}" get svc -l env=env-"${NS_NAME}",app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+
 declare -a CHILD_PIDS
 
 declare -A SERVICES=(
@@ -17,7 +20,7 @@ declare -A SERVICES=(
 
 for SERVICE in "${!SERVICES[@]}"; do
     PORT_MAP="${SERVICES[$SERVICE]}"
-    minikube kubectl -- -n fog port-forward --address 0.0.0.0 svc/"${SERVICE}" "${PORT_MAP}" &
+    minikube kubectl -- --namespace "${NS_NAME}" port-forward --address 0.0.0.0 svc/"${SERVICE}" "${PORT_MAP}" &
     CHILD_PIDS+=($!)
 done
 
