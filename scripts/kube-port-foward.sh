@@ -18,6 +18,10 @@ declare -A SERVICES=(
     [cloud-connector]=8003:8080
 )
 
+if minikube kubectl -- --namespace "${NS_NAME}" get svc/config-manager-service --output name; then
+SERVICES+=([config-manager-service]=8080:8000)
+fi
+
 for SERVICE in "${!SERVICES[@]}"; do
     PORT_MAP="${SERVICES[$SERVICE]}"
     minikube kubectl -- --namespace "${NS_NAME}" port-forward --address 0.0.0.0 svc/"${SERVICE}" "${PORT_MAP}" &
