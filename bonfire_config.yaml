@@ -7,7 +7,7 @@ apps:
         path: clowdapp.yml
         parameters:
           CM_LOG_LEVEL: debug
-          CM_LOG_FORMAT: text
+          CM_LOG_FORMAT: json
   - name: playbook-dispatcher
     components:
       - name: playbook-dispatcher
