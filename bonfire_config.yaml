@@ -26,3 +26,12 @@ apps:
           PSK_AUTH_TEST: xwKhCUzgJ8
           TENANT_TRANSLATOR_HOST: mock
           TENANT_TRANSLATOR_IMPL: mock
+  - name: host-inventory
+    components:
+      - name: host-inventory
+        host: github
+        repo: RedHatInsights/insights-host-inventory
+        path: deployment.yaml
+        parameters:
+          BYPASS_RBAC: "true"
+          XJOIN_SEARCH_HOST: xjoin-search
