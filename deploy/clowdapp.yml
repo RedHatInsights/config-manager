@@ -28,6 +28,11 @@ objects:
 
     envName: ${ENV_NAME}
 
+    optionalDependencies:
+    - cloud-connector-api
+    - playbook-dispatcher
+    - host-inventory
+
     database:
       name: config-manager
       version: 10
