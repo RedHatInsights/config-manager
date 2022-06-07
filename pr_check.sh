@@ -10,6 +10,7 @@
 #
 readonly APP_NAME="config-manager"
 readonly COMPONENT_NAME="config-manager"
+readonly REF_ENV="insights-stage"
 
 # The image built from this repository
 readonly IMAGE="quay.io/cloudservices/config-manager"
@@ -23,6 +24,25 @@ source <(curl -s https://raw.githubusercontent.com/RedHatInsights/bonfire/master
 
 # Build an image and push it to quay. Export no variables.
 source "${CICD_ROOT}/build.sh"
+
+EXTRA_DEPLOY_ARGS=""
+
+# Include cloud-connector (not just cloud-connector-api) as a deployment
+# argument. This pulls in the 'cloud-connector' resource, which in turn pulls in
+# the mosquitto service we need to stand up a live environment.
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} cloud-connector"
+
+# Set additional deploy arguments to use live implementations of services rather
+# than mocks. This should eventually be removed in favor of changing the static
+# parameters in the app-interface ephemeral-base target:
+# https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/insights/config-manager/deploy.yml#L67-69
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_LOG_LEVEL=debug"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_CLOUD_CONNECTOR_IMPL=impl"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_DISPATCHER_IMPL=impl"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_INVENTORY_IMPL=impl"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_DISPATCHER_HOST=http://\${PLAYBOOK_DISPATCHER_HOST}:\${PLAYBOOK_DISPATCHER_PORT}"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_INVENTORY_HOST=http://host-inventory-service:8000"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_CLOUD_CONNECTOR_HOST=http://\${CLOUD_CONNECTOR_HOST}:\${CLOUD_CONNECTOR_PORT}"
 
 # Deploy an ephemeral env with the just-created image. Export NAMESPACE.
 source "${CICD_ROOT}/deploy_ephemeral_env.sh"
