@@ -247,7 +247,7 @@ parameters:
   required: true
 
 - name: CM_LOG_LEVEL
-  value: INFO
+  value: debug
 - name: CM_LOG_FORMAT
   value: json
 - name: CPU_LIMIT
