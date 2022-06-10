@@ -37,8 +37,6 @@ type Container struct {
 	cmController *controllers.ConfigManagerController
 
 	// Repositories
-	accountStateRepo   *persistence.AccountStateRepository
-	stateArchiveRepo   *persistence.StateArchiveRepository
 	dispatcherRepo     dispatcher.DispatcherClient
 	cloudConnectorRepo cloudconnector.CloudConnectorClient
 	inventoryRepo      *persistence.InventoryClient
@@ -84,8 +82,7 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			AccountStateRepo:   c.AccountStateRepo(),
-			StateArchiveRepo:   c.StateArchiveRepo(),
+			Db:                 c.Database(),
 			CloudConnectorRepo: c.CloudConnectorRepo(),
 			DispatcherRepo:     c.DispatcherRepo(),
 			PlaybookGenerator:  *c.PlaybookGenerator(),
@@ -122,30 +119,6 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 	}
 
 	return c.cmController
-}
-
-// AccountStateRepo lazily initializes a new persistence.AccountStateRepository
-// and returns it.
-func (c *Container) AccountStateRepo() *persistence.AccountStateRepository {
-	if c.accountStateRepo == nil {
-		c.accountStateRepo = &persistence.AccountStateRepository{
-			DB: c.Database().Handle(),
-		}
-	}
-
-	return c.accountStateRepo
-}
-
-// StateArchiveRepo lazily initializes a new persistence.StateArchiveRepository
-// and returns it.
-func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
-	if c.stateArchiveRepo == nil {
-		c.stateArchiveRepo = &persistence.StateArchiveRepository{
-			DB: c.Database().Handle(),
-		}
-	}
-
-	return c.stateArchiveRepo
 }
 
 // DispatcherRepo lazily initializes a new dispatcher.DispatcherClient and
