@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-
-	"github.com/google/uuid"
 )
 
 // ConfigManagerInterface is an abstraction around a subset of the
@@ -30,8 +28,7 @@ type ConfigManagerInterface interface {
 // such as the local storage database, inventory, cloud-connector, and
 // playbook-dispatcher.
 type ConfigManagerService struct {
-	AccountStateRepo   domain.AccountStateRepository
-	StateArchiveRepo   domain.StateArchiveRepository
+	Db                 *db.DB
 	CloudConnectorRepo cloudconnector.CloudConnectorClient
 	InventoryRepo      domain.InventoryClient
 	DispatcherRepo     dispatcher.DispatcherClient
@@ -39,14 +36,16 @@ type ConfigManagerService struct {
 }
 
 // GetAccountState retrieves the current state for the account
+//
+// Deprecated: Use db.DB.GetCurrentProfile instead.
 func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState, error) {
-	acc := &domain.AccountState{AccountID: id}
-	acc, err := s.AccountStateRepo.GetAccountState(acc)
+	var acc *domain.AccountState
+	profile, err := s.Db.GetCurrentProfile(id)
 
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			acc, err = s.setupDefaultState(acc)
+			_, err = s.setupDefaultState(&domain.AccountState{AccountID: profile.AccountID.String})
 			if err != nil {
 				return nil, err
 			}
@@ -55,63 +54,82 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 		}
 	}
 
-	return acc, err
+	acc = &domain.AccountState{
+		AccountID: profile.AccountID.String,
+		State:     profile.StateConfig(),
+		StateID:   profile.ID,
+		Label:     profile.Label.String,
+		ApplyState: db.JSONNullBool{
+			NullBool: sql.NullBool{
+				Bool:  profile.Active,
+				Valid: true,
+			},
+		},
+	}
+
+	return acc, nil
 }
 
 func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*domain.AccountState, error) {
 	log.Info().Msgf("Creating new account entry with default values")
-	err := s.AccountStateRepo.CreateAccountState(acc)
-	if err != nil {
-		return nil, err
-	}
 
 	defaultState := config.DefaultConfig.ServiceConfig
 	state := domain.StateMap{}
 	if err := json.Unmarshal([]byte(defaultState), &state); err != nil {
 		return nil, err
 	}
-	acc, err = s.UpdateAccountState(acc.AccountID, "redhat", state, db.JSONNullBool{NullBool: sql.NullBool{Valid: true, Bool: true}})
+	newProfile := db.NewProfile(acc.AccountID, state)
 
-	return acc, err
+	err := s.Db.InsertProfile(*newProfile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.AccountState{
+		AccountID: newProfile.AccountID.String,
+		State:     newProfile.StateConfig(),
+		StateID:   newProfile.ID,
+		Label:     newProfile.Label.String,
+		ApplyState: db.JSONNullBool{
+			NullBool: sql.NullBool{
+				Bool:  newProfile.Active,
+				Valid: true,
+			},
+		},
+	}, nil
 }
 
 // UpdateAccountState updates the current state for the account and creates a new state archive
 func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domain.StateMap, applyState db.JSONNullBool) (*domain.AccountState, error) {
-	newStateID := uuid.New()
-	newLabel := id + "-" + uuid.New().String()
-	acc := &domain.AccountState{
-		AccountID:  id,
-		State:      payload,
-		StateID:    newStateID,
-		Label:      newLabel,
-		ApplyState: applyState,
-	}
+	newProfile := db.NewProfile(id, payload)
 
-	err := s.AccountStateRepo.UpdateAccountState(acc)
+	newProfile.Creator.Valid = true
+	newProfile.Creator.String = user
+	newProfile.Active = applyState.Bool
+	newProfile.SetStateConfig(payload)
+
+	err := s.Db.InsertProfile(*newProfile)
 	if err != nil {
 		return nil, err
 	}
 
-	archive := &domain.StateArchive{
-		AccountID: acc.AccountID,
-		StateID:   acc.StateID,
-		Label:     acc.Label,
-		Initiator: user,
-		CreatedAt: time.Now(),
-		State:     acc.State,
-	}
-
-	err = s.StateArchiveRepo.CreateStateArchive(archive)
-	if err != nil {
-		return nil, err
-	}
-
-	return acc, err
+	return &domain.AccountState{
+		AccountID: newProfile.AccountID.String,
+		State:     newProfile.StateConfig(),
+		StateID:   newProfile.ID,
+		Label:     newProfile.Label.String,
+		ApplyState: db.JSONNullBool{
+			NullBool: sql.NullBool{
+				Bool:  newProfile.Active,
+				Valid: true,
+			},
+		},
+	}, nil
 }
 
 // DeleteAccount TODO
 func (s *ConfigManagerService) DeleteAccount(id string) error {
-	return nil
+	return fmt.Errorf("not implemented")
 }
 
 // GetConnectedClients Retrieve clients from cloud-connector
@@ -201,55 +219,91 @@ func (s *ConfigManagerService) ApplyState(ctx context.Context, profile db.Profil
 // TODO: Add sorting and filtering
 // Sorting: currently only ascending
 // Filtering idea: may need to filter on user/initiator
+//
+// Deprecated: use db.DB.GetProfiles instead.
 func (s *ConfigManagerService) GetStateChanges(accountID, sortBy string, limit, offset int) (*domain.StateArchives, error) {
-	states, err := s.StateArchiveRepo.GetAllStateArchives(accountID, sortBy, limit, offset)
+	total, err := s.Db.CountProfiles(accountID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get profile count: %w", err)
 	}
 
-	return states, err
+	profiles, err := s.Db.GetProfiles(accountID, sortBy, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get profiles: %w", err)
+	}
+
+	states := make([]domain.StateArchive, 0)
+
+	for _, profile := range profiles {
+		state := domain.StateArchive{
+			AccountID: accountID,
+			StateID:   profile.ID,
+			Label:     profile.Label.String,
+			Initiator: profile.Creator.String,
+			CreatedAt: profile.CreatedAt,
+			State:     profile.StateConfig(),
+		}
+		states = append(states, state)
+	}
+
+	return &domain.StateArchives{
+		Count:  len(profiles),
+		Limit:  limit,
+		Offset: offset,
+		Total:  total,
+		States: states,
+	}, nil
 }
 
 // GetSingleStateChange gets a single state archive by state_id
+//
+// Deprecated: use db.DB.GetProfile instead.
 func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.StateArchive, error) {
-	id, err := uuid.Parse(stateID)
+	profile, err := s.Db.GetProfile(stateID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get profile for ID %v: %w", stateID, err)
 	}
 
-	archive := &domain.StateArchive{StateID: id}
-	state, err := s.StateArchiveRepo.GetStateArchive(archive)
-	if err != nil {
-		return nil, err
-	}
-
-	return state, err
+	return &domain.StateArchive{
+		AccountID: profile.AccountID.String,
+		StateID:   profile.ID,
+		Label:     profile.Label.String,
+		Initiator: profile.Creator.String,
+		CreatedAt: profile.CreatedAt,
+		State:     profile.StateConfig(),
+	}, nil
 }
 
 // SetApplyState sets the apply_state field to skipApplyState
+//
+// Deprecated: use db.DB.InsertProfile instead
 func (s *ConfigManagerService) SetApplyState(accountID string, applyState bool) error {
-	return s.AccountStateRepo.UpdateAccountStateApplyState(accountID, applyState)
+	profile, err := s.Db.GetCurrentProfile(accountID)
+	if err != nil {
+		return fmt.Errorf("cannot get current profile: %w", err)
+	}
+
+	newProfile := db.CopyProfile(*profile)
+	newProfile.Active = applyState
+	if err := s.Db.InsertProfile(newProfile); err != nil {
+		return fmt.Errorf("cannot insert new profile: %w", err)
+	}
+	return nil
 }
 
 // GetPlaybook gets a playbook by state_id
 func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
-	id, err := uuid.Parse(stateID)
+	profile, err := s.Db.GetProfile(stateID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("cannot get profile: %w", err)
 	}
 
-	archive := &domain.StateArchive{StateID: id}
-	archive, err = s.StateArchiveRepo.GetStateArchive(archive)
+	playbook, err := s.PlaybookGenerator.GeneratePlaybook(profile.StateConfig())
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("cannot generate playbook: %w", err)
 	}
 
-	playbook, err := s.PlaybookGenerator.GeneratePlaybook(archive.State)
-	if err != nil {
-		return "", err
-	}
-
-	return playbook, err
+	return playbook, nil
 }
 
 // SetupHost messages a host to install the rhc-worker-playbook RPM to enable it
