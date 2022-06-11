@@ -2,13 +2,12 @@ package cloudconnector
 
 import (
 	"bytes"
+	"config-manager/internal/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 //go:generate oapi-codegen -generate client,types -package cloudconnector -o ./cloudconnector.gen.go https://github.com/RedHatInsights/cloud-connector/raw/f7b64dc76271a2293518c2da513676aa979febfd/internal/controller/api/api.spec.json
@@ -30,10 +29,10 @@ type cloudConnectorClientImpl struct {
 // NewCloudConnectorClientWithDoer returns a CloudConnectorClient by
 // constructing a cloudconnector.Client, configured with request headers and
 // host information.
-func NewCloudConnectorClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) (CloudConnectorClient, error) {
-	client, err := NewClientWithResponses(cfg.GetString("Cloud_Connector_Host"), WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("x-rh-cloud-connector-client-id", cfg.GetString("Cloud_Connector_Client_ID"))
-		req.Header.Set("x-rh-cloud-connector-psk", cfg.GetString("Cloud_Connector_PSK"))
+func NewCloudConnectorClientWithDoer(doer HttpRequestDoer) (CloudConnectorClient, error) {
+	client, err := NewClientWithResponses(config.DefaultConfig.CloudConnectorHost.String(), WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("x-rh-cloud-connector-client-id", config.DefaultConfig.CloudConnectorClientID)
+		req.Header.Set("x-rh-cloud-connector-psk", config.DefaultConfig.CloudConnectorPSK)
 		return nil
 	}), WithHTTPClient(doer))
 	if err != nil {
@@ -44,12 +43,12 @@ func NewCloudConnectorClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) (Cl
 }
 
 // NewCloudConnectorClient creates a new CloudConnectorClient.
-func NewCloudConnectorClient(cfg *viper.Viper) (CloudConnectorClient, error) {
+func NewCloudConnectorClient() (CloudConnectorClient, error) {
 	httpClient := &http.Client{
-		Timeout: time.Duration(int(time.Second) * cfg.GetInt("Cloud_Connector_Timeout")),
+		Timeout: time.Duration(int(time.Second) * config.DefaultConfig.CloudConnectorTimeout),
 	}
 
-	return NewCloudConnectorClientWithDoer(cfg, httpClient)
+	return NewCloudConnectorClientWithDoer(httpClient)
 }
 
 // GetConnections calls the GetConnectionAccount API method and formats the

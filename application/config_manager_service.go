@@ -4,6 +4,7 @@ import (
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
+	"config-manager/internal/config"
 	"config-manager/internal/db"
 	"context"
 	"database/sql"
@@ -14,7 +15,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 )
 
 // ConfigManagerInterface is an abstraction around a subset of the
@@ -30,7 +30,6 @@ type ConfigManagerInterface interface {
 // such as the local storage database, inventory, cloud-connector, and
 // playbook-dispatcher.
 type ConfigManagerService struct {
-	Cfg                *viper.Viper
 	AccountStateRepo   domain.AccountStateRepository
 	StateArchiveRepo   domain.StateArchiveRepository
 	CloudConnectorRepo cloudconnector.CloudConnectorClient
@@ -66,7 +65,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 		return nil, err
 	}
 
-	defaultState := s.Cfg.GetString("Service_Config")
+	defaultState := config.DefaultConfig.ServiceConfig
 	state := domain.StateMap{}
 	if err := json.Unmarshal([]byte(defaultState), &state); err != nil {
 		return nil, err
@@ -168,7 +167,7 @@ func (s *ConfigManagerService) ApplyState(
 		input := dispatcher.RunInput{
 			Recipient: client.SystemProfile.RHCID,
 			Account:   acc.AccountID,
-			Url:       s.Cfg.GetString("Playbook_Host") + fmt.Sprintf(s.Cfg.GetString("Playbook_Path"), acc.StateID),
+			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, acc.StateID),
 			Labels: &dispatcher.RunInput_Labels{
 				AdditionalProperties: map[string]string{
 					"state_id": acc.StateID.String(),
@@ -179,7 +178,7 @@ func (s *ConfigManagerService) ApplyState(
 
 		inputs = append(inputs, input)
 
-		if len(inputs) == s.Cfg.GetInt("Dispatcher_Batch_Size") || i == len(clients)-1 {
+		if len(inputs) == config.DefaultConfig.DispatcherBatchSize || i == len(clients)-1 {
 			if inputs != nil {
 				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
 				if err != nil {

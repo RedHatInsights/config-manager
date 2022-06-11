@@ -14,12 +14,11 @@ package dispatcher
 //go:generate oapi-codegen -generate client -package dispatcher -o ./dispatcher.gen.go /tmp/openapi.yaml
 
 import (
+	"config-manager/internal/config"
 	"context"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 // DispatcherClient provides REST client API methods to interact with the
@@ -35,14 +34,14 @@ type dispatcherClientImpl struct {
 
 // NewDispatcherClientWithDoer returns a DispatchClient by constructing a
 // dispatcher.Client, configured with request headers and host information.
-func NewDispatcherClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) DispatcherClient {
+func NewDispatcherClientWithDoer(doer HttpRequestDoer) DispatcherClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: cfg.GetString("Dispatcher_Host"),
+			Server: config.DefaultConfig.DispatcherHost.String(),
 			Client: doer,
 			RequestEditors: []RequestEditorFn{
 				func(ctx context.Context, req *http.Request) error {
-					req.Header.Set("Authorization", fmt.Sprintf("PSK %s", cfg.GetString("Dispatcher_PSK")))
+					req.Header.Set("Authorization", fmt.Sprintf("PSK %s", config.DefaultConfig.DispatcherPSK))
 					req.Header.Set("Content-Type", "application/json")
 					return nil
 				},
@@ -56,12 +55,12 @@ func NewDispatcherClientWithDoer(cfg *viper.Viper, doer HttpRequestDoer) Dispatc
 }
 
 // NewDispatcherClient creates a new DispatcherClient.
-func NewDispatcherClient(cfg *viper.Viper) DispatcherClient {
+func NewDispatcherClient() DispatcherClient {
 	client := &http.Client{
-		Timeout: time.Duration(int(time.Second) * cfg.GetInt("Dispatcher_Timeout")),
+		Timeout: time.Duration(int(time.Second) * config.DefaultConfig.DispatcherTimeout),
 	}
 
-	return NewDispatcherClientWithDoer(cfg, client)
+	return NewDispatcherClientWithDoer(client)
 }
 
 // Dispatch performs the CreateWithResponse API method of the

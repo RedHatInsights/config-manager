@@ -7,6 +7,7 @@ import (
 	"config-manager/infrastructure/persistence"
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
+	"config-manager/internal/config"
 	"config-manager/utils"
 	"database/sql"
 	"fmt"
@@ -20,7 +21,6 @@ import (
 	goMigrate "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/spf13/viper"
 )
 
 // Container is the primary application structure. It holds references to the
@@ -28,7 +28,6 @@ import (
 // provides a collection of accessor methods to retrieve handles to each
 // application component.
 type Container struct {
-	Config *viper.Viper
 	db     *sql.DB
 	server *echo.Echo
 
@@ -52,11 +51,11 @@ type Container struct {
 func (c *Container) Database() *sql.DB {
 	if c.db == nil {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
-			c.Config.GetString("DB_User"),
-			c.Config.GetString("DB_Pass"),
-			c.Config.GetString("DB_Name"),
-			c.Config.GetString("DB_Host"),
-			c.Config.GetInt("DB_Port"))
+			config.DefaultConfig.DBUser,
+			config.DefaultConfig.DBPass,
+			config.DefaultConfig.DBName,
+			config.DefaultConfig.DBHost,
+			config.DefaultConfig.DBPort)
 
 		db, err := sql.Open("postgres", connectionString)
 		if err != nil {
@@ -107,7 +106,6 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			Cfg:                c.Config,
 			AccountStateRepo:   c.AccountStateRepo(),
 			StateArchiveRepo:   c.StateArchiveRepo(),
 			CloudConnectorRepo: c.CloudConnectorRepo(),
@@ -124,7 +122,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 // it.
 func (c *Container) PlaybookGenerator() *application.Generator {
 	if c.playbookGenerator == nil {
-		templates := utils.FilesIntoMap(c.Config.GetString("Playbook_Files"), "*.yml")
+		templates := utils.FilesIntoMap(config.DefaultConfig.PlaybookFiles, "*.yml")
 		c.playbookGenerator = &application.Generator{
 			Templates: templates,
 		}
@@ -140,7 +138,7 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 		c.cmController = &controllers.ConfigManagerController{
 			ConfigManagerService: c.CMService(),
 			Server:               c.Server(),
-			URLBasePath:          c.Config.GetString("URL_Base_Path"),
+			URLBasePath:          config.DefaultConfig.URLBasePath(),
 		}
 	}
 
@@ -175,10 +173,10 @@ func (c *Container) StateArchiveRepo() *persistence.StateArchiveRepository {
 // returns it.
 func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 	if c.dispatcherRepo == nil {
-		if c.Config.GetString("Dispatcher_Impl") == "mock" {
+		if config.DefaultConfig.DispatcherImpl.Value == "mock" {
 			c.dispatcherRepo = dispatcher.NewDispatcherClientMock()
 		} else {
-			c.dispatcherRepo = dispatcher.NewDispatcherClient(c.Config)
+			c.dispatcherRepo = dispatcher.NewDispatcherClient()
 		}
 	}
 
@@ -189,10 +187,10 @@ func (c *Container) DispatcherRepo() dispatcher.DispatcherClient {
 // and returns it.
 func (c *Container) CloudConnectorRepo() cloudconnector.CloudConnectorClient {
 	if c.cloudConnectorRepo == nil {
-		if c.Config.GetString("Cloud_Connector_Impl") == "mock" {
+		if config.DefaultConfig.CloudConnectorImpl.Value == "mock" {
 			c.cloudConnectorRepo = cloudconnector.NewCloudConnectorClientMock()
 		} else {
-			client, err := cloudconnector.NewCloudConnectorClient(c.Config)
+			client, err := cloudconnector.NewCloudConnectorClient()
 			if err != nil {
 				log.Fatal().Err(err).Msg("cannot create cloud connector client")
 			}
@@ -208,12 +206,12 @@ func (c *Container) CloudConnectorRepo() cloudconnector.CloudConnectorClient {
 func (c *Container) InventoryRepo() domain.InventoryClient {
 	if c.inventoryRepo == nil {
 		client := &http.Client{
-			Timeout: time.Duration(int(time.Second) * c.Config.GetInt("Inventory_Timeout")),
+			Timeout: time.Duration(int(time.Second) * config.DefaultConfig.InventoryTimeout),
 		}
 
 		c.inventoryRepo = &persistence.InventoryClient{
-			InventoryHost: c.Config.GetString("Inventory_Host"),
-			InventoryImpl: c.Config.GetString("Inventory_Impl"),
+			InventoryHost: config.DefaultConfig.InventoryHost.String(),
+			InventoryImpl: config.DefaultConfig.InventoryImpl.Value,
 			Client:        client,
 		}
 	}

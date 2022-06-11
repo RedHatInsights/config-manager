@@ -1,7 +1,8 @@
 package cloudconnector
 
 import (
-	"config-manager/config"
+	"config-manager/internal/config"
+	"config-manager/internal/url"
 	"config-manager/utils"
 	"context"
 	"testing"
@@ -14,12 +15,11 @@ func TestGetConnectionsSuccess(t *testing.T) {
 		"connections": ["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]
 	}`
 
-	conf := config.Get()
-	conf.Set("Cloud_Connector_Host", "test")
-	conf.Set("Cloud_Connector_Client_ID", "test")
-	conf.Set("Cloud_Connector_PSK", "test")
+	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
+	config.DefaultConfig.CloudConnectorClientID = "test"
+	config.DefaultConfig.CloudConnectorPSK = "test"
 
-	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
 	if err != nil {
 		t.Error(err)
 	}
@@ -38,12 +38,11 @@ func TestGetConnectionsAccountNotFound(t *testing.T) {
 		"connections": []
 	}`
 
-	conf := config.Get()
-	conf.Set("Cloud_Connector_Host", "test")
-	conf.Set("Cloud_Connector_Client_ID", "test")
-	conf.Set("Cloud_Connector_PSK", "test")
+	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
+	config.DefaultConfig.CloudConnectorClientID = "test"
+	config.DefaultConfig.CloudConnectorPSK = "test"
 
-	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,12 +56,11 @@ func TestGetConnectionsAccountNotFound(t *testing.T) {
 func TestSendMessageSuccess(t *testing.T) {
 	response := `{"id": "0afbfb55-a2af-43f2-84da-a0896f03f067"}`
 
-	conf := config.Get()
-	conf.Set("Cloud_Connector_Host", "test")
-	conf.Set("Cloud_Connector_Client_ID", "test")
-	conf.Set("Cloud_Connector_PSK", "test")
+	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
+	config.DefaultConfig.CloudConnectorClientID = "test"
+	config.DefaultConfig.CloudConnectorPSK = "test"
 
-	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 201))
+	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 201))
 	if err != nil {
 		t.Error(err)
 	}
@@ -76,12 +74,11 @@ func TestSendMessageSuccess(t *testing.T) {
 func TestGetConnectionStatus(t *testing.T) {
 	response := `{"status":"connected","dispatchers": {"rhc-worker-playbook": {}}}`
 
-	conf := config.Get()
-	conf.Set("Cloud_Connector_Host", "test")
-	conf.Set("Cloud_Connector_Client_ID", "test")
-	conf.Set("Cloud_Connector_PSK", "test")
+	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
+	config.DefaultConfig.CloudConnectorClientID = "test"
+	config.DefaultConfig.CloudConnectorPSK = "test"
 
-	connector, err := NewCloudConnectorClientWithDoer(conf, utils.SetupMockHTTPClient(response, 200))
+	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
 	if err != nil {
 		t.Error(err)
 	}

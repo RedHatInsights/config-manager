@@ -1,7 +1,6 @@
 package dispatcher_test
 
 import (
-	"config-manager/config"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/utils"
 	"context"
@@ -41,7 +40,7 @@ func TestDispatchSuccess(t *testing.T) {
 
 	doer := utils.SetupMockHTTPClient(response, 207)
 
-	dispatcher := dispatcher.NewDispatcherClientWithDoer(config.Get(), doer)
+	dispatcher := dispatcher.NewDispatcherClientWithDoer(doer)
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)
 
@@ -63,7 +62,7 @@ func TestDispatchNotFound(t *testing.T) {
 
 	doer := utils.SetupMockHTTPClient(response, 207)
 
-	dispatcher := dispatcher.NewDispatcherClientWithDoer(config.Get(), doer)
+	dispatcher := dispatcher.NewDispatcherClientWithDoer(doer)
 
 	results, err := dispatcher.Dispatch(context.Background(), inputs)
 
