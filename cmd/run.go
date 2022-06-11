@@ -2,33 +2,39 @@ package cmd
 
 import (
 	"config-manager/api"
-	"config-manager/config"
 	dispatcherConsumer "config-manager/dispatcher-consumer"
+	"config-manager/internal/config"
 	inventoryConsumer "config-manager/inventory-consumer"
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/peterbourgon/ff/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // startModuleFn is a function definition that a module must implement in order
 // be started by the run command.
 type startModuleFn = func(
 	ctx context.Context,
-	cfg *viper.Viper,
 	errors chan<- error,
 )
 
 func run(cmd *cobra.Command, args []string) error {
+	fs := config.FlagSet("config-manager", flag.ExitOnError)
+
+	if err := ff.Parse(fs, args, ff.WithEnvVarPrefix("CM")); err != nil {
+		return fmt.Errorf("cannot parse flags: %w", err)
+	}
+
 	modules, err := cmd.Flags().GetStringSlice("module")
 	if err != nil {
 		log.Error().Err(err).Msg("error getting modules")
@@ -39,9 +45,7 @@ func run(cmd *cobra.Command, args []string) error {
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	errors := make(chan error, 1)
 
-	cfg := config.Get()
-
-	level, err := zerolog.ParseLevel(cfg.GetString("Log_Level"))
+	level, err := zerolog.ParseLevel(config.DefaultConfig.LogLevel)
 	if err != nil {
 		log.Error().Err(err)
 		return err
@@ -49,14 +53,14 @@ func run(cmd *cobra.Command, args []string) error {
 
 	zerolog.SetGlobalLevel(level)
 
-	switch cfg.GetString("Log_Format") {
+	switch config.DefaultConfig.LogFormat {
 	case "text":
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
-	metricsServer.GET(cfg.GetString("Metrics_Path"), echo.WrapHandler(promhttp.Handler()))
+	metricsServer.GET(config.DefaultConfig.MetricsPath, echo.WrapHandler(promhttp.Handler()))
 
 	ctx := context.Background() //TODO context.WithCancel
 
@@ -76,12 +80,12 @@ func run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("unknown module %s", module)
 		}
 
-		startModule(ctx, cfg, errors)
+		startModule(ctx, errors)
 	}
 
-	log.Info().Int("port", cfg.GetInt("Metrics_Port")).Str("service", "metrics").Msg("starting http server")
+	log.Info().Int("port", config.DefaultConfig.MetricsPort).Str("service", "metrics").Msg("starting http server")
 	go func() {
-		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("Metrics_Port")))
+		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", config.DefaultConfig.MetricsPort))
 	}()
 
 	log.Debug().Msg("Config Manager started")

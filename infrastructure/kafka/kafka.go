@@ -1,13 +1,13 @@
 package kafka
 
 import (
+	"config-manager/internal/config"
 	"context"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
 
 	kafka "github.com/segmentio/kafka-go"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -25,21 +25,21 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 }
 
 // NewConsumer creates a configured kafka.Reader.
-func NewConsumer(cfg *viper.Viper, topic string) *kafka.Reader {
+func NewConsumer(topic string) *kafka.Reader {
 	consumer := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     cfg.GetStringSlice("Kafka_Brokers"),
+		Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 		Topic:       topic,
-		GroupID:     cfg.GetString("Kafka_Group_ID"),
-		StartOffset: cfg.GetInt64("Kafka_Consumer_Offset"),
+		GroupID:     config.DefaultConfig.KafkaGroupID,
+		StartOffset: config.DefaultConfig.KafkaConsumerOffset,
 	})
 
 	return consumer
 }
 
 // NewProducer creates a configured kafka.Writer.
-func NewProducer(cfg *viper.Viper, topic string) *kafka.Writer {
+func NewProducer(topic string) *kafka.Writer {
 	producer := &kafka.Writer{
-		Addr:  kafka.TCP(cfg.GetStringSlice("Kafka_Brokers")[0]),
+		Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 		Topic: topic,
 	}
 

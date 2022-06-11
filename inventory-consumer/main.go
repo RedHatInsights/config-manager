@@ -3,23 +3,18 @@ package inventoryconsumer
 import (
 	"config-manager/infrastructure"
 	"config-manager/infrastructure/kafka"
+	"config-manager/internal/config"
 	"context"
-
-	"github.com/spf13/viper"
 )
 
 // Start creates a new Kafka consumer, sets up a message handler, and starts
 // running the consumer on a goroutine, reading messages from the consumer. It
 // the module entrypoint for the inventory Kafka consumer, conforming to the
 // startModuleFn type definition in config-manager/cmd.
-func Start(
-	ctx context.Context,
-	cfg *viper.Viper,
-	errors chan<- error,
-) {
-	consumer := kafka.NewConsumer(cfg, cfg.GetString("Kafka_Inventory_Topic"))
+func Start(ctx context.Context, errors chan<- error) {
+	consumer := kafka.NewConsumer(config.DefaultConfig.KafkaInventoryTopic)
 
-	container := infrastructure.Container{Config: cfg}
+	container := infrastructure.Container{}
 
 	cmService := container.CMService()
 

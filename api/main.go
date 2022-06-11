@@ -3,14 +3,13 @@ package api
 import (
 	"config-manager/api/controllers"
 	"config-manager/api/instrumentation"
-	"config-manager/config"
 	"config-manager/infrastructure"
+	"config-manager/internal/config"
 	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/spf13/viper"
 
 	echoPrometheus "github.com/globocom/echo-prometheus"
 
@@ -20,10 +19,9 @@ import (
 // Start creates a new Echo HTTP server, sets up route handlers, and starts
 // listening for HTTP requests. It is the module entrypoint for the REST API,
 // conforming to the startModuleFn type definition in config-manager/cmd.
-func Start(ctx context.Context, cfg *viper.Viper, errors chan<- error) {
-	config := config.Get()
+func Start(ctx context.Context, errors chan<- error) {
 
-	container := infrastructure.Container{Config: config}
+	container := infrastructure.Container{}
 	instrumentation.Start()
 
 	spec, err := controllers.GetSwagger()
@@ -32,7 +30,7 @@ func Start(ctx context.Context, cfg *viper.Viper, errors chan<- error) {
 	}
 	server := container.Server()
 	server.Use(echoPrometheus.MetricsMiddleware())
-	server.GET(config.GetString("URL_Base_Path")+"/openapi.json", func(ctx echo.Context) error {
+	server.GET(config.DefaultConfig.URLBasePath()+"/openapi.json", func(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, spec)
 	})
 
@@ -41,6 +39,6 @@ func Start(ctx context.Context, cfg *viper.Viper, errors chan<- error) {
 	configManager.Server.HideBanner = true
 
 	go func() {
-		errors <- configManager.Server.Start(fmt.Sprintf("0.0.0.0:%d", config.GetInt("Web_Port")))
+		errors <- configManager.Server.Start(fmt.Sprintf("0.0.0.0:%d", config.DefaultConfig.WebPort))
 	}()
 }
