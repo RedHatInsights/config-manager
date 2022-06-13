@@ -40,9 +40,9 @@ EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_LOG_LE
 EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_CLOUD_CONNECTOR_IMPL=impl"
 EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_DISPATCHER_IMPL=impl"
 EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_INVENTORY_IMPL=impl"
-EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_DISPATCHER_HOST=http://\${PLAYBOOK_DISPATCHER_HOST}:\${PLAYBOOK_DISPATCHER_PORT}"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_DISPATCHER_HOST=http://playbook-dispatcher-api:8000"
 EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_INVENTORY_HOST=http://host-inventory-service:8000"
-EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_CLOUD_CONNECTOR_HOST=http://\${CLOUD_CONNECTOR_HOST}:\${CLOUD_CONNECTOR_PORT}"
+EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} --set-parameter config-manager/CM_CLOUD_CONNECTOR_HOST=http://cloud-connector:8080"
 
 # Deploy an ephemeral env with the just-created image. Export NAMESPACE.
 source "${CICD_ROOT}/deploy_ephemeral_env.sh"
