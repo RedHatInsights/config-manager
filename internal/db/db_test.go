@@ -50,17 +50,20 @@ func TestInsertProfile(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			db, err := Open("pgx", DSN)
-			if err != nil {
+			if err := Open("pgx", DSN); err != nil {
 				t.Fatalf("failed to open database: %v", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
 
-			if err := db.Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate("file://../../db/migrations", true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := db.InsertProfile(test.input); err != test.want {
+			if err := InsertProfile(test.input); err != test.want {
 				t.Errorf("got error: %v", err)
 			}
 		})
@@ -87,21 +90,24 @@ func TestGetCurrentProfile(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			db, err := Open("pgx", DSN)
-			if err != nil {
+			if err := Open("pgx", DSN); err != nil {
 				t.Fatalf("failed to open database: %v", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
 
-			if err := db.Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate("file://../../db/migrations", true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := db.seedData(test.seed); err != nil {
+			if err := stddb.seedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
-			got, err := db.GetCurrentProfile(test.input)
+			got, err := GetCurrentProfile(test.input)
 			if err != nil {
 				t.Fatalf("failed to get current profile: %v", err)
 			}
@@ -133,21 +139,24 @@ func TestGetProfile(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			db, err := Open("pgx", DSN)
-			if err != nil {
+			if err := Open("pgx", DSN); err != nil {
 				t.Fatalf("failed to open database: %v", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
 
-			if err := db.Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate("file://../../db/migrations", true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := db.seedData(test.seed); err != nil {
+			if err := stddb.seedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
-			got, err := db.GetProfile(test.input)
+			got, err := GetProfile(test.input)
 			if err != nil {
 				t.Fatalf("failed to get profile: %v", err)
 			}
@@ -207,21 +216,24 @@ func TestGetProfiles(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			db, err := Open("pgx", DSN)
-			if err != nil {
+			if err := Open("pgx", DSN); err != nil {
 				t.Fatalf("failed to open database: %v", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
 
-			if err := db.Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate("file://../../db/migrations", true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := db.seedData(test.seed); err != nil {
+			if err := stddb.seedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
-			got, err := db.GetProfiles(test.input.accountID, test.input.orderBy, test.input.limit, test.input.offset)
+			got, err := GetProfiles(test.input.accountID, test.input.orderBy, test.input.limit, test.input.offset)
 			if err != nil {
 				t.Fatalf("failed to get profile: %v", err)
 			}
@@ -249,21 +261,24 @@ func TestCountProfiles(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			db, err := Open("pgx", DSN)
-			if err != nil {
+			if err := Open("pgx", DSN); err != nil {
 				t.Fatalf("failed to open database: %v", err)
 			}
-			defer db.Close()
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
 
-			if err := db.Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate("file://../../db/migrations", true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := db.seedData(test.seed); err != nil {
+			if err := stddb.seedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
-			got, err := db.CountProfiles(test.input)
+			got, err := CountProfiles(test.input)
 			if err != nil {
 				t.Fatalf("failed to get profile: %v", err)
 			}

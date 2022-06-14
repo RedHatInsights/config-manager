@@ -28,7 +28,6 @@ type ConfigManagerInterface interface {
 // such as the local storage database, inventory, cloud-connector, and
 // playbook-dispatcher.
 type ConfigManagerService struct {
-	Db                 *db.DB
 	CloudConnectorRepo cloudconnector.CloudConnectorClient
 	InventoryRepo      domain.InventoryClient
 	DispatcherRepo     dispatcher.DispatcherClient
@@ -40,7 +39,7 @@ type ConfigManagerService struct {
 // Deprecated: Use db.DB.GetCurrentProfile instead.
 func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState, error) {
 	var acc *domain.AccountState
-	profile, err := s.Db.GetCurrentProfile(id)
+	profile, err := db.GetCurrentProfile(id)
 
 	if err != nil {
 		switch err {
@@ -80,7 +79,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 	}
 	newProfile := db.NewProfile(acc.AccountID, state)
 
-	err := s.Db.InsertProfile(*newProfile)
+	err := db.InsertProfile(*newProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +107,7 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domai
 	newProfile.Active = applyState.Bool
 	newProfile.SetStateConfig(payload)
 
-	err := s.Db.InsertProfile(*newProfile)
+	err := db.InsertProfile(*newProfile)
 	if err != nil {
 		return nil, err
 	}
@@ -220,14 +219,14 @@ func (s *ConfigManagerService) ApplyState(ctx context.Context, profile db.Profil
 // Sorting: currently only ascending
 // Filtering idea: may need to filter on user/initiator
 //
-// Deprecated: use db.DB.GetProfiles instead.
+// Deprecated: use db.GetProfiles instead.
 func (s *ConfigManagerService) GetStateChanges(accountID, sortBy string, limit, offset int) (*domain.StateArchives, error) {
-	total, err := s.Db.CountProfiles(accountID)
+	total, err := db.CountProfiles(accountID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get profile count: %w", err)
 	}
 
-	profiles, err := s.Db.GetProfiles(accountID, sortBy, limit, offset)
+	profiles, err := db.GetProfiles(accountID, sortBy, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get profiles: %w", err)
 	}
@@ -257,9 +256,9 @@ func (s *ConfigManagerService) GetStateChanges(accountID, sortBy string, limit, 
 
 // GetSingleStateChange gets a single state archive by state_id
 //
-// Deprecated: use db.DB.GetProfile instead.
+// Deprecated: use db.GetProfile instead.
 func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.StateArchive, error) {
-	profile, err := s.Db.GetProfile(stateID)
+	profile, err := db.GetProfile(stateID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get profile for ID %v: %w", stateID, err)
 	}
@@ -276,16 +275,16 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 
 // SetApplyState sets the apply_state field to skipApplyState
 //
-// Deprecated: use db.DB.InsertProfile instead
+// Deprecated: use db.InsertProfile instead
 func (s *ConfigManagerService) SetApplyState(accountID string, applyState bool) error {
-	profile, err := s.Db.GetCurrentProfile(accountID)
+	profile, err := db.GetCurrentProfile(accountID)
 	if err != nil {
 		return fmt.Errorf("cannot get current profile: %w", err)
 	}
 
 	newProfile := db.CopyProfile(*profile)
 	newProfile.Active = applyState
-	if err := s.Db.InsertProfile(newProfile); err != nil {
+	if err := db.InsertProfile(newProfile); err != nil {
 		return fmt.Errorf("cannot insert new profile: %w", err)
 	}
 	return nil
@@ -293,7 +292,7 @@ func (s *ConfigManagerService) SetApplyState(accountID string, applyState bool) 
 
 // GetPlaybook gets a playbook by state_id
 func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
-	profile, err := s.Db.GetProfile(stateID)
+	profile, err := db.GetProfile(stateID)
 	if err != nil {
 		return "", fmt.Errorf("cannot get profile: %w", err)
 	}

@@ -12,6 +12,7 @@ import (
 	"config-manager/utils"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -26,7 +27,6 @@ import (
 // provides a collection of accessor methods to retrieve handles to each
 // application component.
 type Container struct {
-	db     *db.DB
 	server *echo.Echo
 
 	// Config Manager Services
@@ -44,8 +44,9 @@ type Container struct {
 
 // Database lazily initializes a db.DB, performs any necessary migrations, and
 // returns it.
-func (c *Container) Database() *db.DB {
-	if c.db == nil {
+func (c *Container) Database() {
+	var once sync.Once
+	once.Do(func() {
 		connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
 			config.DefaultConfig.DBUser,
 			config.DefaultConfig.DBPass,
@@ -53,19 +54,14 @@ func (c *Container) Database() *db.DB {
 			config.DefaultConfig.DBHost,
 			config.DefaultConfig.DBPort)
 
-		db, err := db.Open("pgx", connectionString)
-		if err != nil {
+		if err := db.Open("pgx", connectionString); err != nil {
 			log.Fatal().Err(err).Msg("cannot open database")
 		}
 
 		if err := db.Migrate("file://./db/migrations", false); err != nil {
 			log.Fatal().Err(err).Msg("cannot migrate database")
 		}
-
-		c.db = db
-	}
-
-	return c.db
+	})
 }
 
 // Server lazily initializes a new Echo HTTP server and returns it.
@@ -82,7 +78,6 @@ func (c *Container) Server() *echo.Echo {
 func (c *Container) CMService() *application.ConfigManagerService {
 	if c.cmService == nil {
 		c.cmService = &application.ConfigManagerService{
-			Db:                 c.Database(),
 			CloudConnectorRepo: c.CloudConnectorRepo(),
 			DispatcherRepo:     c.DispatcherRepo(),
 			PlaybookGenerator:  *c.PlaybookGenerator(),
@@ -114,7 +109,6 @@ func (c *Container) CMController() *controllers.ConfigManagerController {
 			ConfigManagerService: c.CMService(),
 			Server:               c.Server(),
 			URLBasePath:          config.DefaultConfig.URLBasePath(),
-			DB:                   c.Database(),
 		}
 	}
 
