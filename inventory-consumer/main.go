@@ -15,10 +15,11 @@ func Start(ctx context.Context, errors chan<- error) {
 	consumer := kafka.NewConsumer(config.DefaultConfig.KafkaInventoryTopic)
 
 	container := infrastructure.Container{}
+	container.Database()
 
 	cmService := container.CMService()
 
-	handler := &handler{ConfigManagerService: cmService, Cfg: cfg, DB: container.Database()}
+	handler := &handler{ConfigManagerService: cmService}
 
 	start := kafka.NewConsumerEventLoop(ctx, consumer, handler.onMessage, errors)
 

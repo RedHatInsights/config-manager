@@ -43,7 +43,6 @@ type ConfigManagerController struct {
 	ConfigManagerService *application.ConfigManagerService
 	Server               *echo.Echo
 	URLBasePath          string
-	DB                   *db.DB
 }
 
 // Routes sets up middlewares and registers handlers for each route
@@ -110,14 +109,14 @@ func (cmc *ConfigManagerController) GetStates(ctx echo.Context, params GetStates
 		offset = int(*params.Offset)
 	}
 
-	total, err := cmc.DB.CountProfiles(id.Identity.AccountNumber)
+	total, err := db.CountProfiles(id.Identity.AccountNumber)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err)
 		log.Printf("%v", echoErr)
 		return echoErr
 	}
 
-	profiles, err := cmc.DB.GetProfiles(id.Identity.AccountNumber, sortBy, limit, offset)
+	profiles, err := db.GetProfiles(id.Identity.AccountNumber, sortBy, limit, offset)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err)
 		log.Printf("%v", echoErr)
@@ -204,7 +203,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 		return echoErr
 	}
 
-	currentProfile, err := cmc.DB.GetCurrentProfile(id.Identity.AccountNumber)
+	currentProfile, err := db.GetCurrentProfile(id.Identity.AccountNumber)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		logger.Error().Err(echoErr).Msg("failed to get current profile for account")
@@ -233,7 +232,7 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 	}
 	logger.Trace().Interface("newProfile", newProfile).Msg("created new profile")
 
-	if err := cmc.DB.InsertProfile(newProfile); err != nil {
+	if err := db.InsertProfile(newProfile); err != nil {
 		instrumentation.UpdateAccountStateError()
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		logger.Error().Err(echoErr).Msg("failed to insert profile")
@@ -278,7 +277,7 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 		log.Error().Err(echoErr)
 		return echoErr
 	}
-	profile, err := cmc.DB.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.AccountNumber, defaultState))
+	profile, err := db.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.AccountNumber, defaultState))
 	if err != nil {
 		instrumentation.GetAccountStateError()
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -299,7 +298,7 @@ func (cmc *ConfigManagerController) GetStateById(ctx echo.Context, stateID State
 	}
 	log.Info().Msgf("Getting state change for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
-	profile, err := cmc.DB.GetProfile(string(stateID))
+	profile, err := db.GetProfile(string(stateID))
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		log.Error().Err(echoErr)
@@ -349,7 +348,7 @@ func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
 
 	log.Info().Msgf("Setting apply_state for account: %v to %v\n", id.Identity.AccountNumber, enabled)
 
-	currentProfile, err := cmc.DB.GetCurrentProfile(id.Identity.AccountNumber)
+	currentProfile, err := db.GetCurrentProfile(id.Identity.AccountNumber)
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		log.Error().Err(echoErr)
@@ -359,7 +358,7 @@ func (cmc *ConfigManagerController) PostManage(ctx echo.Context) error {
 	newProfile := db.CopyProfile(*currentProfile)
 	newProfile.Active = enabled
 
-	if err := cmc.DB.InsertProfile(newProfile); err != nil {
+	if err := db.InsertProfile(newProfile); err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		log.Error().Err(echoErr)
 		return echoErr
@@ -378,7 +377,7 @@ func (cmc *ConfigManagerController) GetPlaybookById(ctx echo.Context, stateID St
 	}
 	log.Info().Msgf("Getting playbook for account: %s, with id: %s\n", id.Identity.AccountNumber, string(stateID))
 
-	profile, err := cmc.DB.GetProfile(string(stateID))
+	profile, err := db.GetProfile(string(stateID))
 	if err != nil {
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		log.Error().Err(echoErr)

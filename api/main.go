@@ -23,6 +23,7 @@ func Start(ctx context.Context, errors chan<- error) {
 
 	container := infrastructure.Container{}
 	instrumentation.Start()
+	container.Database()
 
 	spec, err := controllers.GetSwagger()
 	if err != nil {

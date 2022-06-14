@@ -20,7 +20,6 @@ import (
 // platform.inventory.events topic.
 type handler struct {
 	ConfigManagerService application.ConfigManagerInterface
-	DB                   *db.DB
 }
 
 type requestIDkey string
@@ -62,7 +61,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				log.Printf("cannot unmarshal data: %v", err)
 				return
 			}
-			profile, err := this.DB.GetOrInsertCurrentProfile(value.Host.Account, db.NewProfile(value.Host.Account, defaultState))
+			profile, err := db.GetOrInsertCurrentProfile(value.Host.Account, db.NewProfile(value.Host.Account, defaultState))
 			if err != nil {
 				logger.Error().Err(err).Msgf("Error retrieving state for account: %v", value.Host.Account)
 				return
