@@ -87,7 +87,7 @@ var DefaultConfig Config = Config{
 	InventoryHost:           flagvar.URL{Value: url.MustParse("http://host-inventory-service:8000")},
 	InventoryImpl:           flagvar.Enum{Choices: []string{"mock", "impl"}, Value: "impl"},
 	InventoryTimeout:        10,
-	KafkaBrokers:            flagvar.Strings{Values: []string{"localhost:29092"}},
+	KafkaBrokers:            flagvar.Strings{Values: []string{"localhost:9094"}},
 	KafkaConsumerOffset:     0,
 	KafkaDispatcherTopic:    "platform.playbook-dispatcher.runs",
 	KafkaGroupID:            "config-manager",

@@ -126,6 +126,7 @@ bash scripts/kube-port-forward.sh
 | playbook-dispatcher-api | 8001       | 8000         |
 | host-inventory-service  | 8002       | 8000         |
 | cloud-connector         | 8003       | 8080         |
+| kafka-ext-bootstrap     | 9094       | 9094         |
 
 #### Run database
 
@@ -137,6 +138,7 @@ podman run --env POSTGRES_PASSWORD=insights --env POSTGRES_USER=insights --env P
 
 ```sh
 LOG_LEVEL=debug \
+CM_KAFKA_BROKERS=localhost:9094 \
 CM_DISPATCHER_HOST=http://localhost:8001/ \
 CM_DISPATCHER_PSK=$(kubectl -n fog get secrets/psk-playbook-dispatcher -o json | jq '.data.key' -r | base64 -d) \
 CM_INVENTORY_HOST=http://localhost:8002/ \

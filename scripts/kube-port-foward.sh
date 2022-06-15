@@ -16,6 +16,7 @@ declare -A SERVICES=(
     [playbook-dispatcher-api]=8001:8000
     [host-inventory-service]=8002:8000
     [cloud-connector]=8003:8080
+    [${ENV_NAME}-kafka-ext-bootstrap]=9094:9094
 )
 
 if minikube kubectl -- --namespace "${NS_NAME}" get svc/config-manager-service --output name; then
