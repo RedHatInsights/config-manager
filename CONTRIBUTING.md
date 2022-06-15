@@ -137,7 +137,7 @@ podman run --env POSTGRES_PASSWORD=insights --env POSTGRES_USER=insights --env P
 #### Run config-manager
 
 ```sh
-LOG_LEVEL=debug \
+CM_LOG_LEVEL=debug \
 CM_KAFKA_BROKERS=localhost:9094 \
 CM_DISPATCHER_HOST=http://localhost:8001/ \
 CM_DISPATCHER_PSK=$(kubectl -n fog get secrets/psk-playbook-dispatcher -o json | jq '.data.key' -r | base64 -d) \
@@ -158,47 +158,11 @@ in which config-manager runs in the production and stage environments. It more
 seamlessly interacts with other applications (such as cloud-connector and
 playbook-dispatcher), but makes for a much slower development cycle. Every time
 a code change is made, a new image has to be built, pushed and deployed.
-
-There is a convenient script to do this for you, but the manual steps are
-presented here for educational purposes.
-
-#### Create a container image
-
-Create a container image and tag it with a unique value by concatentating the
-short SHA hash of the HEAD commit and a UNIX timestamp diff. This image is then
-pushed into the local cluster's registry.
+Fortunately, there is a convenient script to do this for you. See
+`scripts/README.md` for details.
 
 ```sh
-HEAD_UNIX=$(date --date="$(git show --no-patch --format='%cI' HEAD)" +%s)
-NOW_UNIX=$(date +%s)
-SECDIFF=$(("${NOW_UNIX}" - "${HEAD_UNIX}"))
-TAG="$(git rev-parse --short HEAD)-${SECDIFF}"
-IMAGE="config-manager"
-IP=$(minikube ip)
-TARGET_NAMESPACE=$(minikube kubectl -- get env -o json | jq '.items[0].spec.targetNamespace' -r)
-
-podman build -t "${IMAGE}:${TAG}" -f Dockerfile
-podman push "${IMAGE}:${TAG}" "${IP}:5000/${IMAGE}:${TAG}" --tls-verify=false
-```
-
-#### Deploy the image
-
-Using bonfire, deploy config-manager, overriding the image and tag values to use
-the image from the local registry instead of the images from quay.io.
-
-```sh
-bonfire deploy \
-    --local-config-path ./bonfire_config.yaml \
-    --get-dependencies \
-    --namespace "${TARGET_NAMESPACE}" \
-    --set-parameter "config-manager/CM_PLAYBOOK_HOST=http://${IP}/" \
-    --set-parameter "config-manager/IMAGE=localhost:5000/${IMAGE}" \
-    --set-parameter "config-manager/IMAGE_TAG=${TAG}" \
-    --set-parameter "config-manager/CM_DISPATCHER_HOST=http://playbook-dispatcher-api.${TARGET_NAMESPACE}.svc.cluster.local:8000/" \
-    --set-parameter "config-manager/CM_INVENTORY_HOST=http://host-inventory-service.${TARGET_NAMESPACE}.svc.cluster.local:8000/" \
-    --set-parameter "config-manager/CM_CLOUD_CONNECTOR_HOST=http://cloud-connector.${TARGET_NAMESPACE}.svc.cluster.local:8080/api/cloud-connector/v1/" \
-    --set-image-tag "quay.io/cloudservices/config-manager=${TAG}" \
-    config-manager
+bash scripts/bonfire-deploy.sh
 ```
 
 ### Forward the port

@@ -8,6 +8,9 @@ apps:
         parameters:
           CM_LOG_LEVEL: debug
           CM_LOG_FORMAT: json
+          CM_DISPATCHER_HOST: http://playbook-dispatcher-api:8000/
+          CM_INVENTORY_HOST: http://host-inventory-service:8000/
+          CM_CLOUD_CONNECTOR_HOST: http://cloud-connector:8080/api/cloud-connector/v1/
   - name: playbook-dispatcher
     components:
       - name: playbook-dispatcher
