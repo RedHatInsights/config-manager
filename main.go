@@ -4,16 +4,21 @@ import (
 	"config-manager/api"
 	dispatcherconsumer "config-manager/dispatcher-consumer"
 	"config-manager/internal/config"
+	"config-manager/internal/logging/cloudwatch"
 	inventoryconsumer "config-manager/inventory-consumer"
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -42,16 +47,35 @@ func main() {
 
 					level, err := zerolog.ParseLevel(config.DefaultConfig.LogLevel.Value)
 					if err != nil {
-						log.Error().Err(err)
+						log.Fatal().Err(err).Msgf("cannot parse log level: %v", config.DefaultConfig.LogLevel)
 						return err
 					}
 
 					zerolog.SetGlobalLevel(level)
 
+					log.Debug().Interface("config", config.DefaultConfig).Send()
+
+					writers := make([]io.Writer, 0)
 					switch config.DefaultConfig.LogFormat.Value {
+					case "json":
+						writers = append(writers, os.Stderr)
 					case "text":
-						log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+						writers = append(writers, zerolog.ConsoleWriter{Out: os.Stderr})
 					}
+
+					if clowder.IsClowderEnabled() {
+						cred := credentials.NewStaticCredentials(config.DefaultConfig.AWSAccessKeyId, config.DefaultConfig.AWSSecretAccessKey, "")
+						awsCfg := aws.NewConfig().WithRegion(config.DefaultConfig.AWSRegion).WithCredentials(cred)
+						batchWriter, err := cloudwatch.NewBatchWriter(config.DefaultConfig.LogGroup, config.DefaultConfig.LogStream, awsCfg, config.DefaultConfig.LogBatchFrequency)
+						if err != nil {
+							log.Error().Err(err).Msg("cannot create CloudWatch batch writer")
+						}
+						if batchWriter != nil {
+							writers = append(writers, batchWriter)
+						}
+					}
+
+					log.Logger = log.Output(zerolog.MultiLevelWriter(writers...))
 
 					metricsServer := echo.New()
 					metricsServer.HideBanner = true

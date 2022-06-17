@@ -3,6 +3,7 @@ module config-manager
 go 1.16
 
 require (
+	github.com/aws/aws-sdk-go v1.44.36
 	github.com/deepmap/oapi-codegen v1.5.0
 	github.com/getkin/kin-openapi v0.38.0
 	github.com/globocom/echo-prometheus v0.1.2
@@ -16,12 +17,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.1.0
 	github.com/redhatinsights/app-common-go v1.2.0
-	github.com/redhatinsights/platform-go-middlewares v0.7.0
-	github.com/rs/zerolog v1.26.1
+	github.com/redhatinsights/platform-go-middlewares v0.18.0
+	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/sgreben/flagvar v1.10.1
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools v2.2.0+incompatible
 )
