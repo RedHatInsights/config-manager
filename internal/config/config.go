@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sgreben/flagvar"
 
@@ -43,9 +44,11 @@ type Config struct {
 	KafkaGroupID            string
 	KafkaInventoryTopic     string
 	KafkaSystemProfileTopic string
+	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
 	LogLevel                flagvar.Enum
+	LogStream               string
 	MetricsPath             string
 	MetricsPort             int
 	Modules                 flagvar.EnumSet
@@ -93,23 +96,33 @@ var DefaultConfig Config = Config{
 	KafkaGroupID:            "config-manager",
 	KafkaInventoryTopic:     "platform.inventory.events",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
+	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
 	LogLevel:                flagvar.Enum{Choices: []string{"panic", "fatal", "error", "warn", "info", "debug", "trace"}, Value: "info"},
-	MetricsPath:             "/metrics",
-	MetricsPort:             9000,
-	Modules:                 flagvar.EnumSet{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{"api": true, "dispatcher-consumer": true, "inventory-consumer": true}},
-	PlaybookFiles:           "./playbooks/",
-	PlaybookHost:            flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
-	PlaybookPath:            "/api/config-manager/v1/states/%v/playbook",
-	ServiceConfig:           `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
-	URLPathPrefix:           "api",
-	WebPort:                 8081,
+	LogStream: func() string {
+		hostname, err := os.Hostname()
+		if err != nil {
+			panic(err)
+		}
+		return hostname
+	}(),
+	MetricsPath:   "/metrics",
+	MetricsPort:   9000,
+	Modules:       flagvar.EnumSet{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{"api": true, "dispatcher-consumer": true, "inventory-consumer": true}},
+	PlaybookFiles: "./playbooks/",
+	PlaybookHost:  flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
+	PlaybookPath:  "/api/config-manager/v1/states/%v/playbook",
+	ServiceConfig: `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
+	URLPathPrefix: "api",
+	WebPort:       8081,
 }
 
 func init() {
-	if os.Getenv("CLOWDER_ENABLED") == "true" {
+	if clowder.IsClowderEnabled() {
+		DefaultConfig.AWSAccessKeyId = clowder.LoadedConfig.Logging.Cloudwatch.AccessKeyId
 		DefaultConfig.AWSRegion = clowder.LoadedConfig.Logging.Cloudwatch.Region
+		DefaultConfig.AWSSecretAccessKey = clowder.LoadedConfig.Logging.Cloudwatch.SecretAccessKey
 		DefaultConfig.DBHost = clowder.LoadedConfig.Database.Hostname
 		DefaultConfig.DBName = clowder.LoadedConfig.Database.Name
 		DefaultConfig.DBPass = clowder.LoadedConfig.Database.Password
@@ -157,9 +170,11 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaGroupID, "kafka-group-id", DefaultConfig.KafkaGroupID, "kafka group ID")
 	fs.StringVar(&DefaultConfig.KafkaInventoryTopic, "kafka-inventory-topic", DefaultConfig.KafkaInventoryTopic, "host-inventory events topic name")
 	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
+	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
 	fs.Var(&DefaultConfig.LogLevel, "log-level", fmt.Sprintf("verbosity level for logging (%v)", DefaultConfig.LogLevel.Help()))
+	fs.StringVar(&DefaultConfig.LogStream, "log-stream", DefaultConfig.LogStream, "CloudWatch log stream")
 	fs.StringVar(&DefaultConfig.MetricsPath, "metrics-path", DefaultConfig.MetricsPath, "base path on which metrics HTTP server responds")
 	fs.IntVar(&DefaultConfig.MetricsPort, "metrics-port", DefaultConfig.MetricsPort, "port on which metrics HTTP server listens")
 	fs.Var(&DefaultConfig.Modules, "module", fmt.Sprintf("config-manager modules to execute (%v)", DefaultConfig.Modules.Help()))
