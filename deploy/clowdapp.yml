@@ -107,7 +107,7 @@ objects:
                 key: client-id
                 name: psk-cloud-connector
           - name: CM_CLOUD_CONNECTOR_HOST
-            value: ${CM_CLOUD_CONNECTOR_HOST}
+            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
           - name: CM_CLOUD_CONNECTOR_IMPL
             value: ${CM_CLOUD_CONNECTOR_IMPL}
           - name: CM_INVENTORY_HOST
@@ -224,7 +224,7 @@ objects:
                 key: client-id
                 name: psk-cloud-connector
           - name: CM_CLOUD_CONNECTOR_HOST
-            value: ${CM_CLOUD_CONNECTOR_HOST}
+            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
           - name: CM_CLOUD_CONNECTOR_IMPL
             value: ${CM_CLOUD_CONNECTOR_IMPL}
           - name: CM_PLAYBOOK_HOST
