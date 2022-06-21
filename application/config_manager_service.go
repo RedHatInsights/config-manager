@@ -254,10 +254,14 @@ func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 // SetupHost messages a host to install the rhc-worker-playbook RPM to enable it
 // to receive and execute playbooks from the playbook-dispatcher service.
 func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) (string, error) {
+	logger := log.With().Str("account-id", host.Account).Str("client-id", host.SystemProfile.RHCID).Logger()
+
 	status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
 	if err != nil {
+		logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 		return "", err
 	}
+	logger.Debug().Str("status", status).Interface("dispatchers", dispatchers).Msg("connection status from cloud-connector")
 
 	if status != "connected" {
 		return "", fmt.Errorf("cannot set up host: host connection status = %v", status)
@@ -280,23 +284,29 @@ func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) 
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
+		logger.Error().Err(err).Msg("cannot marshal payload")
 		return "", fmt.Errorf("cannot marshal payload: %v", err)
 	}
 
 	messageID, err := s.CloudConnectorRepo.SendMessage(ctx, host.Account, "package-manager", data, nil, host.SystemProfile.RHCID)
 	if err != nil {
+		logger.Error().Err(err).Msg("cannot send message to host")
 		return "", err
 	}
 
 	for {
 		status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
 		if err != nil {
+			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 			return "", err
 		}
+		logger.Debug().Str("status", status).Interface("dispatchers", dispatchers).Msg("connection status from cloud-connector")
+
 		if status == "disconnected" {
 			return messageID, fmt.Errorf("host disconnected while waiting for connection status")
 		}
 		if _, has := dispatchers["rhc-worker-playbook"]; has {
+			logger.Debug().Interface("dispatchers", dispatchers).Msg("found rhc-worker-playbook dispatcher")
 			break
 		}
 		time.Sleep(30 * time.Second)
