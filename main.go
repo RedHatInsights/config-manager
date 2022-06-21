@@ -57,10 +57,10 @@ func main() {
 
 					writers := make([]io.Writer, 0)
 					switch config.DefaultConfig.LogFormat.Value {
-					case "json":
-						writers = append(writers, os.Stderr)
 					case "text":
 						writers = append(writers, zerolog.ConsoleWriter{Out: os.Stderr})
+					default:
+						writers = append(writers, os.Stderr)
 					}
 
 					if clowder.IsClowderEnabled() {
