@@ -160,6 +160,35 @@ objects:
             value: ${CM_LOG_FORMAT}
           - name: CLOWDER_ENABLED
             value: "true"
+          - name: CM_DISPATCHER_PSK
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: psk-playbook-dispatcher
+          - name: CM_DISPATCHER_HOST
+            value: ${CM_DISPATCHER_HOST}
+          - name: CM_DISPATCHER_IMPL
+            value: ${CM_DISPATCHER_IMPL}
+          - name: CM_CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: client-psk
+                name: psk-cloud-connector
+          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: client-id
+                name: psk-cloud-connector
+          - name: CM_CLOUD_CONNECTOR_HOST
+            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
+          - name: CM_CLOUD_CONNECTOR_IMPL
+            value: ${CM_CLOUD_CONNECTOR_IMPL}
+          - name: CM_INVENTORY_HOST
+            value: ${CM_INVENTORY_HOST}
+          - name: CM_INVENTORY_IMPL
+            value: ${CM_INVENTORY_IMPL}
+          - name: CM_PLAYBOOK_HOST
+            value: ${CM_PLAYBOOK_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
