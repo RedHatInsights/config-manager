@@ -51,7 +51,7 @@ type Config struct {
 	LogStream               string
 	MetricsPath             string
 	MetricsPort             int
-	Modules                 flagvar.EnumSet
+	Modules                 flagvar.EnumSetCSV
 	PlaybookFiles           string
 	PlaybookHost            flagvar.URL
 	PlaybookPath            string
@@ -109,7 +109,7 @@ var DefaultConfig Config = Config{
 	}(),
 	MetricsPath:   "/metrics",
 	MetricsPort:   9000,
-	Modules:       flagvar.EnumSet{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{"api": true, "dispatcher-consumer": true, "inventory-consumer": true}},
+	Modules:       flagvar.EnumSetCSV{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles: "./playbooks/",
 	PlaybookHost:  flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
 	PlaybookPath:  "/api/config-manager/v1/states/%v/playbook",
