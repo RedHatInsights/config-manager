@@ -65,7 +65,7 @@ func (c *cloudConnectorClientImpl) GetConnections(ctx context.Context, accountID
 		logger.Debug().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Debug().Str("http-status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("revieved HTTP response from cloud-connector")
+	logger.Debug().Str("http-status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("recieved HTTP response from cloud-connector")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connections from cloud-connector")
 		return nil, err

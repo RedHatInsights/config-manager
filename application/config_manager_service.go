@@ -149,21 +149,23 @@ func (s *ConfigManagerService) ApplyState(
 	var inputs []dispatcher.RunInput
 
 	if acc.ApplyState.Valid && !acc.ApplyState.Bool {
-		log.Info().Msgf("account_state.apply_state is false; skipping configuration")
+		log.Info().Msg("account_state.apply_state is false; skipping configuration")
 		return []dispatcher.RunCreated{}, nil
 	}
 
-	log.Info().Msgf("applying state for %v clients: %v", len(clients), acc.State)
+	log.Info().Interface("state", acc.State).Interface("clients", clients).Msgf("start applying state")
 	for i, client := range clients {
+		logger := log.With().Str("client_id", client.SystemProfile.RHCID).Interface("client", client).Logger()
+
 		if client.Reporter == "cloud-connector" {
-			log.Debug().Msgf("setting up host %v for playbook execution", client.DisplayName)
+			logger.Debug().Msg("setting up host for playbook execution")
 			if _, err := s.SetupHost(context.Background(), client); err != nil {
-				log.Info().Msgf("error setting up host '%v': %v", client, err)
+				logger.Error().Err(err).Msg("cannot set up host for playbook execution")
 				continue
 			}
 		}
 
-		log.Info().Msgf("Dispatching work for client %s", client.SystemProfile.RHCID)
+		logger.Info().Msg("dispatching work for client")
 		input := dispatcher.RunInput{
 			Recipient: client.SystemProfile.RHCID,
 			Account:   acc.AccountID,
@@ -175,23 +177,26 @@ func (s *ConfigManagerService) ApplyState(
 				},
 			},
 		}
+		logger.Debug().Interface("run_input", input).Msg("created run input")
 
 		inputs = append(inputs, input)
 
 		if len(inputs) == config.DefaultConfig.DispatcherBatchSize || i == len(clients)-1 {
 			if inputs != nil {
+				logger.Debug().Interface("inputs", inputs).Msg("dispatching runs to playbook-dispatcher")
 				res, err := s.DispatcherRepo.Dispatch(ctx, inputs)
 				if err != nil {
-					log.Error().Err(err) // TODO what happens if a message can't be dispatched? Retry?
+					logger.Error().Err(err).Msg("cannot dispatch work to playbook dispatcher - giving up")
+					continue
 				}
 
 				results = append(results, res...)
 				inputs = nil
-			} else {
-				log.Info().Msg("Nothing sent to playbook dispatcher - no systems currently connected")
+				logger.Debug().Interface("results", results).Msg("results from dispatch")
 			}
 		}
 	}
+	log.Info().Msg("finish applying state")
 
 	return results, err
 }

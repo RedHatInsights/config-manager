@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // DispatcherClient provides REST client API methods to interact with the
@@ -66,14 +68,21 @@ func NewDispatcherClient() DispatcherClient {
 // Dispatch performs the CreateWithResponse API method of the
 // playbook-dispatcher service.
 func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error) {
+	logger := log.With().Str("http_client", "playbook-dispatcher").Logger()
+
 	res, err := dc.client.ApiInternalRunsCreateWithResponse(ctx, inputs)
+	logger.Debug().Str("http_status", res.Status()).Msg("received response from playbook-dispatcher")
 	if err != nil {
+		logger.Error().Err(err).Msg("cannot create runs with response")
 		return nil, err
 	}
 
 	if res.HTTPResponse.StatusCode != 207 {
-		return nil, fmt.Errorf("Unexpected error code %d received: %v", res.HTTPResponse.StatusCode, string(res.Body))
+		err := fmt.Errorf("unexpected HTTP response - %v (%v)", res.StatusCode(), string(res.Body))
+		logger.Error().Err(err).Msg("received unexpected response from playbook-dispatcher")
+		return nil, err
 	}
+	logger.Debug().Interface("runs_created", *res.JSON207).Msg("runs created")
 
 	return *res.JSON207, nil
 }
