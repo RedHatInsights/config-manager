@@ -58,14 +58,14 @@ func NewCloudConnectorClient() (CloudConnectorClient, error) {
 // GetConnections calls the GetConnectionAccount API method and formats the
 // response.
 func (c *cloudConnectorClientImpl) GetConnections(ctx context.Context, accountID string) ([]string, error) {
-	logger := log.With().Str("http-client", "cloud-connector").Logger()
+	logger := log.With().Str("http_client", "cloud-connector").Logger()
 
 	resp, err := c.GetConnectionAccount(ctx, AccountID(accountID), func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-account", accountID)
 		logger.Debug().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Debug().Str("http-status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("recieved HTTP response from cloud-connector")
+	logger.Debug().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("recieved HTTP response from cloud-connector")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connections from cloud-connector")
 		return nil, err
@@ -85,7 +85,7 @@ func (c *cloudConnectorClientImpl) GetConnections(ctx context.Context, accountID
 }
 
 func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error) {
-	logger := log.With().Str("http-client", "cloud-connector").Logger()
+	logger := log.With().Str("http_client", "cloud-connector").Logger()
 
 	body := struct {
 		Account   string            `json:"account"`
@@ -114,7 +114,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 		logger.Debug().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Debug().Str("http-status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("revieved HTTP response from cloud-connector")
+	logger.Debug().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("revieved HTTP response from cloud-connector")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot post message to cloud-connector")
 		return "", err
@@ -134,7 +134,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 }
 
 func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, accountID string, recipient string) (string, map[string]interface{}, error) {
-	logger := log.With().Str("http-client", "cloud-connector").Logger()
+	logger := log.With().Str("http_client", "cloud-connector").Logger()
 
 	body := ConnectionStatusRequest{
 		Account: &accountID,
@@ -145,7 +145,7 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 		logger.Debug().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Debug().Str("http-status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("revieved HTTP response from cloud-connector")
+	logger.Debug().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("revieved HTTP response from cloud-connector")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 		return "unknown", nil, err

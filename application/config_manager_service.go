@@ -259,7 +259,7 @@ func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 // SetupHost messages a host to install the rhc-worker-playbook RPM to enable it
 // to receive and execute playbooks from the playbook-dispatcher service.
 func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) (string, error) {
-	logger := log.With().Str("account-id", host.Account).Str("client-id", host.SystemProfile.RHCID).Logger()
+	logger := log.With().Str("account_id", host.Account).Str("client_id", host.SystemProfile.RHCID).Logger()
 
 	status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
 	if err != nil {
