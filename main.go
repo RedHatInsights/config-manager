@@ -53,6 +53,10 @@ func main() {
 
 					zerolog.SetGlobalLevel(level)
 
+					if level <= zerolog.DebugLevel {
+						log.Logger = log.With().Caller().Logger()
+					}
+
 					log.Debug().Interface("config", config.DefaultConfig).Send()
 
 					writers := make([]io.Writer, 0)
