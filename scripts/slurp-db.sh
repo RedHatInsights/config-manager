@@ -7,7 +7,7 @@ DB_USER=${DB_USER:-insights}
 DB_PASS=${DB_PASS:-insights}
 DB_NAME=${DB_NAME:-insights}
 DB_PORT=${DB_PORT:-5432}
-DB_URN="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/insights?sslmode=disable"
+DB_URN="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
 
 echo '{"query":"SELECT * FROM account_states;"}' | 
     ht GET "https://${GABI_HOST}/query" "Authorization: Bearer ${TOKEN}" |

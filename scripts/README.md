@@ -17,7 +17,7 @@ using bonfire, overriding image tags and references using a combination of
 
 ## `slurp-db.sh`
 
-`slurp-db.sh` selects all rows from the `account_state` and
-`state_archives` from the a `gabi` server and inserts them into a local
-database. To use this script, you must set both the `GABI_HOST` and `TOKEN`
-environment to their correct values.
+`slurp-db.sh` selects all rows from the `account_state` and `state_archives`
+from a `gabi` server and inserts them into a local database. To use this script,
+you must set both the `GABI_HOST` and `TOKEN` environment to their correct
+values.
