@@ -8,12 +8,17 @@ participantgroup #lightblue **cloud.redhat.com**
 participant Config-manager API
 participant Inventory API
 participant Playbook Dispatcher API
+participant Cloud Connector API
 end
 
 
 RHC User->Config-manager API:Get current Service Enablement\nstate for account
-
 Config-manager API->Config-manager API:Retrieve current\nstate from DB
+Config-manager API->Cloud Connector API:Get connection status for host
+Config-manager API<--Cloud Connector API:Connection status and dispatchers map
+Config-manager API->Cloud Connector API:Post message to package-manager install rhc-worker-playbook
+Cloud Connector API->RHC Client:Send message to package-manager worker
+Config-manager API->Cloud Connector API:Poll until rhc-worker-playbook is present in dispatchers map
 RHC User<--Config-manager API:Current state content
 RHC User->Config-manager API:Update Service Enablement\nstate for account
 Config-manager API->Inventory API:Get RHC connected clients\nfor requesting account
