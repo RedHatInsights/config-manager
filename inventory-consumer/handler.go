@@ -33,7 +33,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		logger.Error().Err(err).Msg("error getting event_type")
 		return
 	}
-	logger.Debug().Str("module", "inventory-consumer").Msgf("event_type = %v", eventType)
+	logger.Debug().Msgf("event_type = %v", eventType)
 
 	if eventType == "created" || eventType == "updated" {
 		value := &message.InventoryEvent{}
