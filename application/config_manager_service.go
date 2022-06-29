@@ -299,7 +299,11 @@ func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) 
 		return "", err
 	}
 
+	var tries = 0
 	for {
+		if tries > 5 {
+			return "", fmt.Errorf("unable to detect rhc-worker-playbook after %v tries", tries)
+		}
 		status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
 		if err != nil {
 			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
@@ -314,6 +318,7 @@ func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) 
 			logger.Debug().Interface("dispatchers", dispatchers).Msg("found rhc-worker-playbook dispatcher")
 			break
 		}
+		tries += 1
 		time.Sleep(30 * time.Second)
 	}
 
