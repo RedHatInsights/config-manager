@@ -4,77 +4,93 @@ import (
 	"config-manager/utils"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-var verifyPayloadTests = []struct {
-	name         string
-	currentState map[string]string
-	payload      map[string]string
-	equal        bool
-	errorThrown  bool
-}{
-	{
-		"valid payload",
-		map[string]string{
-			"insights":            "enabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "enabled",
-		},
-		map[string]string{
-			"insights":            "enabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "disabled",
-		},
-		false,
-		false,
-	},
-	{
-		"payload equal to current state",
-		map[string]string{
-			"insights":            "enabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "enabled",
-		},
-		map[string]string{
-			"insights":            "enabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "enabled",
-		},
-		true,
-		false,
-	},
-	{
-		"additional services enabled when insights is disabled",
-		map[string]string{
-			"insights":            "enabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "enabled",
-		},
-		map[string]string{
-			"insights":            "disabled",
-			"remediations":        "enabled",
-			"compliance_openscap": "enabled",
-		},
-		false,
-		true,
-	},
-}
-
 func TestVerifyStatePayload(t *testing.T) {
-	for _, tt := range verifyPayloadTests {
-		t.Run(tt.name, func(t *testing.T) {
-			equal, err := utils.VerifyStatePayload(tt.currentState, tt.payload)
-			if tt.errorThrown {
-				assert.NotNil(t, err)
+	tests := []struct {
+		desc  string
+		input struct {
+			current map[string]string
+			payload map[string]string
+		}
+		want      bool
+		wantError error
+	}{
+		{
+			desc: "valid payload",
+			input: struct {
+				current map[string]string
+				payload map[string]string
+			}{
+				current: map[string]string{
+					"insights":            "enabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "enabled",
+				},
+				payload: map[string]string{
+					"insights":            "enabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "disabled",
+				},
+			},
+			want: false,
+		},
+		{
+			desc: "payload equal to current state",
+			input: struct {
+				current map[string]string
+				payload map[string]string
+			}{
+				current: map[string]string{
+					"insights":            "enabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "enabled",
+				},
+				payload: map[string]string{
+					"insights":            "enabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "enabled",
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "additional services enabled when insights is disabled",
+			input: struct {
+				current map[string]string
+				payload map[string]string
+			}{
+				current: map[string]string{
+					"insights":            "enabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "enabled",
+				},
+				payload: map[string]string{
+					"insights":            "disabled",
+					"remediations":        "enabled",
+					"compliance_openscap": "enabled",
+				},
+			},
+			want:      false,
+			wantError: cmpopts.AnyError,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			got, err := utils.VerifyStatePayload(test.input.current, test.input.payload)
+			if test.wantError != nil {
+				if !cmp.Equal(test.wantError, err, cmpopts.EquateErrors()) {
+					t.Errorf("%#v != %#v", test.wantError, err)
+				}
 			} else {
-				assert.Nil(t, err)
-			}
-
-			if tt.equal {
-				assert.True(t, equal)
-			} else {
-				assert.False(t, equal)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if test.want != got {
+					t.Errorf("%v != %v", test.want, got)
+				}
 			}
 		})
 	}
