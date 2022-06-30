@@ -1,24 +1,39 @@
 package utils_test
 
 import (
-	"config-manager/domain"
 	"config-manager/utils"
 	"sort"
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestInsightsFirst(t *testing.T) {
-	state := domain.StateMap{
-		"a":        "enabled",
-		"b":        "enabled",
-		"insights": "enabled",
-		"c":        "enabled",
-		"z":        "enabled",
+	tests := []struct {
+		desc  string
+		input utils.InsightsFirst
+		want  utils.InsightsFirst
+	}{
+		{
+			input: utils.InsightsFirst{"a", "b", "insights", "c", "z"},
+			want:  utils.InsightsFirst{"insights", "a", "b", "c", "z"},
+		},
+		{
+			input: utils.InsightsFirst{"a", "b", "i", "insights", "c"},
+			want:  utils.InsightsFirst{"insights", "a", "b", "i", "c"},
+		},
+		{
+			input: utils.InsightsFirst{"z", "x", "y"},
+			want:  utils.InsightsFirst{"z", "x", "y"},
+		},
 	}
 
-	services := state.GetKeys()
-	sort.Sort(utils.InsightsFirst(services))
-	assert.Equal(t, services[0], "insights")
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			sort.Sort(test.input)
+			if !cmp.Equal(test.input, test.want) {
+				t.Errorf("+++%v\n---%v\n%v", test.input, test.want, cmp.Diff(test.input, test.want))
+			}
+		})
+	}
 }
