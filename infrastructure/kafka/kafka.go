@@ -62,7 +62,7 @@ func NewConsumerEventLoop(
 				log.Info().Err(err)
 				errors <- err
 			}
-			handler(ctx, m)
+			go handler(ctx, m)
 		}
 	}
 }
