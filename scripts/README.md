@@ -21,3 +21,8 @@ using bonfire, overriding image tags and references using a combination of
 from a `gabi` server and inserts them into a local database. To use this script,
 you must set both the `GABI_HOST` and `TOKEN` environment to their correct
 values.
+
+## `release.sh`
+
+`release.sh` will create an MR in app-interface to promote the *current* HEAD
+ref to production.
