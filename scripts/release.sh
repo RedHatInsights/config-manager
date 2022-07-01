@@ -22,6 +22,7 @@ if [ "${FORK_ID}" == "null" ]; then
     while [ "$(ht GET https://gitlab.cee.redhat.com/api/v4/projects/${FORK_ID} "PRIVATE-TOKEN:${GITLAB_TOKEN}" | jq -r '.import_status')" != "finished" ]; do
         sleep 2
     done
+    ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/members "PRIVATE-TOKEN:${GITLAB_TOKEN}" user_id=3889 access_level=40
 fi
 
 SSH_URL_TO_REPO=$(ht GET https://gitlab.cee.redhat.com/api/v4/projects/${FORK_ID} "PRIVATE-TOKEN:${GITLAB_TOKEN}" | jq -r '.ssh_url_to_repo')
@@ -39,5 +40,5 @@ git -C "${TMPDIR}/app-interface" add data/services/insights/${PROJECT_NAME}/depl
 git -C "${TMPDIR}/app-interface" commit -m "deploy(${PROJECT_NAME}): release ${SHORT_REF} to production"
 git -C "${TMPDIR}/app-interface" show -1
 git -C "${TMPDIR}/app-interface" push -u origin "${PROJECT_NAME}/prod-release-${SHORT_REF}"
-ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/merge_requests "PRIVATE-TOKEN:${GITLAB_TOKEN}" id="${FORK_ID}" source_branch="${PROJECT_NAME}/prod-release-${SHORT_REF}" target_branch=master target_project_id=13582 title="deploy(${PROJECT_NAME}): release ${SHORT_REF} to production" | jq -r .web_url
+ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/merge_requests "PRIVATE-TOKEN:${GITLAB_TOKEN}" source_branch="${PROJECT_NAME}/prod-release-${SHORT_REF}" target_branch=master target_project_id=13582 title="deploy(${PROJECT_NAME}): release ${SHORT_REF} to production" | jq -r .web_url
 rm -rf "${TMPDIR}"
