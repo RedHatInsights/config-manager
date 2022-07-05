@@ -33,12 +33,13 @@ git clone --depth=1 "${SSH_URL_TO_REPO}" "${TMPDIR}/app-interface"
 git -C "${TMPDIR}/app-interface" remote add upstream "${FORKED_SSH_URL_TO_REPO}"
 git -C "${TMPDIR}/app-interface" pull upstream master
 git -C "${TMPDIR}/app-interface" push origin master
-git -C "${TMPDIR}/app-interface" checkout -b "${PROJECT_NAME}/prod-release-${SHORT_REF}"
-OLD_REF=$(yq -r '.resourceTemplates[0].targets[] | select(.namespace."$ref" == "/services/insights/${PROJECT_NAME}/namespaces/${PROJECT_NAME}-prod.yml") | .ref' < "${TMPDIR}"/app-interface/data/services/insights/${PROJECT_NAME}/deploy.yml)
+BRANCH_NAME="${PROJECT_NAME}/prod-release-${SHORT_REF}"
+git -C "${TMPDIR}/app-interface" checkout -b "${BRANCH_NAME}"
+OLD_REF=$(yq -r ".resourceTemplates[0].targets[] | select(.namespace.\"\$ref\" == \"/services/insights/${PROJECT_NAME}/namespaces/${PROJECT_NAME}-prod.yml\") | .ref" < "${TMPDIR}"/app-interface/data/services/insights/${PROJECT_NAME}/deploy.yml)
 sed -i -e "s/${OLD_REF}/${LONG_REF}/" "${TMPDIR}"/app-interface/data/services/insights/${PROJECT_NAME}/deploy.yml
 git -C "${TMPDIR}/app-interface" add data/services/insights/${PROJECT_NAME}/deploy.yml
 git -C "${TMPDIR}/app-interface" commit -m "deploy(${PROJECT_NAME}): release ${SHORT_REF} to production"
 git -C "${TMPDIR}/app-interface" show -1
-git -C "${TMPDIR}/app-interface" push -u origin "${PROJECT_NAME}/prod-release-${SHORT_REF}"
-ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/merge_requests "PRIVATE-TOKEN:${GITLAB_TOKEN}" source_branch="${PROJECT_NAME}/prod-release-${SHORT_REF}" target_branch=master target_project_id=13582 title="deploy(${PROJECT_NAME}): release ${SHORT_REF} to production" | jq -r .web_url
+git -C "${TMPDIR}/app-interface" push -u origin "${BRANCH_NAME}"
+ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/merge_requests "PRIVATE-TOKEN:${GITLAB_TOKEN}" source_branch="${BRANCH_NAME}" target_branch=master target_project_id=13582 title="deploy(${PROJECT_NAME}): release ${SHORT_REF} to production" | jq -r .web_url
 rm -rf "${TMPDIR}"
