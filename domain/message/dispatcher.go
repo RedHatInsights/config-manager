@@ -11,7 +11,7 @@ type DispatcherEvent struct {
 // DispatcherEvent.
 type DispatcherEventPayload struct {
 	ID            string            `json:"id"`
-	Account       string            `json:"account"`
+	OrgID         string            `json:"org_id"`
 	Recipient     string            `json:"recipient"`
 	CorrelationID string            `json:"correlation_id"`
 	Service       string            `json:"service"`
