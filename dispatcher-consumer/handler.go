@@ -29,8 +29,8 @@ func buildMessage(payload message.DispatcherEventPayload, reqID uuid.UUID) ([]by
 		Operation: "add_host",
 		Metadata:  message.PlatformMetadata{RequestID: reqID.String()},
 		Data: message.HostUpdateData{
-			ID:      payload.Labels["id"],
-			Account: payload.Account,
+			ID:    payload.Labels["id"],
+			OrgID: payload.OrgID,
 			SystemProfile: message.HostUpdateSystemProfile{
 				RHCState: payload.Labels["state_id"],
 			},
@@ -84,8 +84,8 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			if err != nil {
 				log.Info().Msgf("Error producing message to system profile topic. request_id: %v", reqID.String())
 			} else {
-				log.Info().Msgf("Message sent to inventory with request_id: %s, host_id: %s, account: %s",
-					reqID.String(), value.Payload.Labels["id"], value.Payload.Account)
+				log.Info().Msgf("Message sent to inventory with request_id: %s, host_id: %s, org_id: %s",
+					reqID.String(), value.Payload.Labels["id"], value.Payload.OrgID)
 			}
 		case "running":
 			log.Info().Msgf("Received running event for host %v", value.Payload.Recipient)

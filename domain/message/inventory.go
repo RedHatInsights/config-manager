@@ -25,7 +25,7 @@ type PlatformMetadata struct {
 // HostUpdateData represents the data field of the InventoryUpdate.
 type HostUpdateData struct {
 	ID            string                  `json:"id"`
-	Account       string                  `json:"account"`
+	OrgID         string                  `json:"org_id"`
 	SystemProfile HostUpdateSystemProfile `json:"system_profile"`
 }
 
