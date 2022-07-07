@@ -21,6 +21,7 @@ type InventoryResponse struct {
 type Host struct {
 	ID            string        `json:"id"`
 	Account       string        `json:"account"`
+	OrgID         string        `json:"org_id"`
 	DisplayName   string        `json:"display_name"`
 	Reporter      string        `json:"reporter"`
 	SystemProfile SystemProfile `json:"system_profile"`

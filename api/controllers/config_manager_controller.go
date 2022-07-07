@@ -5,7 +5,7 @@ package controllers
 // of this writing, it was generated using version 1.5.1. Go does not support
 // path@version synytax with 'go run', so oapi-codegen must be installed
 // manually before code can be generated:
-// 'go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@1.5.1'
+// 'go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.5.1'
 
 //go:generate oapi-codegen -generate types -package controllers -o ./types.gen.go ../../schema/api.spec.yaml
 //go:generate oapi-codegen -generate server,spec -package controllers -o ./spec.gen.go ../../schema/api.spec.yaml
@@ -226,10 +226,8 @@ func (cmc *ConfigManagerController) UpdateStates(ctx echo.Context) error {
 
 	newProfile := db.CopyProfile(*currentProfile)
 	newProfile.SetStateConfig(*payload)
-	if !newProfile.OrgID.Valid && id.Identity.OrgID != "" {
-		newProfile.OrgID.String = id.Identity.OrgID
-		newProfile.OrgID.Valid = true
-	}
+	newProfile.OrgID.Valid = id.Identity.OrgID != ""
+	newProfile.OrgID.String = id.Identity.OrgID
 	logger.Trace().Interface("newProfile", newProfile).Msg("created new profile")
 
 	if err := db.InsertProfile(newProfile); err != nil {
@@ -277,7 +275,7 @@ func (cmc *ConfigManagerController) GetCurrentState(ctx echo.Context) error {
 		log.Error().Err(echoErr)
 		return echoErr
 	}
-	profile, err := db.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.AccountNumber, defaultState))
+	profile, err := db.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.OrgID, id.Identity.AccountNumber, defaultState))
 	if err != nil {
 		instrumentation.GetAccountStateError()
 		echoErr := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -448,6 +446,10 @@ func formatAPIResponse(profile *db.Profile) AccountState {
 		Insights:           profile.StateConfig()["insights"],
 		Remediations:       profile.StateConfig()["remediations"],
 		ComplianceOpenscap: profile.StateConfig()["compliance_openscap"],
+	}
+
+	if profile.OrgID.Valid {
+		accountState.OrgId = (*OrgID)(&profile.OrgID.String)
 	}
 
 	return accountState

@@ -43,7 +43,7 @@ func TestInsertProfile(t *testing.T) {
 		want        error
 	}{
 		{
-			input: *NewProfile("1", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
+			input: *NewProfile("1", "1", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
 			want:  nil,
 		},
 	}

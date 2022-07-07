@@ -44,7 +44,7 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			_, err = s.setupDefaultState(&domain.AccountState{AccountID: profile.AccountID.String})
+			_, err = s.setupDefaultState(&domain.AccountState{AccountID: profile.AccountID.String, OrgID: profile.OrgID.String})
 			if err != nil {
 				return nil, err
 			}
@@ -55,6 +55,7 @@ func (s *ConfigManagerService) GetAccountState(id string) (*domain.AccountState,
 
 	acc = &domain.AccountState{
 		AccountID: profile.AccountID.String,
+		OrgID:     profile.OrgID.String,
 		State:     profile.StateConfig(),
 		StateID:   profile.ID,
 		Label:     profile.Label.String,
@@ -77,7 +78,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 	if err := json.Unmarshal([]byte(defaultState), &state); err != nil {
 		return nil, err
 	}
-	newProfile := db.NewProfile(acc.AccountID, state)
+	newProfile := db.NewProfile(acc.OrgID, acc.AccountID, state)
 
 	err := db.InsertProfile(*newProfile)
 	if err != nil {
@@ -86,6 +87,7 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 
 	return &domain.AccountState{
 		AccountID: newProfile.AccountID.String,
+		OrgID:     newProfile.OrgID.String,
 		State:     newProfile.StateConfig(),
 		StateID:   newProfile.ID,
 		Label:     newProfile.Label.String,
@@ -99,8 +101,8 @@ func (s *ConfigManagerService) setupDefaultState(acc *domain.AccountState) (*dom
 }
 
 // UpdateAccountState updates the current state for the account and creates a new state archive
-func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domain.StateMap, applyState db.JSONNullBool) (*domain.AccountState, error) {
-	newProfile := db.NewProfile(id, payload)
+func (s *ConfigManagerService) UpdateAccountState(orgID, accountID, user string, payload domain.StateMap, applyState db.JSONNullBool) (*domain.AccountState, error) {
+	newProfile := db.NewProfile(orgID, accountID, payload)
 
 	newProfile.Creator.Valid = true
 	newProfile.Creator.String = user
@@ -114,6 +116,7 @@ func (s *ConfigManagerService) UpdateAccountState(id, user string, payload domai
 
 	return &domain.AccountState{
 		AccountID: newProfile.AccountID.String,
+		OrgID:     newProfile.OrgID.String,
 		State:     newProfile.StateConfig(),
 		StateID:   newProfile.ID,
 		Label:     newProfile.Label.String,
@@ -236,6 +239,7 @@ func (s *ConfigManagerService) GetStateChanges(accountID, sortBy string, limit, 
 	for _, profile := range profiles {
 		state := domain.StateArchive{
 			AccountID: accountID,
+			OrgID:     profile.OrgID.String,
 			StateID:   profile.ID,
 			Label:     profile.Label.String,
 			Initiator: profile.Creator.String,
@@ -265,6 +269,7 @@ func (s *ConfigManagerService) GetSingleStateChange(stateID string) (*domain.Sta
 
 	return &domain.StateArchive{
 		AccountID: profile.AccountID.String,
+		OrgID:     profile.OrgID.String,
 		StateID:   profile.ID,
 		Label:     profile.Label.String,
 		Initiator: profile.Creator.String,
