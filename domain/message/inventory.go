@@ -26,6 +26,7 @@ type PlatformMetadata struct {
 type HostUpdateData struct {
 	ID            string                  `json:"id"`
 	OrgID         string                  `json:"org_id"`
+	Account       string                  `json:"account"`
 	SystemProfile HostUpdateSystemProfile `json:"system_profile"`
 }
 
