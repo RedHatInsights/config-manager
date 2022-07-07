@@ -13,6 +13,7 @@ import (
 // object.
 type AccountState struct {
 	AccountID  string          `db:"account_id" json:"account"`
+	OrgID      string          `db:"org_id" json:"org_id"`
 	State      StateMap        `db:"state" json:"state"`
 	StateID    uuid.UUID       `db:"state_id" json:"id"`
 	Label      string          `db:"label" json:"label"`

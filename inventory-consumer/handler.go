@@ -61,7 +61,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				log.Printf("cannot unmarshal data: %v", err)
 				return
 			}
-			profile, err := db.GetOrInsertCurrentProfile(value.Host.Account, db.NewProfile(value.Host.Account, defaultState))
+			profile, err := db.GetOrInsertCurrentProfile(value.Host.Account, db.NewProfile(value.Host.OrgID, value.Host.Account, defaultState))
 			if err != nil {
 				logger.Error().Err(err).Msgf("Error retrieving state for account: %v", value.Host.Account)
 				return

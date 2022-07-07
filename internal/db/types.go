@@ -22,11 +22,12 @@ type Profile struct {
 }
 
 // NewProfile creates a new, default Profile.
-func NewProfile(accountID string, state map[string]string) *Profile {
+func NewProfile(orgID string, accountID string, state map[string]string) *Profile {
 	profile := Profile{
 		ID:        uuid.New(),
 		Label:     sql.NullString{Valid: true, String: accountID + "-" + uuid.New().String()},
-		AccountID: sql.NullString{Valid: true, String: accountID},
+		AccountID: sql.NullString{Valid: accountID != "", String: accountID},
+		OrgID:     sql.NullString{Valid: orgID != "", String: orgID},
 		Creator:   sql.NullString{Valid: true, String: "redhat"},
 		CreatedAt: time.Now(),
 		Active:    true,

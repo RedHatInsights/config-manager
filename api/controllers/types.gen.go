@@ -16,6 +16,7 @@ type AccountState struct {
 	ApplyState *ApplyState `json:"apply_state,omitempty"`
 	Id         *StateID    `json:"id,omitempty"`
 	Label      *Label      `json:"label,omitempty"`
+	OrgId      *OrgID      `json:"org_id,omitempty"`
 	State      *State      `json:"state,omitempty"`
 }
 
@@ -27,6 +28,9 @@ type Initiator string
 
 // Label defines model for Label.
 type Label string
+
+// OrgID defines model for OrgID.
+type OrgID string
 
 // State defines model for State.
 type State struct {

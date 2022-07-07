@@ -10,6 +10,7 @@ import (
 // object.
 type StateArchive struct {
 	AccountID string    `db:"account_id" json:"account"`
+	OrgID     string    `db:"org_id" json:"org_id"`
 	StateID   uuid.UUID `db:"state_id" json:"id"`
 	Label     string    `db:"label" json:"label"`
 	Initiator string    `db:"initiator" json:"initiator"`
