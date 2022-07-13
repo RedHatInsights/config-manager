@@ -47,13 +47,17 @@ minikube start --cpus 8 --disk-size 36GB --memory 16GB --addons=registry --drive
 ### Install Clowder Custom Resource Definitions
 
 ```sh
-curl https://raw.githubusercontent.com/RedHatInsights/clowder/master/build/kube_setup.sh | bash
+curl https://raw.githubusercontent.com/RedHatInsights/clowder/$(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq -r '.tag_name')/build/kube_setup.sh | bash
 ```
 
 ### Install Clowder
 
 ```sh
-minikube kubectl -- apply --filename $(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq '.assets[0].browser_download_url' -r)
+minikube kubectl -- apply --filename $(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq -r '.assets[0].browser_download_url')
+# Apply the example clowder-config ConfigMap that sets enableExternalStrimzi to true
+minikube kubectl -- --namespace clowder-system apply --filename https://raw.githubusercontent.com/RedHatInsights/clowder/$(curl https://api.github.com/repos/RedHatInsights/clowder/releases/latest | jq -r '.tag_name')/clowder-config.yaml
+# Delete the clowder-system-controller-manager pod to rebuild with the above applied ConfigMap
+minikube kubectl -- --namespace clowder-system delete pods --selector control-plane=controller-manager
 ```
 
 ### Create a namespace
@@ -93,7 +97,7 @@ bonfire deploy-env --namespace fog --quay-user $USER
 ### Deploy Applications
 
 ```sh
-bonfire deploy --namespace fog --local-config-path ./bonfire_config.yaml \
+bonfire deploy --namespace fog --local-config-path ./scripts/bonfire.yml \
     cloud-connector \
     host-inventory \
     playbook-dispatcher
