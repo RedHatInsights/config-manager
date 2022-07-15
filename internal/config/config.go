@@ -141,10 +141,10 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
-		DefaultConfig.KafkaUsername = clowder.LoadedConfig.KafkaSSLConfig.KafkaUsername
-		DefaultConfig.KafkaPassword = clowder.LoadedConfig.KafkaSSLConfig.KafkaPassword
-		DefaultConfig.KafkaSASLMech = clowder.LoadedConfig.KafkaSSLConfig.SASLMechanism
-		DefaultConfig.KafkaProtocol = clowder.LoadedConfig.KafkaSSLConfig.Protocol
+		DefaultConfig.KafkaUsername = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.KafkaUsername
+		DefaultConfig.KafkaPassword = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.KafkaPassword
+		DefaultConfig.KafkaSASLMech = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.SASLMechanism
+		DefaultConfig.KafkaProtocol = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.Protocol
 	}
 }
 
@@ -182,6 +182,10 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaGroupID, "kafka-group-id", DefaultConfig.KafkaGroupID, "kafka group ID")
 	fs.StringVar(&DefaultConfig.KafkaInventoryTopic, "kafka-inventory-topic", DefaultConfig.KafkaInventoryTopic, "host-inventory events topic name")
 	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
+	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
+	fs.StringVar(&DefaultConfig.KafkaPassword, "kafka-password", DefaultConfig.KafkaPassword, "managed kafka auth password")
+	fs.StringVar(&DefaultConfig.KafkaSASLMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSASLMechanism, "managed kafka auth sasl mechanism")
+	fs.StringVar(&DefaultConfig.KafkaProtocol, "kafka-security-protocol", DefaultConfig.KafkaProtocol, "managed kafka auth security protocol")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
