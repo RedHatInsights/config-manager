@@ -141,10 +141,10 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
-		DefaultConfig.KafkaUsername = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.KafkaUsername
-		DefaultConfig.KafkaPassword = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.KafkaPassword
-		DefaultConfig.KafkaSASLMech = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.SASLMechanism
-		DefaultConfig.KafkaProtocol = clowder.LoadedConfig.KafkaConfig.KafkaSSLConfig.Protocol
+		DefaultConfig.KafkaUsername = clowder.LoadedConfig.KafkaSSLConfig.KafkaUsername
+		DefaultConfig.KafkaPassword = clowder.LoadedConfig.KafkaSSLConfig.KafkaPassword
+		DefaultConfig.KafkaSASLMech = clowder.LoadedConfig.KafkaSSLConfig.SASLMechanism
+		DefaultConfig.KafkaProtocol = clowder.LoadedConfig.KafkaSSLConfig.Protocol
 	}
 }
 
