@@ -26,21 +26,66 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	consumer := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     config.DefaultConfig.KafkaBrokers.Values,
-		Topic:       topic,
-		GroupID:     config.DefaultConfig.KafkaGroupID,
-		StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-	})
+	if config.DefaultConfig.KafkaUsername == nil 
+		|| config.DefaultConfig.KafkaPassword == nil 
+		|| config.DefaultConfig.KafkaSASLMech == nil 
+		|| config.DefaultConfig.KafkaProtocol == nil 
+	{
+		consumer := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Topic:       topic,
+			GroupID:     config.DefaultConfig.KafkaGroupID,
+			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+		})
+	} else {
+		mechanism := plain.Mechanism{
+			Username: config.DefaultConfig.KafkaUsername,
+			Password: config.DefaultConfig.KafkaPassword,
+		}
+		dialer := &kafka.Dialer{
+			Timeout:       10 * time.Second,
+			DualStack:     true,
+			SASLMechanism: mechanism,
+		}
+		consumer := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Topic:       topic,
+			GroupID:     config.DefaultConfig.KafkaGroupID,
+			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+			Dialer: dialer
+		})
+	}
 
 	return consumer
 }
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	producer := &kafka.Writer{
-		Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-		Topic: topic,
+	if config.DefaultConfig.KafkaUsername == nil 
+		|| config.DefaultConfig.KafkaPassword == nil 
+		|| config.DefaultConfig.KafkaSASLMech == nil 
+		|| config.DefaultConfig.KafkaProtocol == nil 
+	{
+		producer := &kafka.Writer{
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic: topic,
+		}
+	}else {
+		mechanism := plain.Mechanism{
+			Username: config.DefaultConfig.KafkaUsername,
+			Password: config.DefaultConfig.KafkaPassword,
+		}
+		sharedTransport := &kafka.Transport{
+			SASL: mechanism,
+			TLS: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
+		producer := &kafka.Writer{
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic: topic,
+			Transport: sharedTransport,
+		}
 	}
 
 	return producer
