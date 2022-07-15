@@ -44,6 +44,10 @@ type Config struct {
 	KafkaGroupID            string
 	KafkaInventoryTopic     string
 	KafkaSystemProfileTopic string
+	KafkaUsername			string
+	KafkaPassword			string
+	KafkaSASLMechanism		string
+	KafkaSecurityProtocol	string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -96,6 +100,10 @@ var DefaultConfig Config = Config{
 	KafkaGroupID:            "config-manager",
 	KafkaInventoryTopic:     "platform.inventory.events",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
+	KafkaUsername: 			 os.Getenv("KAFKA_USER_NAME"),
+	KafkaPassword:			 os.Getenv("KAFKA_PASSWORD"),
+	KafkaSASLMechanism:		 os.Getenv("KAFKA_SASL_MECH"),
+	KafkaSecurityProtocol: 	 os.Getenv("KAFKA_SECURITY_PROTOCOL"),
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -129,6 +137,15 @@ func init() {
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
+		if clowder.LoadedConfig.Kafka.Brokers != nil {
+			broker := clowder.LoadedConfig.Kafka.Brokers[0]
+			if broker.Authtype != nil {
+				DefaultConfig.KafkaUsername = *broker.Sasl.Username
+				DefaultConfig.KafkaPassword = *broker.Sasl.Password
+				DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
+				DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
+			}
+		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort

@@ -351,6 +351,8 @@ github.com/prometheus/procfs v0.0.3 h1:CTwfnzjQ+8dS6MhHHu4YswVAD99sL2wjPqP+VkURm
 github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDaekg4FpcdQ=
 github.com/redhatinsights/app-common-go v1.2.0 h1:Z4TxbamehwIHdgK0GI7VDDv0q9mhaHlutiZeGtE+an4=
 github.com/redhatinsights/app-common-go v1.2.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
+github.com/redhatinsights/app-common-go v1.6.2 h1:SYOYC7eelAAMiOK8hp4GxmQLAJ4HtuJ50kNzEZa7S/4=
+github.com/redhatinsights/app-common-go v1.6.2/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
 github.com/redhatinsights/platform-go-middlewares v0.18.0 h1:jUNiKxyL/DkSG7n4GtDBz1jKGLXoJpM8u2x62EVgXCw=
 github.com/redhatinsights/platform-go-middlewares v0.18.0/go.mod h1:i5gVDZJ/quCQhs5AW5CwkRPXlz1HfDBvyNtXHnlXZfM=
 github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
