@@ -48,6 +48,7 @@ type Config struct {
 	KafkaPassword			string
 	KafkaSASLMechanism		string
 	KafkaSecurityProtocol	string
+	KafkaAuthType			string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -62,7 +63,6 @@ type Config struct {
 	ServiceConfig           string
 	URLPathPrefix           string
 	WebPort                 int
-	ClowderEnabled			bool
 }
 
 func (c *Config) URLBasePath() string {
@@ -105,6 +105,7 @@ var DefaultConfig Config = Config{
 	KafkaPassword:			 os.Getenv("KAFKA_PASSWORD"),
 	KafkaSASLMechanism:		 os.Getenv("KAFKA_SASL_MECH"),
 	KafkaSecurityProtocol: 	 os.Getenv("KAFKA_SECURITY_PROTOCOL"),
+	KafkaAuthType:           "sasl"
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -137,16 +138,16 @@ func init() {
 		DefaultConfig.DBPass = clowder.LoadedConfig.Database.Password
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
-		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
+		DefaultConfig.KafkaBrokers.Values = clowder.LoadedConfig.Kafka.Brokers
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
-		DefaultConfig.KafkaUsername = clowder.KafkaServers[0].sasl.Username
-		DefaultConfig.KafkaPassword = clowder.KafkaServers[0].sasl.Password
-		DefaultConfig.KafkaSASLMechanism = clowder.KafkaServers[0].sasl.saslMechanism
-		DefaultConfig.KafkaSecurityProtocol = clowder.KafkaServers[0].sasl.securityProtocol
-		DefaultConfig.KafkaAuthType = clowder.KafkaServers[0].authtype 
+		DefaultConfig.KafkaUsername = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Username
+		DefaultConfig.KafkaPassword = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Password
+		DefaultConfig.KafkaSASLMechanism = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.saslMechanism
+		DefaultConfig.KafkaSecurityProtocol = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.securityProtocol
+		DefaultConfig.KafkaAuthType = clowder.LoadedConfig.Kafka.Brokers[0].Authtype 
 	}
 }
 
