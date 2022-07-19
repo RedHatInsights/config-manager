@@ -26,10 +26,10 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype != nil {
+	if config.DefaultConfig.KafkaBrokers[0].Authtype != nil {
 		mechanism, err := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
-			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
+			Username: config.DefaultConfig.KafkaBrokers[0].Sasl.Username,
+			Password: config.DefaultConfig.KafkaBrokers[0].Sasl.Password,
 		}
 		if err != nil {
 			mechanism, err := plain.Mechanism{
@@ -45,7 +45,7 @@ func NewConsumer(topic string) *kafka.Reader {
 				SASLMechanism: mechanism,
 			}
 			consumer := kafka.NewReader(kafka.ReaderConfig{
-				Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+				Brokers:     config.DefaultConfig.KafkaBrokers,
 				Topic:       topic,
 				GroupID:     config.DefaultConfig.KafkaGroupID,
 				StartOffset: config.DefaultConfig.KafkaConsumerOffset,
@@ -60,7 +60,7 @@ func NewConsumer(topic string) *kafka.Reader {
 			SASLMechanism: mechanism,
 		}
 		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Brokers:     config.DefaultConfig.KafkaBrokers,
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
@@ -70,7 +70,7 @@ func NewConsumer(topic string) *kafka.Reader {
 		return consumer
 	} else {
 		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Brokers:     config.DefaultConfig.KafkaBrokers,
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
@@ -82,10 +82,10 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype != nil {
+	if config.DefaultConfig.KafkaBrokers[0].Authtype != nil {
 		mechanism, err := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
-			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
+			Username: config.DefaultConfig.KafkaBrokers[0].Sasl.Username,
+			Password: config.DefaultConfig.KafkaBrokers[0].Sasl.Password,
 		}
 		if err != nil {
 			mechanism, err := plain.Mechanism{
@@ -99,7 +99,7 @@ func NewProducer(topic string) *kafka.Writer {
 				SASL: mechanism,
 			}
 			producer := &kafka.Writer{
-				Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+				Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers[0]),
 				Topic: topic,
 				Transport: sharedTransport,
 			}
@@ -110,7 +110,7 @@ func NewProducer(topic string) *kafka.Writer {
 			SASL: mechanism,
 		}
 		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers[0]),
 			Topic: topic,
 			Transport: sharedTransport,
 		}
@@ -118,7 +118,7 @@ func NewProducer(topic string) *kafka.Writer {
 		return producer
 	} else {
 		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers[0]),
 			Topic: topic,
 		}
 		
