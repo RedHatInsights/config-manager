@@ -57,7 +57,7 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if config.DefaultConfig.KafkaBrokers.Values[0] == nil {
+	if config.DefaultConfig.KafkaBrokers.Values == string {
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
