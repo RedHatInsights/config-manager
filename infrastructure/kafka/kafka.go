@@ -26,11 +26,7 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if config.DefaultConfig.KafkaUsername == nil 
-		|| config.DefaultConfig.KafkaPassword == nil 
-		|| config.DefaultConfig.KafkaSASLMech == nil 
-		|| config.DefaultConfig.KafkaProtocol == nil 
-	{
+	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype == nil {
 		consumer := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 			Topic:       topic,
@@ -39,8 +35,8 @@ func NewConsumer(topic string) *kafka.Reader {
 		})
 	} else {
 		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaUsername,
-			Password: config.DefaultConfig.KafkaPassword,
+			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
+			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
 		}
 		dialer := &kafka.Dialer{
 			Timeout:       10 * time.Second,
