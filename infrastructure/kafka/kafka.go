@@ -33,6 +33,8 @@ func NewConsumer(topic string) *kafka.Reader {
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
 		})
+
+		return consumer
 	} else {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
@@ -50,9 +52,9 @@ func NewConsumer(topic string) *kafka.Reader {
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
 			Dialer: dialer,
 		})
-	}
 
-	return consumer
+		return consumer
+	}
 }
 
 // NewProducer creates a configured kafka.Writer.
@@ -62,6 +64,8 @@ func NewProducer(topic string) *kafka.Writer {
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
 		}
+		
+		return producer
 	} else {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
@@ -75,9 +79,9 @@ func NewProducer(topic string) *kafka.Writer {
 			Topic: topic,
 			Transport: sharedTransport,
 		}
-	}
 
-	return producer
+		return producer
+	}
 }
 
 // NewConsumerEventLoop returns a function handler (start) that can be called to
