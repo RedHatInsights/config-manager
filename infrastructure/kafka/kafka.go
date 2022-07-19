@@ -26,7 +26,7 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype == nil {
+	if config.DefaultConfig.KafkaBrokers.Values= == string {
 		consumer := kafka.NewReader(kafka.ReaderConfig{
 			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 			Topic:       topic,
