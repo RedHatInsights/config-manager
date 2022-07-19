@@ -57,7 +57,7 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype == nil {
+	if config.DefaultConfig.KafkaBrokers.Values[0] == nil {
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
@@ -69,9 +69,6 @@ func NewProducer(topic string) *kafka.Writer {
 		}
 		sharedTransport := &kafka.Transport{
 			SASL: mechanism,
-			TLS: &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			},
 		}
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
