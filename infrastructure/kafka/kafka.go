@@ -57,10 +57,11 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if config.DefaultConfig.KafkaUsername == nil 
+	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype == nil {
 		|| config.DefaultConfig.KafkaPassword == nil 
 		|| config.DefaultConfig.KafkaSASLMech == nil 
 		|| config.DefaultConfig.KafkaProtocol == nil 
+	}
 	{
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
@@ -68,8 +69,8 @@ func NewProducer(topic string) *kafka.Writer {
 		}
 	}else {
 		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaUsername,
-			Password: config.DefaultConfig.KafkaPassword,
+			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
+			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
 		}
 		sharedTransport := &kafka.Transport{
 			SASL: mechanism,
