@@ -48,7 +48,6 @@ type Config struct {
 	KafkaPassword			string
 	KafkaSASLMechanism		string
 	KafkaSecurityProtocol	string
-	KafkaAuthType			string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -105,7 +104,6 @@ var DefaultConfig Config = Config{
 	KafkaPassword:			 os.Getenv("KAFKA_PASSWORD"),
 	KafkaSASLMechanism:		 os.Getenv("KAFKA_SASL_MECH"),
 	KafkaSecurityProtocol: 	 os.Getenv("KAFKA_SECURITY_PROTOCOL"),
-	KafkaAuthType:           "sasl",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -143,11 +141,6 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
-		DefaultConfig.KafkaUsername = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Username
-		DefaultConfig.KafkaPassword = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Password
-		DefaultConfig.KafkaSASLMechanism = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.saslMechanism
-		DefaultConfig.KafkaSecurityProtocol = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.securityProtocol
-		DefaultConfig.KafkaAuthType = clowder.LoadedConfig.Kafka.Brokers[0].Authtype 
 	}
 }
 
