@@ -125,7 +125,6 @@ var DefaultConfig Config = Config{
 	ServiceConfig: `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	URLPathPrefix: "api",
 	WebPort:       8081,
-	ClowderEnabled: false
 }
 
 func init() {
