@@ -62,6 +62,7 @@ type Config struct {
 	ServiceConfig           string
 	URLPathPrefix           string
 	WebPort                 int
+	ClowderEnabled			bool
 }
 
 func (c *Config) URLBasePath() string {
@@ -124,6 +125,7 @@ var DefaultConfig Config = Config{
 	ServiceConfig: `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	URLPathPrefix: "api",
 	WebPort:       8081,
+	ClowderEnabled: false
 }
 
 func init() {
@@ -141,7 +143,12 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
-	}	
+		DefaultConfig.KafkaUsername = clowder.KafkaServers[0].Sasl.Username
+		DefaultConfig.KafkaPassword = clowder.KafkaServers[0].Sasl.Password
+		DefaultConfig.KafkaSASLMechanism = clowder.KafkaServers[0].Sasl.saslMechanism
+		DefaultConfig.KafkaSecurityProtocol = clowder.KafkaServers[0].Sasl.securityProtocol
+		DefaultConfig.KafkaAuthType = clowder.KafkaServers[0].authtype 
+	}
 }
 
 // FlagSet creates a new FlagSet, defined with flags for each struct field in

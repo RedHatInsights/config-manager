@@ -26,19 +26,10 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if config.DefaultConfig.KafkaBrokers.Values == string {
-		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
-			Topic:       topic,
-			GroupID:     config.DefaultConfig.KafkaGroupID,
-			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-		})
-
-		return consumer
-	} else {
+	if config.DefaultConfig.KafkaAuthType != nil {
 		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
-			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
+			Username: config.DefaultConfig.KafkaUsername
+			Password: config.DefaultConfig.KafkaPassword,
 		}
 		dialer := &kafka.Dialer{
 			Timeout:       10 * time.Second,
@@ -54,22 +45,24 @@ func NewConsumer(topic string) *kafka.Reader {
 		})
 
 		return consumer
+	} else {
+		consumer := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Topic:       topic,
+			GroupID:     config.DefaultConfig.KafkaGroupID,
+			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+		})
+
+		return consumer
 	}
 }
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if config.DefaultConfig.KafkaBrokers.Values == string {
-		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-			Topic: topic,
-		}
-		
-		return producer
-	} else {
+	if config.DefaultConfig.KafkaAuthType != nil {
 		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Username,
-			Password: config.DefaultConfig.KafkaBrokers.Values[0].Sasl.Password,
+			Username: config.DefaultConfig.KafkaUsername
+			Password: config.DefaultConfig.KafkaPassword,
 		}
 		sharedTransport := &kafka.Transport{
 			SASL: mechanism,
@@ -80,6 +73,13 @@ func NewProducer(topic string) *kafka.Writer {
 			Transport: sharedTransport,
 		}
 
+		return producer
+	} else {
+		producer := &kafka.Writer{
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic: topic,
+		}
+		
 		return producer
 	}
 }
