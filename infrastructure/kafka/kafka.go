@@ -48,7 +48,7 @@ func NewConsumer(topic string) *kafka.Reader {
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-			Dialer: dialer
+			Dialer: dialer,
 		})
 	}
 
@@ -71,7 +71,7 @@ func NewProducer(topic string) *kafka.Writer {
 			SASL: mechanism,
 			TLS: &tls.Config{
 				MinVersion: tls.VersionTLS12,
-			}
+			},
 		}
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
