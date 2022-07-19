@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	config "config-manager/internal/config"
+	"config-manager/internal/config"
 	"context"
 	"fmt"
 
