@@ -58,11 +58,6 @@ func NewConsumer(topic string) *kafka.Reader {
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
 	if config.DefaultConfig.KafkaBrokers.Values[0].Authtype == nil {
-		|| config.DefaultConfig.KafkaPassword == nil 
-		|| config.DefaultConfig.KafkaSASLMech == nil 
-		|| config.DefaultConfig.KafkaProtocol == nil 
-	}
-	{
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
