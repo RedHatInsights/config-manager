@@ -105,7 +105,7 @@ var DefaultConfig Config = Config{
 	KafkaPassword:			 os.Getenv("KAFKA_PASSWORD"),
 	KafkaSASLMechanism:		 os.Getenv("KAFKA_SASL_MECH"),
 	KafkaSecurityProtocol: 	 os.Getenv("KAFKA_SECURITY_PROTOCOL"),
-	KafkaAuthType:           "sasl"
+	KafkaAuthType:           "sasl",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
