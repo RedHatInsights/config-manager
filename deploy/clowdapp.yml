@@ -93,11 +93,11 @@ objects:
                 key: key
                 name: psk-playbook-dispatcher
           - name: KAFKA_HOSTNAME
-          valueFrom:
-            secretKeyRef:
-              key: hostname
-              name: clowder-oauth
-              optional: true
+            valueFrom:
+              secretKeyRef:
+                key: hostname
+                name: clowder-oauth
+                optional: true
           - name: KAFKA_PORT
             valueFrom:
               secretKeyRef:
