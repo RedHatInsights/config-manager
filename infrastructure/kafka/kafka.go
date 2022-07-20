@@ -61,7 +61,7 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if (config.DefaultConfig.KafkaUsername != nil && config.DefaultConfig.KafkaPassword != nil) {
+	if (config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "") {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaUsername,
 			Password: config.DefaultConfig.KafkaPassword,
