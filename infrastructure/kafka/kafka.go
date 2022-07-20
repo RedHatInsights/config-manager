@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	kafka "github.com/segmentio/kafka-go"
-	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/mock"
 )
