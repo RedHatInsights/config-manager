@@ -37,7 +37,7 @@ func NewConsumer(topic string) *kafka.Reader {
 			SASLMechanism: mechanism,
 		}
 		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers,
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
@@ -47,7 +47,7 @@ func NewConsumer(topic string) *kafka.Reader {
 		return consumer
 	} else {
 		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers,
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
@@ -68,7 +68,7 @@ func NewProducer(topic string) *kafka.Writer {
 			SASL: mechanism,
 		}
 		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers[0]),
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
 			Transport: sharedTransport,
 		}
@@ -76,7 +76,7 @@ func NewProducer(topic string) *kafka.Writer {
 		return producer
 	} else {
 		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers[0]),
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
 		}
 		

@@ -137,11 +137,12 @@ func init() {
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
-		if clowder.LoadedConfig.Kafka.Brokers[0].Authtype != nil {
-			DefaultConfig.KafkaUsername = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Username
-			DefaultConfig.KafkaPassword = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.Password
-			DefaultConfig.KafkaSASLMechanism = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.saslMechanism
-			DefaultConfig.KafkaSecurityProtocol = clowder.LoadedConfig.Kafka.Brokers[0].Sasl.securityProtocol
+		broker := clowder.LoadedConfig.Kafka.Brokers[0]
+		if broker.Authtype != nil {
+			DefaultConfig.KafkaUsername = *broker.Sasl.Username
+			DefaultConfig.KafkaPassword = *broker.Sasl.Password
+			DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
+			DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
 		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
