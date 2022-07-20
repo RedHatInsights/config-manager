@@ -137,8 +137,8 @@ func init() {
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
-		var broker clowder.BrokerConfig
 		if clowder.LoadedConfig.Kafka.Brokers != nil {
+			var broker clowder.BrokerConfig
 			broker := clowder.LoadedConfig.Kafka.Brokers[0]
 			if broker.Authtype != nil {
 				DefaultConfig.KafkaUsername = *broker.Sasl.Username
