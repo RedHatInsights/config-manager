@@ -8,6 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,7 +28,7 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if (config.DefaultConfig.KafkaUsername != nil && config.DefaultConfig.KafkaPassword != nil) {
+	if (config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "") {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaUsername,
 			Password: config.DefaultConfig.KafkaPassword,
