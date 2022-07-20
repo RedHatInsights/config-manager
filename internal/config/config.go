@@ -140,6 +140,7 @@ func init() {
 		var broker clowder.BrokerConfig
 		if clowder.LoadedConfig.Kafka.Brokers != nil {
 			broker := clowder.LoadedConfig.Kafka.Brokers[0]
+			json.Unmarshal([]byte(clowder.LoadedConfig.Kafka.Brokers[0]), &broker)
 			if (broker.Sasl != nil) {
 				DefaultConfig.KafkaUsername = *broker.Sasl.Username
 				DefaultConfig.KafkaPassword = *broker.Sasl.Password
