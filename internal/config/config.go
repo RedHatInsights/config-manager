@@ -141,7 +141,7 @@ func init() {
 		if clowder.LoadedConfig.Kafka.Brokers != nil {
 			broker := clowder.LoadedConfig.Kafka.Brokers[0]
 			if val, ok := broker["authtype"]; ok {
-				if  broker.Authtype != nil {
+				if  broker.authtype != nil {
 					DefaultConfig.KafkaUsername = *broker.Sasl.Username
 					DefaultConfig.KafkaPassword = *broker.Sasl.Password
 					DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
