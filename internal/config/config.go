@@ -140,13 +140,11 @@ func init() {
 		var broker clowder.BrokerConfig
 		if clowder.LoadedConfig.Kafka.Brokers != nil {
 			broker := clowder.LoadedConfig.Kafka.Brokers[0]
-			if val, ok := broker["authtype"]; ok {
-				if  broker.authtype != nil {
-					DefaultConfig.KafkaUsername = *broker.Sasl.Username
-					DefaultConfig.KafkaPassword = *broker.Sasl.Password
-					DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
-					DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
-				}
+			if  broker.Sasl != null {
+				DefaultConfig.KafkaUsername = *broker.Sasl.Username
+				DefaultConfig.KafkaPassword = *broker.Sasl.Password
+				DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
+				DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
 			}
 		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
