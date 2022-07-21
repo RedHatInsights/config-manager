@@ -71,6 +71,7 @@ func NewProducer(topic string) *kafka.Writer {
 			SASL: mechanism,
 			TLS: &tls.Config{
 				MinVersion: tls.VersionTLS12,
+			}
 		}
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
