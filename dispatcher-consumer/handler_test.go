@@ -36,7 +36,6 @@ var tests = []struct {
 	requestID    string
 	data         []byte
 	orgID        string
-	account      string
 	stateID      string
 	invMsgSent   bool
 	validEvent   bool
@@ -50,7 +49,6 @@ var tests = []struct {
 			"payload": {
 				"id": "1234",
 				"org_id": "5318290",
-				"account": "0000001",
 				"recipient": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
 				"correlation_id": "62156f8e-9dfd-4103-a60d-31f6090a3241",
 				"service": "config_manager",
@@ -62,7 +60,6 @@ var tests = []struct {
 			}
 		}`),
 		"5318290",
-		"0000001",
 		"88d2706a-a9da-4aa4-a6fd-9750bcb4714f",
 		false,
 		true,
@@ -76,7 +73,6 @@ var tests = []struct {
 			"payload": {
 				"id": "1234",
 				"org_id": "5318290",
-				"account": "0000001",
 				"recipient": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
 				"correlation_id": "62156f8e-9dfd-4103-a60d-31f6090a3241",
 				"service": "config_manager",
@@ -88,7 +84,6 @@ var tests = []struct {
 			}
 		}`),
 		"5318290",
-		"0000001",
 		"88d2706a-a9da-4aa4-a6fd-9750bcb4714f",
 		true,
 		true,
@@ -102,7 +97,6 @@ var tests = []struct {
 			"payload": {
 				"id": "1234",
 				"org_id": "5318290",
-				"account": "0000001",
 				"recipient": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
 				"correlation_id": "62156f8e-9dfd-4103-a60d-31f6090a3241",
 				"service": "config_manager",
@@ -114,7 +108,6 @@ var tests = []struct {
 			}
 		}`),
 		"5318290",
-		"0000001",
 		"88d2706a-a9da-4aa4-a6fd-9750bcb4714f",
 		false,
 		true,
@@ -128,7 +121,6 @@ var tests = []struct {
 			"payload": {
 				"id": "1234",
 				"org_id": "5318290",
-				"account": "0000001",
 				"recipient": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7",
 				"correlation_id": "62156f8e-9dfd-4103-a60d-31f6090a3241",
 				"service": "config_manager",
@@ -140,7 +132,6 @@ var tests = []struct {
 			}
 		}`),
 		"5318290",
-		"0000001",
 		"88d2706a-a9da-4aa4-a6fd-9750bcb4714f",
 		false,
 		false,
@@ -225,7 +216,6 @@ func TestDispatcherMessageBuilder(t *testing.T) {
 			assert.Nil(t, err)
 
 			assert.Equal(t, invMsg.Metadata.RequestID, tt.requestID)
-			assert.Equal(t, invMsg.Data.Account, tt.account)
 			assert.Equal(t, invMsg.Data.OrgID, tt.orgID)
 			assert.Equal(t, invMsg.Data.ID, value.Payload.Labels["id"])
 			assert.Equal(t, invMsg.Data.SystemProfile.RHCState, tt.stateID)
