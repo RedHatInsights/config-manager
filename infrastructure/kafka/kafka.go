@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"crypto/tls"
+
 	"github.com/rs/zerolog/log"
 
 	kafka "github.com/segmentio/kafka-go"
@@ -67,6 +69,8 @@ func NewProducer(topic string) *kafka.Writer {
 		}
 		sharedTransport := &kafka.Transport{
 			SASL: mechanism,
+			TLS: &tls.Config{
+				MinVersion: tls.VersionTLS12,
 		}
 		producer := &kafka.Writer{
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
