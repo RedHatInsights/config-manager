@@ -92,37 +92,37 @@ objects:
               secretKeyRef:
                 key: key
                 name: psk-playbook-dispatcher
-          - name: KAFKA_HOSTNAME
+          - name: CM_KAFKA_HOSTNAME
             valueFrom:
               secretKeyRef:
                 key: hostname
                 name: clowder-oauth
                 optional: true
-          - name: KAFKA_PORT
+          - name: CM_KAFKA_PORT
             valueFrom:
               secretKeyRef:
                 key: port
                 name: clowder-oauth
                 optional: true
-          - name: KAFKA_USER_NAME
+          - name: CM_KAFKA_USERNAME
             valueFrom:
               secretKeyRef:
                 key: username
                 name: clowder-oauth
                 optional: true
-          - name: KAFKA_PASSWORD
+          - name: CM_KAFKA_PASSWORD
             valueFrom:
               secretKeyRef:
                 key: password
                 name: clowder-oauth
                 optional: true
-          - name: KAFKA_SECURITY_PROTOCOL
+          - name: CM_KAFKA_SECURITY_PROTOCOL
             valueFrom:
               secretKeyRef:
                 key: security_protocol
                 name: client-config
                 optional: true
-          - name: KAFKA_SASL_MECH
+          - name: KAFKA_SASL_MECHANISM
             valueFrom:
               secretKeyRef:
                 key: sasl_mechanism
