@@ -44,8 +44,6 @@ type Config struct {
 	KafkaGroupID            string
 	KafkaInventoryTopic     string
 	KafkaPassword			string
-	KafkaSASLMechanism		string
-	KafkaSecurityProtocol	string
 	KafkaSystemProfileTopic string
 	KafkaUsername			string
 	LogBatchFrequency       time.Duration
@@ -100,8 +98,6 @@ var DefaultConfig Config = Config{
 	KafkaGroupID:            "config-manager",
 	KafkaInventoryTopic:     "platform.inventory.events",
 	KafkaPassword:			 "",
-	KafkaSASLMechanism:		 "",
-	KafkaSecurityProtocol: 	 "",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
 	KafkaUsername: 			 "",
 	LogBatchFrequency:       10 * time.Second,
@@ -142,8 +138,6 @@ func init() {
 			if broker.Authtype != nil {
 				DefaultConfig.KafkaUsername = *broker.Sasl.Username
 				DefaultConfig.KafkaPassword = *broker.Sasl.Password
-				DefaultConfig.KafkaSASLMechanism = *broker.Sasl.SaslMechanism
-				DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
 			}
 		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
