@@ -181,8 +181,6 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaGroupID, "kafka-group-id", DefaultConfig.KafkaGroupID, "kafka group ID")
 	fs.StringVar(&DefaultConfig.KafkaInventoryTopic, "kafka-inventory-topic", DefaultConfig.KafkaInventoryTopic, "host-inventory events topic name")
 	fs.StringVar(&DefaultConfig.KafkaPassword, "kafka-password", DefaultConfig.KafkaPassword, "managed kafka auth password")
-	fs.StringVar(&DefaultConfig.KafkaSASLMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSASLMechanism, "managed kafka auth sasl mechanism")
-	fs.StringVar(&DefaultConfig.KafkaSecurityProtocol, "kafka-security-protocol", DefaultConfig.KafkaSecurityProtocol, "managed kafka auth security protocol")
 	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
 	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
