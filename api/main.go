@@ -1,45 +1,29 @@
 package api
 
 import (
-	"config-manager/api/controllers"
 	"config-manager/api/instrumentation"
 	"config-manager/infrastructure"
 	"config-manager/internal/config"
+	v1 "config-manager/internal/http/v1"
 	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
-
-	echoPrometheus "github.com/globocom/echo-prometheus"
-
-	_ "github.com/lib/pq"
 )
 
-// Start creates a new Echo HTTP server, sets up route handlers, and starts
+// Start creates a new HTTP server, sets up route handlers, and starts
 // listening for HTTP requests. It is the module entrypoint for the REST API,
 // conforming to the startModuleFn type definition in config-manager/cmd.
 func Start(ctx context.Context, errors chan<- error) {
-
 	container := infrastructure.Container{}
 	instrumentation.Start()
 	container.Database()
 
-	spec, err := controllers.GetSwagger()
+	router, err := v1.NewMux()
 	if err != nil {
-		panic(err)
+		errors <- err
 	}
-	server := container.Server()
-	server.Use(echoPrometheus.MetricsMiddleware())
-	server.GET(config.DefaultConfig.URLBasePath()+"/openapi.json", func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, spec)
-	})
-
-	configManager := container.CMController()
-	configManager.Routes(spec)
-	configManager.Server.HideBanner = true
 
 	go func() {
-		errors <- configManager.Server.Start(fmt.Sprintf("0.0.0.0:%d", config.DefaultConfig.WebPort))
+		errors <- http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.WebPort), router)
 	}()
 }

@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"config-manager/api/controllers"
 	"config-manager/application"
 	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
@@ -17,8 +16,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/labstack/echo/v4"
-
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
@@ -27,14 +24,9 @@ import (
 // provides a collection of accessor methods to retrieve handles to each
 // application component.
 type Container struct {
-	server *echo.Echo
-
 	// Config Manager Services
 	cmService         *application.ConfigManagerService
 	playbookGenerator *application.Generator
-
-	// API Controllers
-	cmController *controllers.ConfigManagerController
 
 	// Repositories
 	dispatcherRepo     dispatcher.DispatcherClient
@@ -64,15 +56,6 @@ func (c *Container) Database() {
 	})
 }
 
-// Server lazily initializes a new Echo HTTP server and returns it.
-func (c *Container) Server() *echo.Echo {
-	if c.server == nil {
-		c.server = echo.New()
-	}
-
-	return c.server
-}
-
 // CMService lazily initializes a new application.ConfigManagerService and
 // returns it.
 func (c *Container) CMService() *application.ConfigManagerService {
@@ -99,20 +82,6 @@ func (c *Container) PlaybookGenerator() *application.Generator {
 	}
 
 	return c.playbookGenerator
-}
-
-// CMController lazily initializes a new controllers.ConfigManagerController and
-// returns it.
-func (c *Container) CMController() *controllers.ConfigManagerController {
-	if c.cmController == nil {
-		c.cmController = &controllers.ConfigManagerController{
-			ConfigManagerService: c.CMService(),
-			Server:               c.Server(),
-			URLBasePath:          config.DefaultConfig.URLBasePath(),
-		}
-	}
-
-	return c.cmController
 }
 
 // DispatcherRepo lazily initializes a new dispatcher.DispatcherClient and
