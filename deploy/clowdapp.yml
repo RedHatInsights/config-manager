@@ -92,6 +92,18 @@ objects:
               secretKeyRef:
                 key: key
                 name: psk-playbook-dispatcher
+          - name: CM_KAFKA_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: username
+                name: clowder-oauth
+                optional: true
+          - name: CM_KAFKA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: clowder-oauth
+                optional: true
           - name: CM_DISPATCHER_HOST
             value: ${CM_DISPATCHER_HOST}
           - name: CM_DISPATCHER_IMPL

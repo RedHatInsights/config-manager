@@ -3,11 +3,14 @@ package kafka
 import (
 	"config-manager/internal/config"
 	"context"
+	"crypto/tls"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,24 +29,65 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	consumer := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:     config.DefaultConfig.KafkaBrokers.Values,
-		Topic:       topic,
-		GroupID:     config.DefaultConfig.KafkaGroupID,
-		StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-	})
+	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
+		mechanism := plain.Mechanism{
+			Username: config.DefaultConfig.KafkaUsername,
+			Password: config.DefaultConfig.KafkaPassword,
+		}
+		dialer := &kafka.Dialer{
+			Timeout:       10 * time.Second,
+			DualStack:     true,
+			SASLMechanism: mechanism,
+		}
+		consumer := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Topic:       topic,
+			GroupID:     config.DefaultConfig.KafkaGroupID,
+			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+			Dialer:      dialer,
+		})
 
-	return consumer
+		return consumer
+	} else {
+		consumer := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+			Topic:       topic,
+			GroupID:     config.DefaultConfig.KafkaGroupID,
+			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+		})
+
+		return consumer
+	}
 }
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	producer := &kafka.Writer{
-		Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-		Topic: topic,
-	}
+	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
+		mechanism := plain.Mechanism{
+			Username: config.DefaultConfig.KafkaUsername,
+			Password: config.DefaultConfig.KafkaPassword,
+		}
+		sharedTransport := &kafka.Transport{
+			SASL: mechanism,
+			TLS: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		}
+		producer := &kafka.Writer{
+			Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic:     topic,
+			Transport: sharedTransport,
+		}
 
-	return producer
+		return producer
+	} else {
+		producer := &kafka.Writer{
+			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic: topic,
+		}
+
+		return producer
+	}
 }
 
 // NewConsumerEventLoop returns a function handler (start) that can be called to

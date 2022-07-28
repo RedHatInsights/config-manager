@@ -43,7 +43,9 @@ type Config struct {
 	KafkaDispatcherTopic    string
 	KafkaGroupID            string
 	KafkaInventoryTopic     string
+	KafkaPassword           string
 	KafkaSystemProfileTopic string
+	KafkaUsername           string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -95,7 +97,9 @@ var DefaultConfig Config = Config{
 	KafkaDispatcherTopic:    "platform.playbook-dispatcher.runs",
 	KafkaGroupID:            "config-manager",
 	KafkaInventoryTopic:     "platform.inventory.events",
+	KafkaPassword:           "",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
+	KafkaUsername:           "",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -129,6 +133,13 @@ func init() {
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
+		if clowder.LoadedConfig.Kafka.Brokers != nil {
+			broker := clowder.LoadedConfig.Kafka.Brokers[0]
+			if broker.Authtype != nil {
+				DefaultConfig.KafkaUsername = *broker.Sasl.Username
+				DefaultConfig.KafkaPassword = *broker.Sasl.Password
+			}
+		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
@@ -169,7 +180,9 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaDispatcherTopic, "kafka-dispatcher-topic", DefaultConfig.KafkaDispatcherTopic, "playbook-dispatcher runs topic name")
 	fs.StringVar(&DefaultConfig.KafkaGroupID, "kafka-group-id", DefaultConfig.KafkaGroupID, "kafka group ID")
 	fs.StringVar(&DefaultConfig.KafkaInventoryTopic, "kafka-inventory-topic", DefaultConfig.KafkaInventoryTopic, "host-inventory events topic name")
+	fs.StringVar(&DefaultConfig.KafkaPassword, "kafka-password", DefaultConfig.KafkaPassword, "managed kafka auth password")
 	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
+	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
