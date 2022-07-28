@@ -3,9 +3,9 @@ package kafka
 import (
 	"config-manager/internal/config"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
-	"crypto/tls"
 
 	"github.com/rs/zerolog/log"
 
@@ -29,7 +29,7 @@ func (w *MockWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) e
 
 // NewConsumer creates a configured kafka.Reader.
 func NewConsumer(topic string) *kafka.Reader {
-	if (config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "") {
+	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaUsername,
 			Password: config.DefaultConfig.KafkaPassword,
@@ -44,7 +44,7 @@ func NewConsumer(topic string) *kafka.Reader {
 			Topic:       topic,
 			GroupID:     config.DefaultConfig.KafkaGroupID,
 			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-			Dialer: dialer,
+			Dialer:      dialer,
 		})
 
 		return consumer
@@ -62,7 +62,7 @@ func NewConsumer(topic string) *kafka.Reader {
 
 // NewProducer creates a configured kafka.Writer.
 func NewProducer(topic string) *kafka.Writer {
-	if (config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "") {
+	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
 		mechanism := plain.Mechanism{
 			Username: config.DefaultConfig.KafkaUsername,
 			Password: config.DefaultConfig.KafkaPassword,
@@ -74,8 +74,8 @@ func NewProducer(topic string) *kafka.Writer {
 			},
 		}
 		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-			Topic: topic,
+			Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+			Topic:     topic,
 			Transport: sharedTransport,
 		}
 
@@ -85,7 +85,7 @@ func NewProducer(topic string) *kafka.Writer {
 			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
 			Topic: topic,
 		}
-		
+
 		return producer
 	}
 }

@@ -43,9 +43,9 @@ type Config struct {
 	KafkaDispatcherTopic    string
 	KafkaGroupID            string
 	KafkaInventoryTopic     string
-	KafkaPassword			string
+	KafkaPassword           string
 	KafkaSystemProfileTopic string
-	KafkaUsername			string
+	KafkaUsername           string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -97,9 +97,9 @@ var DefaultConfig Config = Config{
 	KafkaDispatcherTopic:    "platform.playbook-dispatcher.runs",
 	KafkaGroupID:            "config-manager",
 	KafkaInventoryTopic:     "platform.inventory.events",
-	KafkaPassword:			 "",
+	KafkaPassword:           "",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
-	KafkaUsername: 			 "",
+	KafkaUsername:           "",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
