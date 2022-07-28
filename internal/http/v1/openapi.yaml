@@ -1,11 +1,11 @@
-openapi: 3.0.1
+openapi: 3.1.1
 info:
   title: Config manager
   description: Config manager service
   version: 0.0.1
 
 servers:
-  - url: 'https://cloud.redhat.com/api/config-manager/v1'
+  - url: "https://cloud.redhat.com/api/config-manager/v1"
     description: production
   - url: /api/config-manager/v1
     description: relative path
@@ -16,23 +16,23 @@ paths:
       summary: Get archive of state changes for requesting account
       operationId: getStates
       parameters:
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
-      - $ref: '#/components/parameters/SortBy'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/SortBy"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StateArchives'
-        '400':
+                $ref: "#/components/schemas/StateArchives"
+        "400":
           description: Bad Request
           content: {}
-        '401':
+        "401":
           description: Authentication missing from request
           content: {}
-        '500':
+        "500":
           description: Internal Server Error
           content: {}
     post:
@@ -43,19 +43,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/State'
+              $ref: "#/components/schemas/State"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountState'
-        '400':
+                $ref: "#/components/schemas/AccountState"
+        "400":
           description: Bad Request
           content: {}
-        '500':
+        "500":
           description: Internal Server Error
           content: {}
 
@@ -64,19 +64,19 @@ paths:
       summary: Get the current state for requesting account
       operationId: getCurrentState
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccountState'
-        '400':
+                $ref: "#/components/schemas/AccountState"
+        "400":
           description: Bad Request
           content: {}
-        '401':
+        "401":
           description: Authentication missing from request
           content: {}
-        '500':
+        "500":
           description: Internal Server Error
           content: {}
 
@@ -89,16 +89,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/State'
+              $ref: "#/components/schemas/State"
         required: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             text/vnd.yaml:
               schema:
                 type: string
-        '400':
+        "400":
           description: Bad Request
           content: {}
 
@@ -107,15 +107,15 @@ paths:
       summary: Get single state change for requesting account
       operationId: getStateById
       parameters:
-      - $ref: '#/components/parameters/StateIDParam'
+        - $ref: "#/components/parameters/StateIDParam"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StateArchive'
-        '400':
+                $ref: "#/components/schemas/StateArchive"
+        "400":
           description: Bad Request
           content: {}
 
@@ -124,15 +124,15 @@ paths:
       summary: Get ansible playbook for current state configuration
       operationId: getPlaybookById
       parameters:
-      - $ref: '#/components/parameters/StateIDParam'
+        - $ref: "#/components/parameters/StateIDParam"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             text/vnd.yaml:
               schema:
                 type: string
-        '400':
+        "400":
           description: Bad Request
           content: {}
 
@@ -155,7 +155,6 @@ paths:
         "400":
           description: Bad Request
 
-
 components:
   schemas:
     Account:
@@ -165,7 +164,7 @@ components:
 
     OrgID:
       type: string
-    
+
     State:
       type: object
       properties:
@@ -183,56 +182,56 @@ components:
         - compliance_openscap
         - remediations
       additionalProperties: false
-        
+
     StateID:
       type: string
       format: uuid
-      
+
     Label:
       type: string
-      
+
     Initiator:
       type: string
-      
+
     Timestamp:
       type: string
       format: date-time
-    
+
     ApplyState:
       type: boolean
-        
+
     AccountState:
       type: object
       properties:
         account:
-          $ref: '#/components/schemas/Account'
+          $ref: "#/components/schemas/Account"
         state:
-          $ref: '#/components/schemas/State'
+          $ref: "#/components/schemas/State"
         id:
-          $ref: '#/components/schemas/StateID'
+          $ref: "#/components/schemas/StateID"
         label:
-          $ref: '#/components/schemas/Label'
+          $ref: "#/components/schemas/Label"
         apply_state:
-          $ref: '#/components/schemas/ApplyState'
+          $ref: "#/components/schemas/ApplyState"
         org_id:
-          $ref: '#/components/schemas/OrgID'
-    
+          $ref: "#/components/schemas/OrgID"
+
     StateArchive:
       type: object
       properties:
         account:
-          $ref: '#/components/schemas/Account'
+          $ref: "#/components/schemas/Account"
         id:
-          $ref: '#/components/schemas/StateID'
+          $ref: "#/components/schemas/StateID"
         label:
-          $ref: '#/components/schemas/Label'
+          $ref: "#/components/schemas/Label"
         initiator:
-          $ref: '#/components/schemas/Initiator'
+          $ref: "#/components/schemas/Initiator"
         created_at:
-          $ref: '#/components/schemas/Timestamp'
+          $ref: "#/components/schemas/Timestamp"
         state:
-          $ref: '#/components/schemas/State'
-        
+          $ref: "#/components/schemas/State"
+
     StateArchives:
       type: object
       properties:
@@ -252,8 +251,8 @@ components:
           description: Query results
           type: array
           items:
-            $ref: '#/components/schemas/StateArchive'
-  
+            $ref: "#/components/schemas/StateArchive"
+
   parameters:
     StateIDParam:
       in: path
@@ -261,14 +260,14 @@ components:
       description: state archive identifier
       required: true
       schema:
-        $ref: '#/components/schemas/StateID'
+        $ref: "#/components/schemas/StateID"
 
     Filter:
       in: query
       name: filter
       required: false
       schema:
-        $ref: '#/components/schemas/Label'
+        $ref: "#/components/schemas/Label"
 
     SortBy:
       in: query

@@ -10,13 +10,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 	"github.com/rs/zerolog"
@@ -81,10 +81,6 @@ func main() {
 
 					log.Logger = log.Output(zerolog.MultiLevelWriter(writers...))
 
-					metricsServer := echo.New()
-					metricsServer.HideBanner = true
-					metricsServer.GET(config.DefaultConfig.MetricsPath, echo.WrapHandler(promhttp.Handler()))
-
 					for _, module := range config.DefaultConfig.Modules.Values() {
 						log.Info().Str("module", module).Msg("starting")
 
@@ -109,7 +105,9 @@ func main() {
 
 					log.Info().Int("port", config.DefaultConfig.MetricsPort).Str("service", "metrics").Msg("starting http server")
 					go func() {
-						errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", config.DefaultConfig.MetricsPort))
+						mux := http.NewServeMux()
+						mux.Handle(config.DefaultConfig.MetricsPath, promhttp.Handler())
+						errors <- http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.MetricsPort), mux)
 					}()
 
 					log.Debug().Msg("Config Manager started")

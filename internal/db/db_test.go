@@ -2,7 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -17,11 +19,23 @@ import (
 
 const (
 	UNIXTime string = "1970-01-01T00:00:00Z"
-	DSN      string = "host=localhost port=9876 user=postgres password=postgres dbname=postgres sslmode=disable"
+)
+
+var (
+	DSN  string
+	port uint32
 )
 
 func TestMain(m *testing.M) {
-	postgres := embeddedpostgres.NewDatabase(embeddedpostgres.DefaultConfig().Port(9876))
+	rand.Seed(time.Now().UnixNano())
+	port = uint32(rand.Int31n(10000-9876) + 9876)
+	DSN = fmt.Sprintf("host=localhost port=%v user=postgres password=postgres dbname=postgres sslmode=disable", port)
+
+	runtimedir, err := os.MkdirTemp("", "config-manager-internal-db.")
+	if err != nil {
+		log.Fatalf("cannot make temp dir: %v", err)
+	}
+	postgres := embeddedpostgres.NewDatabase(embeddedpostgres.DefaultConfig().Port(port).RuntimePath(runtimedir))
 
 	if err := postgres.Start(); err != nil {
 		log.Fatalf("failed to start database: %v", err)
@@ -31,6 +45,10 @@ func TestMain(m *testing.M) {
 
 	if err := postgres.Stop(); err != nil {
 		log.Fatalf("failed to stop database: %v", err)
+	}
+
+	if err := os.RemoveAll(runtimedir); err != nil {
+		log.Fatalf("cannot remove temp dir: %v", err)
 	}
 
 	os.Exit(code)
