@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/rs/zerolog/log"
 )
 
@@ -66,7 +67,8 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (do
 		log.Error().Err(err).Msg("error constructing request to inventory")
 		return results, err
 	}
-	req.Header.Add("X-Rh-Identity", ctx.Value(IdentityKey).(string)) //TODO: Re-evaluate header forwarding
+
+	req.Header.Add("X-Rh-Identity", identity.GetIdentityHeader(ctx))
 
 	res, err := c.Client.Do(req)
 	if err != nil {
