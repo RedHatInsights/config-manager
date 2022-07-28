@@ -156,7 +156,7 @@ func (c *Container) InventoryRepo() domain.InventoryClient {
 		}
 
 		c.inventoryRepo = &persistence.InventoryClient{
-			InventoryHost: config.DefaultConfig.InventoryHost.String(),
+			InventoryHost: config.DefaultConfig.InventoryHost.Value.String(),
 			InventoryImpl: config.DefaultConfig.InventoryImpl.Value,
 			Client:        client,
 		}
