@@ -64,3 +64,7 @@ func Migrate(migrationsPath string, reset bool) error {
 func Seed(path string) error {
 	return stddb.seed(path)
 }
+
+func SeedData(data []byte) error {
+	return stddb.seedData(data)
+}
