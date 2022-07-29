@@ -87,41 +87,41 @@ func InsertProfile(profile Profile) error {
 	return nil
 }
 
-// GetCurrentProfile retrieves the current profile for the given account ID from
+// GetCurrentProfile retrieves the current profile for the given org ID from
 // the database.
-func GetCurrentProfile(accountID string) (*Profile, error) {
-	query := fmt.Sprintf("SELECT %v FROM profiles WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1;", fields)
+func GetCurrentProfile(orgID string) (*Profile, error) {
+	query := fmt.Sprintf("SELECT %v FROM profiles WHERE org_id = $1 ORDER BY created_at DESC LIMIT 1;", fields)
 	stmt, err := preparedStatement(query)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare SELECT: %w", err)
 	}
 
 	var profile Profile
-	if err := stmt.Get(&profile, accountID); err != nil {
+	if err := stmt.Get(&profile, orgID); err != nil {
 		return nil, fmt.Errorf("cannot execute SELECT: %w", err)
 	}
 
 	return &profile, nil
 }
 
-// GetOrInsertCurrentProfile attempts to retrieve a profile for the account ID.
-// If no row is returned, a new one is created and inserted using newProfile as
-// a template. A new row is then queried from the database and returned.
-func GetOrInsertCurrentProfile(accountID string, newProfile *Profile) (*Profile, error) {
-	query := fmt.Sprintf("SELECT %v FROM profiles WHERE account_id = $1 ORDER BY created_at DESC LIMIT 1;", fields)
+// GetOrInsertCurrentProfile attempts to retrieve a profile for the given org
+// ID. If no row is returned, a new one is created and inserted using newProfile
+// as a template. A new row is then queried from the database and returned.
+func GetOrInsertCurrentProfile(orgID string, newProfile *Profile) (*Profile, error) {
+	query := fmt.Sprintf("SELECT %v FROM profiles WHERE org_id = $1 ORDER BY created_at DESC LIMIT 1;", fields)
 	stmt, err := preparedStatement(query)
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare SELECT: %w", err)
 	}
 
 	var profile Profile
-	err = stmt.Get(&profile, accountID)
+	err = stmt.Get(&profile, orgID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			if err := InsertProfile(*newProfile); err != nil {
 				return nil, fmt.Errorf("cannot perform INSERT: %w", err)
 			}
-			if err := stmt.Get(&profile, accountID); err != nil {
+			if err := stmt.Get(&profile, orgID); err != nil {
 				return nil, fmt.Errorf("cannot perform SELECT: %w", err)
 			}
 		} else {
@@ -148,15 +148,14 @@ func GetProfile(profileID string) (*Profile, error) {
 	return &profile, nil
 }
 
-// GetProfiles retrieves all profiles for the given account ID from the
-// database.
-func GetProfiles(accountID string, orderBy string, limit int, offset int) ([]Profile, error) {
+// GetProfiles retrieves all profiles for the given org ID from the database.
+func GetProfiles(orgID string, orderBy string, limit int, offset int) ([]Profile, error) {
 	orderColumn, orderDirection, err := parseOrderBy(orderBy)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("SELECT %v FROM profiles WHERE account_id = $1", fields)
+	query := fmt.Sprintf("SELECT %v FROM profiles WHERE org_id = $1", fields)
 
 	if orderColumn != "" {
 		query += " ORDER BY " + orderColumn
@@ -182,17 +181,17 @@ func GetProfiles(accountID string, orderBy string, limit int, offset int) ([]Pro
 	}
 
 	profiles := []Profile{}
-	if err := stmt.Select(&profiles, accountID); err != nil {
+	if err := stmt.Select(&profiles, orgID); err != nil {
 		return nil, fmt.Errorf("cannot execute SELECT: %w", err)
 	}
 
 	return profiles, nil
 }
 
-// CountProfiles returns a count of all rows with an account_id column equal to
-// accountID.
-func CountProfiles(accountID string) (int, error) {
-	query := "SELECT COUNT(*) FROM profiles WHERE account_id = $1;"
+// CountProfiles returns a count of all profiles for the given org ID from the
+// database.
+func CountProfiles(orgID string) (int, error) {
+	query := "SELECT COUNT(*) FROM profiles WHERE org_id = $1;"
 
 	stmt, err := preparedStatement(query)
 	if err != nil {
@@ -200,7 +199,7 @@ func CountProfiles(accountID string) (int, error) {
 	}
 
 	var count int
-	if err := stmt.Get(&count, accountID); err != nil {
+	if err := stmt.Get(&count, orgID); err != nil {
 		return -1, fmt.Errorf("cannot execute SELECT: %w", err)
 	}
 

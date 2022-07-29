@@ -61,8 +61,19 @@ func TestInsertProfile(t *testing.T) {
 		want        error
 	}{
 		{
-			input: *NewProfile("1", "1", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
-			want:  nil,
+			description: "profile with account ID and org ID",
+			input:       *NewProfile("1", "1", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
+			want:        nil,
+		},
+		{
+			description: "profile without account ID",
+			input:       *NewProfile("", "1", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
+			want:        nil,
+		},
+		{
+			description: "profile without org ID",
+			input:       *NewProfile("1", "", map[string]string{"insights": "enabled", "remediations": "enabled", "compliance_openscap": "enabled"}),
+			want:        nil,
 		},
 	}
 
@@ -96,11 +107,12 @@ func TestGetCurrentProfile(t *testing.T) {
 		want        *Profile
 	}{
 		{
-			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, created_at) VALUES ('84d3724c-1944-41d1-a12a-235eddca7771', '1', '` + UNIXTime + `');`),
-			input: "1",
+			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('84d3724c-1944-41d1-a12a-235eddca7771', '1', '2', '` + UNIXTime + `');`),
+			input: "2",
 			want: &Profile{
 				ID:        uuid.MustParse("84d3724c-1944-41d1-a12a-235eddca7771"),
 				AccountID: sql.NullString{Valid: true, String: "1"},
+				OrgID:     sql.NullString{Valid: true, String: "2"},
 				CreatedAt: time.Unix(0, 0),
 			},
 		},
@@ -131,7 +143,7 @@ func TestGetCurrentProfile(t *testing.T) {
 			}
 
 			if !cmp.Equal(got, test.want) {
-				t.Errorf("---got\n+++want\n%v", cmp.Diff(got, test.want))
+				t.Errorf("%v", cmp.Diff(got, test.want))
 			}
 		})
 	}
@@ -145,11 +157,12 @@ func TestGetProfile(t *testing.T) {
 		want        *Profile
 	}{
 		{
-			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, created_at) VALUES ('84d3724c-1944-41d1-a12a-235eddca7771', '1', '` + UNIXTime + `');`),
+			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('84d3724c-1944-41d1-a12a-235eddca7771', '1', '2', '` + UNIXTime + `');`),
 			input: "84d3724c-1944-41d1-a12a-235eddca7771",
 			want: &Profile{
 				ID:        uuid.MustParse("84d3724c-1944-41d1-a12a-235eddca7771"),
 				AccountID: sql.NullString{Valid: true, String: "1"},
+				OrgID:     sql.NullString{Valid: true, String: "2"},
 				CreatedAt: time.Unix(0, 0),
 			},
 		},
@@ -180,7 +193,7 @@ func TestGetProfile(t *testing.T) {
 			}
 
 			if !cmp.Equal(got, test.want) {
-				t.Errorf("---got\n+++want\n%v", cmp.Diff(got, test.want))
+				t.Errorf("%v", cmp.Diff(got, test.want))
 			}
 		})
 	}
@@ -191,30 +204,31 @@ func TestGetProfiles(t *testing.T) {
 		description string
 		seed        []byte
 		input       struct {
-			accountID string
-			orderBy   string
-			limit     int
-			offset    int
+			orgID   string
+			orderBy string
+			limit   int
+			offset  int
 		}
 		want []Profile
 	}{
 		{
-			seed: []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
+			seed: []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '2', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '2', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
 			input: struct {
-				accountID string
-				orderBy   string
-				limit     int
-				offset    int
+				orgID   string
+				orderBy string
+				limit   int
+				offset  int
 			}{
-				accountID: "1",
-				orderBy:   "",
-				limit:     -1,
-				offset:    -1,
+				orgID:   "2",
+				orderBy: "",
+				limit:   -1,
+				offset:  -1,
 			},
 			want: []Profile{
 				{
 					ID:           uuid.MustParse("b5db9cbc-4ecd-464b-b416-3a6cd67af87a"),
 					AccountID:    sql.NullString{Valid: true, String: "1"},
+					OrgID:        sql.NullString{Valid: true, String: "2"},
 					CreatedAt:    time.Unix(0, 0),
 					Insights:     false,
 					Remediations: false,
@@ -223,6 +237,7 @@ func TestGetProfiles(t *testing.T) {
 				{
 					ID:           uuid.MustParse("3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf"),
 					AccountID:    sql.NullString{Valid: true, String: "1"},
+					OrgID:        sql.NullString{Valid: true, String: "2"},
 					CreatedAt:    time.Unix(0, 0),
 					Insights:     true,
 					Remediations: true,
@@ -251,13 +266,13 @@ func TestGetProfiles(t *testing.T) {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
-			got, err := GetProfiles(test.input.accountID, test.input.orderBy, test.input.limit, test.input.offset)
+			got, err := GetProfiles(test.input.orgID, test.input.orderBy, test.input.limit, test.input.offset)
 			if err != nil {
 				t.Fatalf("failed to get profile: %v", err)
 			}
 
 			if !cmp.Equal(got, test.want) {
-				t.Errorf("---got\n+++want\n%v", cmp.Diff(got, test.want))
+				t.Errorf("%v", cmp.Diff(got, test.want))
 			}
 		})
 	}
@@ -271,8 +286,8 @@ func TestCountProfiles(t *testing.T) {
 		want        int
 	}{
 		{
-			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
-			input: "1",
+			seed:  []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '2', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '2', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
+			input: "2",
 			want:  2,
 		},
 	}
@@ -302,7 +317,7 @@ func TestCountProfiles(t *testing.T) {
 			}
 
 			if !cmp.Equal(got, test.want) {
-				t.Errorf("---got\n+++want\n%v", cmp.Diff(got, test.want))
+				t.Errorf("%v", cmp.Diff(got, test.want))
 			}
 		})
 	}
