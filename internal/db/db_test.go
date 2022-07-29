@@ -121,7 +121,7 @@ func TestGetCurrentProfile(t *testing.T) {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := stddb.seedData(test.seed); err != nil {
+			if err := SeedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
@@ -170,7 +170,7 @@ func TestGetProfile(t *testing.T) {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := stddb.seedData(test.seed); err != nil {
+			if err := SeedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
@@ -247,7 +247,7 @@ func TestGetProfiles(t *testing.T) {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := stddb.seedData(test.seed); err != nil {
+			if err := SeedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
@@ -292,7 +292,7 @@ func TestCountProfiles(t *testing.T) {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
-			if err := stddb.seedData(test.seed); err != nil {
+			if err := SeedData(test.seed); err != nil {
 				t.Fatalf("failed to seed database: %v", err)
 			}
 
