@@ -231,6 +231,8 @@ components:
           $ref: "#/components/schemas/Timestamp"
         state:
           $ref: "#/components/schemas/State"
+        org_id:
+          $ref: "#/components/schemas/OrgID"
 
     StateArchives:
       type: object

@@ -38,6 +38,7 @@ type stateArchive struct {
 	Initiator string            `json:"initiator"`
 	CreatedAt time.Time         `json:"created_at"`
 	State     map[string]string `json:"state"`
+	OrgID     string            `json:"org_id"`
 }
 
 // postStates records a new state into the account states table and dispatches
@@ -69,7 +70,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentProfile, err := db.GetCurrentProfile(id.Identity.AccountNumber)
+	currentProfile, err := db.GetCurrentProfile(id.Identity.OrgID)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get current profile for account: %v", err), logger)
@@ -188,7 +189,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	total, err := db.CountProfiles(id.Identity.AccountNumber)
+	total, err := db.CountProfiles(id.Identity.OrgID)
 	if err != nil {
 		instrumentation.GetStateChangesError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to count profiles: %v", err), logger)
@@ -196,7 +197,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Debug().Int("total", total).Msg("found profiles for account")
 
-	profiles, err := db.GetProfiles(id.Identity.AccountNumber, sortBy, limit, offset)
+	profiles, err := db.GetProfiles(id.Identity.OrgID, sortBy, limit, offset)
 	if err != nil {
 		instrumentation.GetStateChangesError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profiles: %v", err), logger)
@@ -213,6 +214,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 			Initiator: profile.Creator.String,
 			CreatedAt: profile.CreatedAt.UTC(),
 			State:     make(map[string]string),
+			OrgID:     profile.OrgID.String,
 		}
 		s.State = profile.StateConfig()
 
@@ -258,7 +260,7 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := db.GetOrInsertCurrentProfile(id.Identity.AccountNumber, db.NewProfile(id.Identity.OrgID, id.Identity.AccountNumber, defaultState))
+	profile, err := db.GetOrInsertCurrentProfile(id.Identity.OrgID, db.NewProfile(id.Identity.OrgID, id.Identity.AccountNumber, defaultState))
 	if err != nil {
 		instrumentation.GetAccountStateError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profile: %v", err), logger)
@@ -309,6 +311,7 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 		Initiator: profile.Creator.String,
 		CreatedAt: profile.CreatedAt.UTC(),
 		State:     profile.StateConfig(),
+		OrgID:     profile.OrgID.String,
 	}
 	renderJSON(w, r, http.StatusOK, resp, logger)
 }
@@ -338,7 +341,7 @@ func PostManage(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info().Bool("apply_state", enabled).Msg("setting apply_state for account")
 
-	currentProfile, err := db.GetCurrentProfile(id.Identity.AccountNumber)
+	currentProfile, err := db.GetCurrentProfile(id.Identity.OrgID)
 	if err != nil {
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get current profile: %v", err), logger)
 		return

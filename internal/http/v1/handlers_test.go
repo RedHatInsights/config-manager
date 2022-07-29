@@ -82,17 +82,17 @@ func TestGetStates(t *testing.T) {
 		want        response
 	}{
 		{
-			seed: []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
+			seed: []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '10064', '78606', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '10064', '78606', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
 			input: request{
 				method: http.MethodGet,
 				url:    "/states",
 				headers: map[string]string{
-					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"1","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
+					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"10064","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
 				},
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"account":"1","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"}},{"account":"1","id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"}}]}`),
+				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"},{"account":"10064","id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"},"org_id":"78606"}]}`),
 			},
 		},
 	}
@@ -150,19 +150,19 @@ func TestPostStates(t *testing.T) {
 		want        response
 	}{
 		{
-			seed: []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
+			seed: []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '10064', '78606', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '10064', '78606', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
 			input: request{
 				method: http.MethodPost,
 				url:    "/states",
 				body:   []byte(`{"insights":"enabled","remediations":"enabled","compliance_openscap":"enabled"}`),
 				headers: map[string]string{
-					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"1","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
+					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"10064","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
 				},
 			},
 			want: response{
 				code: http.StatusOK,
 				body: map[string]interface{}{
-					"account":     "1",
+					"account":     "10064",
 					"apply_state": false,
 					"id":          "b5db9cbc-4ecd-464b-b416-3a6cd67af87a",
 					"label":       "",
@@ -198,7 +198,7 @@ func TestPostStates(t *testing.T) {
 
 			config.DefaultConfig.InventoryHost.Value = url.MustParse("http://localhost:8000")
 			staticInventoryMux := staticmux.StaticMux{}
-			staticInventoryMux.AddResponse("/api/inventory/v1/hosts", 200, []byte(`{"count":1,"limit":0","offset":0","total":1,"page":1,"per_page":50","results":[{"id":"6a46563f-6c26-449a-89c4-de902d8c5ceb","account":"1","org_id":"78606","display_name":"test","reporter":"test","system_profile":{"rhc_client_id":"7eb87461-a49b-4ce6-8042-2494200f6bf6","rhc_config_state":"connected"}}]}`))
+			staticInventoryMux.AddResponse("/api/inventory/v1/hosts", 200, []byte(`{"count":1,"limit":0","offset":0","total":1,"page":1,"per_page":50","results":[{"id":"6a46563f-6c26-449a-89c4-de902d8c5ceb","account":"10064","org_id":"78606","display_name":"test","reporter":"test","system_profile":{"rhc_client_id":"7eb87461-a49b-4ce6-8042-2494200f6bf6","rhc_config_state":"connected"}}]}`))
 			go func() {
 				if err := http.ListenAndServe(config.DefaultConfig.InventoryHost.Value.Host, &staticInventoryMux); err != nil {
 					log.Print(err)
@@ -251,7 +251,7 @@ func TestGetCurrentState(t *testing.T) {
 				method: http.MethodGet,
 				url:    "/states/current",
 				headers: map[string]string{
-					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"1","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
+					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"10064","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
 				},
 			},
 			want: response{
@@ -309,17 +309,17 @@ func TestGetStateByID(t *testing.T) {
 		want        response
 	}{
 		{
-			seed: []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '1', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
+			seed: []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '10064', '78606', '` + UNIXTime + `', FALSE, FALSE, FALSE), ('3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf', '10064', '78606', '` + UNIXTime + `', TRUE, TRUE, TRUE);`),
 			input: request{
 				method: http.MethodGet,
 				url:    "/states/b5db9cbc-4ecd-464b-b416-3a6cd67af87a",
 				headers: map[string]string{
-					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"1","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
+					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"10064","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
 				},
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"account":"1","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"}}`),
+				body: []byte(`{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"}`),
 			},
 		},
 	}
@@ -372,12 +372,12 @@ func TestPostManage(t *testing.T) {
 		want        response
 	}{
 		{
-			seed: []byte(`INSERT INTO profiles (profile_id, account_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '1', '` + UNIXTime + `', FALSE, FALSE, FALSE);`),
+			seed: []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '10064', '78606', '` + UNIXTime + `', FALSE, FALSE, FALSE);`),
 			input: request{
 				method: http.MethodPost,
 				url:    "/manage",
 				headers: map[string]string{
-					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"1","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
+					"X-Rh-Identity": base64.StdEncoding.EncodeToString([]byte(`{"identity":{"account_number":"10064","auth_type":"basic","employee_account_number":"10064","internal":{"org_id":"78606"},"org_id":"78606","type":"User","user":{"email":"collett@elfreda.name","first_name":"Maricela","is_active":true,"is_internal":false,"is_org_admin":true,"last_name":"Purdy","locale":"pa","user_id":"algae","username":"torque"}}}`)),
 				},
 				body: []byte{'t', 'r', 'u', 'e'},
 			},
