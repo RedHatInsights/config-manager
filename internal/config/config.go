@@ -58,6 +58,7 @@ type Config struct {
 	PlaybookHost            flagvar.URL
 	PlaybookPath            string
 	ServiceConfig           string
+	TenantTranslatorHost    string
 	URLPathPrefix           string
 	WebPort                 int
 }
@@ -111,15 +112,16 @@ var DefaultConfig Config = Config{
 		}
 		return hostname
 	}(),
-	MetricsPath:   "/metrics",
-	MetricsPort:   9000,
-	Modules:       flagvar.EnumSetCSV{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
-	PlaybookFiles: "./playbooks/",
-	PlaybookHost:  flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
-	PlaybookPath:  "/api/config-manager/v1/states/%v/playbook",
-	ServiceConfig: `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
-	URLPathPrefix: "api",
-	WebPort:       8081,
+	MetricsPath:          "/metrics",
+	MetricsPort:          9000,
+	Modules:              flagvar.EnumSetCSV{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
+	PlaybookFiles:        "./playbooks/",
+	PlaybookHost:         flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
+	PlaybookPath:         "/api/config-manager/v1/states/%v/playbook",
+	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
+	TenantTranslatorHost: "",
+	URLPathPrefix:        "api",
+	WebPort:              8081,
 }
 
 func init() {
@@ -194,9 +196,10 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.PlaybookFiles, "playbook-files", DefaultConfig.PlaybookFiles, "path to playbook directory")
 	fs.Var(&DefaultConfig.PlaybookHost, "playbook-host", fmt.Sprintf("default host from which to download playbooks (%v)", DefaultConfig.PlaybookHost.Help()))
 	fs.StringVar(&DefaultConfig.PlaybookPath, "playbook-path", DefaultConfig.PlaybookPath, "path component for playbook downloads")
+	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
+	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")
 	fs.IntVar(&DefaultConfig.WebPort, "web-port", DefaultConfig.WebPort, "port on which HTTP API server listens")
 	fs.StringVar(&DefaultConfig.URLPathPrefix, "url-path-prefix", DefaultConfig.URLPathPrefix, "generic prefix used in the URL path")
-	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
 
 	return fs
 }
