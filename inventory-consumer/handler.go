@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/google/uuid"
@@ -65,6 +66,27 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			if err != nil {
 				logger.Error().Err(err).Msgf("Error retrieving state for account: %v", value.Host.Account)
 				return
+			}
+
+			if !profile.OrgID.Valid {
+				logger.Debug().Msg("profile missing org ID")
+				if config.DefaultConfig.TenantTranslatorHost != "" {
+					translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
+					orgID, err := translator.EANToOrgID(ctx, profile.AccountID.String)
+					if err != nil {
+						logger.Error().Err(err).Msg("unable to translate EAN to orgID")
+						return
+					}
+					logger.Debug().Str("org_id", orgID).Str("account_number", profile.AccountID.String).Msg("translated EAN to orgID")
+					profile.OrgID.Valid = orgID != ""
+					profile.OrgID.String = orgID
+
+					if err := db.InsertProfile(*profile); err != nil {
+						log.Error().Err(err).Msg("unable to insert profile")
+						return
+					}
+					logger.Debug().Msg("inserted new profile")
+				}
 			}
 
 			reqID, err := kafkaUtils.GetHeader(msg, "request_id")
