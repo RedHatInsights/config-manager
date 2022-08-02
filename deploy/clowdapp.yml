@@ -57,9 +57,7 @@ objects:
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
-        - run
-        - -m
-        - api
+        - http-api
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -144,8 +142,6 @@ objects:
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
-        - run
-        - -m
         - dispatcher-consumer
         livenessProbe:
           failureThreshold: 3
@@ -219,8 +215,6 @@ objects:
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
-        - run
-        - -m
         - inventory-consumer
         livenessProbe:
           failureThreshold: 3
