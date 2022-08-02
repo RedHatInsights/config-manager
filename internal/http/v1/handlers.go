@@ -2,8 +2,8 @@ package v1
 
 import (
 	"config-manager/api/instrumentation"
-	"config-manager/domain"
 	"config-manager/infrastructure"
+	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
 	"config-manager/utils"
@@ -110,7 +110,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var clients []domain.Host
+	var clients []internal.Host
 	container := infrastructure.Container{}
 	inventoryResp, err := container.InventoryRepo().GetInventoryClients(r.Context(), 1)
 	if err != nil {

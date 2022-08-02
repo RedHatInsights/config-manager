@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"config-manager/application"
-	"config-manager/domain"
 	"config-manager/infrastructure/persistence"
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
@@ -64,7 +63,7 @@ func (c *Container) CMService() *application.ConfigManagerService {
 			CloudConnectorRepo: c.CloudConnectorRepo(),
 			DispatcherRepo:     c.DispatcherRepo(),
 			PlaybookGenerator:  *c.PlaybookGenerator(),
-			InventoryRepo:      c.InventoryRepo(),
+			InventoryRepo:      *c.InventoryRepo(),
 		}
 	}
 
@@ -118,7 +117,7 @@ func (c *Container) CloudConnectorRepo() cloudconnector.CloudConnectorClient {
 
 // InventoryRepo lazily initializes a new persistence.InventoryClient and
 // returns it.
-func (c *Container) InventoryRepo() domain.InventoryClient {
+func (c *Container) InventoryRepo() *persistence.InventoryClient {
 	if c.inventoryRepo == nil {
 		client := &http.Client{
 			Timeout: time.Duration(int(time.Second) * config.DefaultConfig.InventoryTimeout),

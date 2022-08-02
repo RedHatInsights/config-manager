@@ -1,37 +1,55 @@
 package inventoryconsumer
 
 import (
-	"config-manager/application"
-	"config-manager/domain"
-	"config-manager/domain/message"
-	kafkaUtils "config-manager/infrastructure/kafka"
+	"config-manager/infrastructure"
+	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
+	"config-manager/internal/util"
 	"context"
 	"encoding/json"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
-	"github.com/rs/zerolog/log"
-
 	"github.com/google/uuid"
-	kafka "github.com/segmentio/kafka-go"
+	"github.com/peterbourgon/ff/v3/ffcli"
+	"github.com/rs/zerolog/log"
+	"github.com/segmentio/kafka-go"
 )
 
-// handler is a kafka message handler, designed to handle messages read from a
-// platform.inventory.events topic.
-type handler struct {
-	ConfigManagerService application.ConfigManagerInterface
+var Command ffcli.Command = ffcli.Command{
+	Name:      "inventory-consumer",
+	ShortHelp: "Run the inventory kafka consumer",
+	LongHelp:  "Consumes messages from the 'kafka-inventory-topic' topic and attempts to configure the identified hosts for remote configuration management.",
+	Exec: func(ctx context.Context, args []string) error {
+		log.Info().Str("command", "inventory-consumer").Msg("starting command")
+
+		reader := util.Kafka.NewReader(config.DefaultConfig.KafkaInventoryTopic)
+
+		for {
+			m, err := reader.ReadMessage(ctx)
+			if err != nil {
+				log.Error().Err(err).Msg("unable to read message")
+				continue
+			}
+			go handler(ctx, m)
+		}
+	},
 }
 
 type requestIDkey string
 
-// onMessage is the handler function that is called during the consumer event
-// loop. It unmarshals the received message and evaluates whether state should
-// be applied for the identified host, applying as needed.
-func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
+// InventoryEvent represents a message read off the inventory.events
+// topic.
+type InventoryEvent struct {
+	Type string        `json:"type"`
+	Host internal.Host `json:"host"`
+}
+
+func handler(ctx context.Context, msg kafka.Message) {
+	container := infrastructure.Container{}
 	logger := log.With().Str("module", "inventory-consumer").Logger()
 
-	eventType, err := kafkaUtils.GetHeader(msg, "event_type")
+	eventType, err := util.Kafka.GetHeader(msg, "event_type")
 	if err != nil {
 		logger.Error().Err(err).Msg("error getting event_type")
 		return
@@ -39,7 +57,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 	logger.Trace().Msgf("event_type = %v", eventType)
 
 	if eventType == "created" || eventType == "updated" {
-		value := &message.InventoryEvent{}
+		value := &InventoryEvent{}
 
 		if err := json.Unmarshal(msg.Value, &value); err != nil {
 			logger.Error().Err(err).Msg("couldn't unmarshal inventory event")
@@ -49,7 +67,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 		if value.Host.Reporter == "cloud-connector" {
 			if eventType == "created" {
 				logger.Info().Msg("new host detected; setting up for playbook execution")
-				messageID, err := this.ConfigManagerService.SetupHost(ctx, value.Host)
+				messageID, err := container.CMService().SetupHost(ctx, value.Host)
 				if err != nil {
 					logger.Error().Err(err).Msgf("error setting up host: %v", value.Host)
 					return
@@ -89,7 +107,7 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 				}
 			}
 
-			reqID, err := kafkaUtils.GetHeader(msg, "request_id")
+			reqID, err := util.Kafka.GetHeader(msg, "request_id")
 			if err != nil {
 				logger.Error().Err(err).Msg("Error getting request_id header")
 				k := requestIDkey("request_id")
@@ -104,8 +122,8 @@ func (this *handler) onMessage(ctx context.Context, msg kafka.Message) {
 			if value.Host.SystemProfile.RHCState != profile.ID.String() {
 				logger.Info().Msgf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
 					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.ID.String(), profile.AccountID.String)
-				client := []domain.Host{value.Host}
-				responses, err := this.ConfigManagerService.ApplyState(ctx, *profile, client)
+				client := []internal.Host{value.Host}
+				responses, err := container.CMService().ApplyState(ctx, *profile, client)
 				if err != nil {
 					logger.Error().Err(err).Msg("error applying state")
 				}

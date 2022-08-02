@@ -1,11 +1,12 @@
 package main
 
 import (
-	"config-manager/api"
-	dispatcherconsumer "config-manager/dispatcher-consumer"
+	"config-manager/infrastructure"
+	"config-manager/internal/cmd/dispatcherconsumer"
+	"config-manager/internal/cmd/httpapi"
+	"config-manager/internal/cmd/inventoryconsumer"
 	"config-manager/internal/config"
 	"config-manager/internal/logging/cloudwatch"
-	inventoryconsumer "config-manager/inventory-consumer"
 	"context"
 	"flag"
 	"fmt"
@@ -33,100 +34,86 @@ func main() {
 			ff.WithEnvVarPrefix("CM"),
 		},
 		Subcommands: []*ffcli.Command{
-			{
-				Name: "run",
-				FlagSet: func() *flag.FlagSet {
-					fs := flag.NewFlagSet("run", flag.ExitOnError)
-					fs.Var(&config.DefaultConfig.Modules, "m", fmt.Sprintf("config-manager modules to execute (%v)", config.DefaultConfig.Modules.Help()))
-					return fs
-				}(),
-				Exec: func(ctx context.Context, args []string) error {
-					signals := make(chan os.Signal, 1)
-					signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
-					errors := make(chan error, 1)
+			&httpapi.Command,
+			&inventoryconsumer.Command,
+			&dispatcherconsumer.Command,
+		},
+		Exec: func(ctx context.Context, args []string) error {
+			modules := map[string]*ffcli.Command{
+				"dispatcher-consumer": &dispatcherconsumer.Command,
+				"http-api":            &httpapi.Command,
+				"inventory-consumer":  &inventoryconsumer.Command,
+			}
 
-					level, err := zerolog.ParseLevel(config.DefaultConfig.LogLevel.Value)
-					if err != nil {
-						log.Fatal().Err(err).Msgf("cannot parse log level: %v", config.DefaultConfig.LogLevel)
-						return err
+			quit := make(chan os.Signal, 1)
+			signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+			for _, module := range config.DefaultConfig.Modules.Values() {
+				subcommand := modules[module]
+				go func() {
+					if err := subcommand.Exec(ctx, args); err != nil {
+						log.Fatal().Err(err).Msg("cannot run subcommand")
 					}
+				}()
+			}
 
-					zerolog.SetGlobalLevel(level)
+			<-quit
 
-					if level <= zerolog.DebugLevel {
-						log.Logger = log.With().Caller().Logger()
-					}
-
-					log.Debug().Interface("config", config.DefaultConfig).Send()
-
-					writers := make([]io.Writer, 0)
-					switch config.DefaultConfig.LogFormat.Value {
-					case "text":
-						writers = append(writers, zerolog.ConsoleWriter{Out: os.Stderr})
-					default:
-						writers = append(writers, os.Stderr)
-					}
-
-					if clowder.IsClowderEnabled() {
-						cred := credentials.NewStaticCredentials(config.DefaultConfig.AWSAccessKeyId, config.DefaultConfig.AWSSecretAccessKey, "")
-						awsCfg := aws.NewConfig().WithRegion(config.DefaultConfig.AWSRegion).WithCredentials(cred)
-						batchWriter, err := cloudwatch.NewBatchWriter(config.DefaultConfig.LogGroup, config.DefaultConfig.LogStream, awsCfg, config.DefaultConfig.LogBatchFrequency)
-						if err != nil {
-							log.Error().Err(err).Msg("cannot create CloudWatch batch writer")
-						}
-						if batchWriter != nil {
-							writers = append(writers, batchWriter)
-						}
-					}
-
-					log.Logger = log.Output(zerolog.MultiLevelWriter(writers...))
-
-					for _, module := range config.DefaultConfig.Modules.Values() {
-						log.Info().Str("module", module).Msg("starting")
-
-						var startModule func(
-							ctx context.Context,
-							errors chan<- error,
-						)
-
-						switch module {
-						case "api":
-							startModule = api.Start
-						case "dispatcher-consumer":
-							startModule = dispatcherconsumer.Start
-						case "inventory-consumer":
-							startModule = inventoryconsumer.Start
-						default:
-							return fmt.Errorf("unknown module %s", module)
-						}
-
-						startModule(context.Background(), errors)
-					}
-
-					log.Info().Int("port", config.DefaultConfig.MetricsPort).Str("service", "metrics").Msg("starting http server")
-					go func() {
-						mux := http.NewServeMux()
-						mux.Handle(config.DefaultConfig.MetricsPath, promhttp.Handler())
-						errors <- http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.MetricsPort), mux)
-					}()
-
-					log.Debug().Msg("Config Manager started")
-
-					// stop on signal or error, whatever comes first
-					select {
-					case signal := <-signals:
-						log.Info().Msgf("Shutting down due to signal: %v", signal)
-						return nil
-					case err := <-errors:
-						log.Error().Err(err).Msg("shutting down due to error")
-						return err
-					}
-				},
-			},
+			return nil
 		},
 	}
 
-	if err := root.ParseAndRun(context.Background(), os.Args[1:]); err != nil {
-		log.Fatal().Err(err).Msg("cannot execute command")
+	if err := root.Parse(os.Args[1:]); err != nil {
+		log.Fatal().Err(err).Msg("unable to parse flags")
+	}
+
+	level, err := zerolog.ParseLevel(config.DefaultConfig.LogLevel.Value)
+	if err != nil {
+		log.Fatal().Err(err).Str("level", config.DefaultConfig.LogLevel.Value).Msgf("cannot parse log level")
+	}
+
+	zerolog.SetGlobalLevel(level)
+
+	if level <= zerolog.DebugLevel {
+		log.Logger = log.With().Caller().Logger()
+	}
+
+	log.Debug().Interface("config", config.DefaultConfig).Send()
+
+	writers := make([]io.Writer, 0)
+	switch config.DefaultConfig.LogFormat.Value {
+	case "text":
+		writers = append(writers, zerolog.ConsoleWriter{Out: os.Stderr})
+	default:
+		writers = append(writers, os.Stderr)
+	}
+
+	if clowder.IsClowderEnabled() {
+		cred := credentials.NewStaticCredentials(config.DefaultConfig.AWSAccessKeyId, config.DefaultConfig.AWSSecretAccessKey, "")
+		awsCfg := aws.NewConfig().WithRegion(config.DefaultConfig.AWSRegion).WithCredentials(cred)
+		batchWriter, err := cloudwatch.NewBatchWriter(config.DefaultConfig.LogGroup, config.DefaultConfig.LogStream, awsCfg, config.DefaultConfig.LogBatchFrequency)
+		if err != nil {
+			log.Error().Err(err).Msg("cannot create CloudWatch batch writer")
+		}
+		if batchWriter != nil {
+			writers = append(writers, batchWriter)
+		}
+	}
+
+	log.Logger = log.Output(zerolog.MultiLevelWriter(writers...))
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle(config.DefaultConfig.MetricsPath, promhttp.Handler())
+		if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.MetricsPort), mux); err != nil {
+			log.Fatal().Err(err).Int("metrics-port", config.DefaultConfig.MetricsPort).Msg("cannot listen on port")
+		}
+	}()
+
+	container := infrastructure.Container{}
+	container.Database()
+
+	if err := root.Run(context.Background()); err != nil {
+		log.Fatal().Err(err).Msg("unable to run command")
 	}
 }

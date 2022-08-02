@@ -2,8 +2,10 @@ package application
 
 import (
 	"config-manager/domain"
+	"config-manager/infrastructure/persistence"
 	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
+	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
 	"context"
@@ -19,9 +21,9 @@ import (
 // ConfigManagerService methods.
 type ConfigManagerInterface interface {
 	GetAccountState(id string) (*domain.AccountState, error)
-	ApplyState(ctx context.Context, profile db.Profile, clients []domain.Host) ([]dispatcher.RunCreated, error)
+	ApplyState(ctx context.Context, profile db.Profile, clients []internal.Host) ([]dispatcher.RunCreated, error)
 	GetSingleStateChange(stateID string) (*domain.StateArchive, error)
-	SetupHost(ctx context.Context, host domain.Host) (string, error)
+	SetupHost(ctx context.Context, host internal.Host) (string, error)
 }
 
 // ConfigManagerService provides an API for interacting with backend services
@@ -29,7 +31,7 @@ type ConfigManagerInterface interface {
 // playbook-dispatcher.
 type ConfigManagerService struct {
 	CloudConnectorRepo cloudconnector.CloudConnectorClient
-	InventoryRepo      domain.InventoryClient
+	InventoryRepo      persistence.InventoryClient
 	DispatcherRepo     dispatcher.DispatcherClient
 	PlaybookGenerator  Generator
 }
@@ -150,7 +152,7 @@ func (s *ConfigManagerService) GetConnectedClients(ctx context.Context, id strin
 }
 
 // GetInventoryClients Retrieve clients from inventory
-func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
+func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int) (persistence.InventoryResponse, error) {
 	res, err := s.InventoryRepo.GetInventoryClients(ctx, page)
 	if err != nil {
 		return res, err
@@ -159,7 +161,7 @@ func (s *ConfigManagerService) GetInventoryClients(ctx context.Context, page int
 }
 
 // ApplyState applies the current state to selected clients
-func (s *ConfigManagerService) ApplyState(ctx context.Context, profile db.Profile, clients []domain.Host) ([]dispatcher.RunCreated, error) {
+func (s *ConfigManagerService) ApplyState(ctx context.Context, profile db.Profile, clients []internal.Host) ([]dispatcher.RunCreated, error) {
 	var err error
 	var results []dispatcher.RunCreated
 	var inputs []dispatcher.RunInput
@@ -312,7 +314,7 @@ func (s *ConfigManagerService) GetPlaybook(stateID string) (string, error) {
 
 // SetupHost messages a host to install the rhc-worker-playbook RPM to enable it
 // to receive and execute playbooks from the playbook-dispatcher service.
-func (s *ConfigManagerService) SetupHost(ctx context.Context, host domain.Host) (string, error) {
+func (s *ConfigManagerService) SetupHost(ctx context.Context, host internal.Host) (string, error) {
 	logger := log.With().Str("account_id", host.Account).Str("client_id", host.SystemProfile.RHCID).Logger()
 
 	status, dispatchers, err := s.CloudConnectorRepo.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)

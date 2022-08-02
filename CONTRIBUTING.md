@@ -152,7 +152,7 @@ CM_WEB_PORT=8080 \
 CM_DB_USER=insights \
 CM_DB_PASS=insights \
 CM_DB_NAME=insights \
-go run . run
+go run .
 ```
 
 ### Deployed into the cluster

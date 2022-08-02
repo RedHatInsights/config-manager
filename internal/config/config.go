@@ -114,7 +114,7 @@ var DefaultConfig Config = Config{
 	}(),
 	MetricsPath:          "/metrics",
 	MetricsPort:          9000,
-	Modules:              flagvar.EnumSetCSV{Choices: []string{"api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
+	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles:        "./playbooks/",
 	PlaybookHost:         flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
 	PlaybookPath:         "/api/config-manager/v1/states/%v/playbook",

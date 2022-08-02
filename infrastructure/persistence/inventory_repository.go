@@ -1,7 +1,7 @@
 package persistence
 
 import (
-	"config-manager/domain"
+	"config-manager/internal"
 	"config-manager/utils"
 	"context"
 	"encoding/json"
@@ -15,6 +15,21 @@ import (
 )
 
 var IdentityKey = struct{}{}
+
+// InventoryParams represents query parameters to send with HTTP requests.
+type InventoryParams struct {
+	Page    int `json:"page"`
+	PerPage int `json:"per_page"`
+}
+
+// InventoryResponse represents a list of hosts received from the Inventory application.
+type InventoryResponse struct {
+	Total   int             `json:"total"`
+	Count   int             `json:"count"`
+	Page    int             `json:"page"`
+	PerPage int             `json:"per_page"`
+	Results []internal.Host `json:"results"`
+}
 
 // InventoryClient provides REST client API methods to interact with the
 // platform Inventory application.
@@ -46,8 +61,8 @@ func (c *InventoryClient) buildURL(page int) string {
 // GetInventoryClients sends an HTTP GET request to the Inventory service,
 // marshals the response into a domain.InventoryResponse structure and returns
 // it.
-func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (domain.InventoryResponse, error) {
-	var results domain.InventoryResponse
+func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (InventoryResponse, error) {
+	var results InventoryResponse
 
 	if c.InventoryImpl == "mock" {
 		expectedResponse := []byte(`{
