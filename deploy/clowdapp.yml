@@ -320,7 +320,7 @@ objects:
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdJobInvocation
   metadata:
-    name: populate-org-id-column-${POPULATOR_RUN_NUMBER}
+    name: cm-populate-org-id-column-${POPULATOR_RUN_NUMBER}
   spec:
     appName: config-manager
     jobs:
