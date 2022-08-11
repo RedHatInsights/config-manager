@@ -40,6 +40,7 @@ func NewMux() (*chi.Mux, error) {
 		r.Get("/states/{id}", getStateByID)
 		r.Get("/states/{id}/playbook", getStatesIDPlaybook)
 		r.Post("/states/preview", postStatesPreview)
+		r.Post("/manage", postManage)
 		r.Get("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
 			renderJSON(w, r, http.StatusOK, spec, log.Logger)
 		})

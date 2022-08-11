@@ -415,7 +415,7 @@ func TestPostManage(t *testing.T) {
 
 			router := chi.NewMux()
 			router.Use(identity.EnforceIdentity)
-			router.Post("/manage", PostManage)
+			router.Post("/manage", postManage)
 			router.ServeHTTP(rr, req)
 
 			got := response{rr.Code, rr.Body.Bytes()}

@@ -316,9 +316,9 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 	renderJSON(w, r, http.StatusOK, resp, logger)
 }
 
-// PostManage sets the value of the apply_state field on the current account
+// postManage sets the value of the apply_state field on the current account
 // state record.
-func PostManage(w http.ResponseWriter, r *http.Request) {
+func postManage(w http.ResponseWriter, r *http.Request) {
 	logger := log.With().Str("path", r.URL.Path).Str("method", r.Method).Logger()
 
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
