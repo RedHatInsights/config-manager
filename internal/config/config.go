@@ -22,7 +22,6 @@ type Config struct {
 	AWSSecretAccessKey      string
 	CloudConnectorClientID  string
 	CloudConnectorHost      flagvar.URL
-	CloudConnectorImpl      flagvar.Enum
 	CloudConnectorPSK       string
 	CloudConnectorTimeout   int
 	DBHost                  string
@@ -32,11 +31,9 @@ type Config struct {
 	DBUser                  string
 	DispatcherBatchSize     int
 	DispatcherHost          flagvar.URL
-	DispatcherImpl          flagvar.Enum
 	DispatcherPSK           string
 	DispatcherTimeout       int
 	InventoryHost           flagvar.URL
-	InventoryImpl           flagvar.Enum
 	InventoryTimeout        int
 	KafkaBrokers            flagvar.Strings
 	KafkaConsumerOffset     int64
@@ -77,7 +74,6 @@ var DefaultConfig Config = Config{
 	AWSSecretAccessKey:      os.Getenv("CW_AWS_SECRET_ACCESS_KEY"),
 	CloudConnectorClientID:  "config-manager",
 	CloudConnectorHost:      flagvar.URL{Value: url.MustParse("http://cloud-connector:8080")},
-	CloudConnectorImpl:      flagvar.Enum{Choices: []string{"mock", "impl"}, Value: "impl"},
 	CloudConnectorPSK:       "",
 	CloudConnectorTimeout:   10,
 	DBHost:                  "localhost",
@@ -87,11 +83,9 @@ var DefaultConfig Config = Config{
 	DBUser:                  "insights",
 	DispatcherBatchSize:     50,
 	DispatcherHost:          flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
-	DispatcherImpl:          flagvar.Enum{Choices: []string{"mock", "impl"}, Value: "impl"},
 	DispatcherPSK:           "",
 	DispatcherTimeout:       10,
 	InventoryHost:           flagvar.URL{Value: url.MustParse("http://host-inventory-service:8000")},
-	InventoryImpl:           flagvar.Enum{Choices: []string{"mock", "impl"}, Value: "impl"},
 	InventoryTimeout:        10,
 	KafkaBrokers:            flagvar.Strings{Values: []string{"localhost:9094"}},
 	KafkaConsumerOffset:     0,
@@ -161,7 +155,6 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.AWSSecretAccessKey, "aws-secret-access-key", DefaultConfig.AWSSecretAccessKey, "CloudWatch secret access key")
 	fs.StringVar(&DefaultConfig.CloudConnectorClientID, "cloud-connector-client-id", DefaultConfig.CloudConnectorClientID, "client ID to use when authenticating to cloud-connector")
 	fs.Var(&DefaultConfig.CloudConnectorHost, "cloud-connector-host", fmt.Sprintf("hostname for the cloud-connector service (%v)", DefaultConfig.CloudConnectorHost.Help()))
-	fs.Var(&DefaultConfig.CloudConnectorImpl, "cloud-connector-impl", fmt.Sprintf("use either a mock or real implementation of cloud-connector (%v)", DefaultConfig.CloudConnectorImpl.Help()))
 	fs.StringVar(&DefaultConfig.CloudConnectorPSK, "cloud-connector-psk", DefaultConfig.CloudConnectorPSK, "preshared key from config-manager")
 	fs.IntVar(&DefaultConfig.CloudConnectorTimeout, "cloud-connector-timeout", DefaultConfig.CloudConnectorTimeout, "number of seconds before timing out HTTP requests to cloud-connector")
 	fs.StringVar(&DefaultConfig.DBHost, "db-host", DefaultConfig.DBHost, "database host")
@@ -171,11 +164,9 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.DBUser, "db-user", DefaultConfig.DBUser, "database user")
 	fs.IntVar(&DefaultConfig.DispatcherBatchSize, "dispatcher-batch-size", DefaultConfig.DispatcherBatchSize, "size of batches to transmit to playbook-dispatcher")
 	fs.Var(&DefaultConfig.DispatcherHost, "dispatcher-host", fmt.Sprintf("hostname for the playbook-dispatcher service (%v)", DefaultConfig.DispatcherHost.Help()))
-	fs.Var(&DefaultConfig.DispatcherImpl, "dispatcher-impl", fmt.Sprintf("use either a mock or real implementation of playbook-dispatcher (%v)", DefaultConfig.DispatcherImpl.Help()))
 	fs.StringVar(&DefaultConfig.DispatcherPSK, "dispatcher-psk", DefaultConfig.DispatcherPSK, "preshared key from playbook-dispatcher")
 	fs.IntVar(&DefaultConfig.DispatcherTimeout, "dispatcher-timeout", DefaultConfig.DispatcherTimeout, "number of seconds before timing out HTTP requests to playbook-dispatcher")
 	fs.Var(&DefaultConfig.InventoryHost, "inventory-host", fmt.Sprintf("hostname for the host-inventory service (%v)", DefaultConfig.InventoryHost.Help()))
-	fs.Var(&DefaultConfig.InventoryImpl, "inventory-impl", fmt.Sprintf("use either a mock or real implementation of host-inventory (%v)", DefaultConfig.InventoryImpl.Help()))
 	fs.IntVar(&DefaultConfig.InventoryTimeout, "inventory-timeout", DefaultConfig.InventoryTimeout, "number of seconds before timing out HTTP requests to host-inventory")
 	fs.Var(&DefaultConfig.KafkaBrokers, "kafka-brokers", "kafka bootstrap broker addresses")
 	fs.Int64Var(&DefaultConfig.KafkaConsumerOffset, "kafka-consumer-offset", DefaultConfig.KafkaConsumerOffset, "kafka consumer offset")
