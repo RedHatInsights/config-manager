@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -105,7 +105,7 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (In
 
 	err = json.NewDecoder(res.Body).Decode(&results)
 	if err != nil {
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		log.Error().Err(err).Msgf("error decoding inventory response: %v", string(body))
 	}
 	return results, nil
