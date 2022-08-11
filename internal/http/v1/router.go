@@ -6,6 +6,7 @@ import (
 	"config-manager/internal/config"
 	"fmt"
 	"net/http"
+	"path"
 
 	chiprometheus "github.com/766b/chi-prometheus"
 	oapimiddleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
@@ -31,9 +32,12 @@ func NewMux() (*chi.Mux, error) {
 	router.Use(identity.EnforceIdentity)
 	router.Use(chiprometheus.NewMiddleware("config-manager"))
 	router.Use(middleware.RequestID)
-	router.Use(oapimiddleware.OapiRequestValidator(spec))
+	router.Get(path.Join(config.DefaultConfig.URLBasePath(), "openapi.json"), func(w http.ResponseWriter, r *http.Request) {
+		renderJSON(w, r, http.StatusOK, spec, log.Logger)
+	})
 
 	router.Route(config.DefaultConfig.URLBasePath(), func(r chi.Router) {
+		r.Use(oapimiddleware.OapiRequestValidator(spec))
 		r.Post("/states", postStates)
 		r.Get("/states", getStates)
 		r.Get("/states/current", getCurrentState)
@@ -41,9 +45,6 @@ func NewMux() (*chi.Mux, error) {
 		r.Get("/states/{id}/playbook", getStatesIDPlaybook)
 		r.Post("/states/preview", postStatesPreview)
 		r.Post("/manage", postManage)
-		r.Get("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
-			renderJSON(w, r, http.StatusOK, spec, log.Logger)
-		})
 	})
 
 	return router, nil
