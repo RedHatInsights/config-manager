@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-//go:generate oapi-codegen -generate client,types -package cloudconnector -o ./cloudconnector.gen.go https://github.com/RedHatInsights/cloud-connector/raw/f7b64dc76271a2293518c2da513676aa979febfd/internal/controller/api/api.spec.json
+//go:generate oapi-codegen -config oapi-codegen.yml https://github.com/RedHatInsights/cloud-connector/raw/f7b64dc76271a2293518c2da513676aa979febfd/internal/controller/api/api.spec.json
 
 // CloundConnectorClient is an abstraction of the REST client API methods to
 // interact with the platform cloud-connector application.
@@ -127,7 +127,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
 
 	if response.JSON201 != nil {
-		return *response.JSON201.Id, nil
+		return response.JSON201.Id.String(), nil
 	}
 
 	return "", nil
