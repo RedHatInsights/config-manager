@@ -36,14 +36,12 @@ type InventoryResponse struct {
 // platform Inventory application.
 type InventoryClient struct {
 	InventoryHost string
-	InventoryImpl string
 	Client        *http.Client
 }
 
 func NewInventoryClient() *InventoryClient {
 	return &InventoryClient{
 		InventoryHost: config.DefaultConfig.InventoryHost.Value.String(),
-		InventoryImpl: config.DefaultConfig.InventoryImpl.Value,
 		Client: &http.Client{
 			Timeout: time.Duration(int(time.Second) * config.DefaultConfig.InventoryTimeout),
 		},
@@ -74,19 +72,6 @@ func (c *InventoryClient) buildURL(page int) string {
 // it.
 func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (InventoryResponse, error) {
 	var results InventoryResponse
-
-	if c.InventoryImpl == "mock" {
-		expectedResponse := []byte(`{
-			"total": 0,
-			"count": 0,
-			"page": 1,
-			"per_page": 50,
-			"results": []
-		}`)
-
-		err := json.Unmarshal(expectedResponse, &results)
-		return results, err
-	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.buildURL(page), nil)
 	if err != nil {
