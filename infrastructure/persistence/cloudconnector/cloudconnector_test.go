@@ -2,90 +2,236 @@ package cloudconnector
 
 import (
 	"config-manager/internal/config"
+	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
-	"config-manager/utils"
 	"context"
+	"log"
+	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func TestGetConnectionsSuccess(t *testing.T) {
-	response := `{
-		"connections": ["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]
-	}`
-
-	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
-	config.DefaultConfig.CloudConnectorClientID = "test"
-	config.DefaultConfig.CloudConnectorPSK = "test"
-
-	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
-	if err != nil {
-		t.Error(err)
+func TestGetConnections(t *testing.T) {
+	tests := []struct {
+		description string
+		input       struct {
+			accountID string
+			response  []byte
+		}
+		want      []string
+		wantError error
+	}{
+		{
+			description: "two connections",
+			input: struct {
+				accountID string
+				response  []byte
+			}{
+				accountID: "000001",
+				response:  []byte(`{"connections":["3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"]}`),
+			},
+			want: []string{"3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"},
+		},
+		{
+			description: "zero connections",
+			input: struct {
+				accountID string
+				response  []byte
+			}{
+				accountID: "000001",
+				response:  []byte(`{"connections":[]}`),
+			},
+			want: []string{},
+		},
 	}
 
-	results, err := connector.GetConnections(context.Background(), "0000001")
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			config.DefaultConfig.CloudConnectorClientID = "test"
+			config.DefaultConfig.CloudConnectorPSK = "test"
 
-	assert.Nil(t, err)
-	assert.Equal(t, len(results), 2, "there should be two connections returned")
+			mux := staticmux.StaticMux{}
+			mux.AddResponse("/connection/"+test.input.accountID, 200, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
+			server := http.Server{Addr: config.DefaultConfig.CloudConnectorHost.Value.Host, Handler: &mux}
+			defer server.Close()
+			go func() {
+				if err := server.ListenAndServe(); err != nil {
+					log.Print(err)
+				}
+			}()
 
-	assert.Equal(t, results[0], "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "the id from the response should be included")
-	assert.Equal(t, results[1], "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4", "The id from the response should be included")
+			connector, err := NewCloudConnectorClient()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			got, err := connector.GetConnections(context.Background(), test.input.accountID)
+
+			if test.wantError != nil {
+				if !cmp.Equal(err, test.wantError, cmpopts.EquateErrors()) {
+					t.Errorf("%#v != %#v", err, test.wantError)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !cmp.Equal(got, test.want) {
+					t.Errorf("%v", cmp.Diff(got, test.want))
+				}
+			}
+		})
+	}
 }
 
-func TestGetConnectionsAccountNotFound(t *testing.T) {
-	response := `{
-		"connections": []
-	}`
-
-	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
-	config.DefaultConfig.CloudConnectorClientID = "test"
-	config.DefaultConfig.CloudConnectorPSK = "test"
-
-	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
-	if err != nil {
-		t.Error(err)
+func TestSendMessage(t *testing.T) {
+	tests := []struct {
+		description string
+		input       struct {
+			accountID string
+			directive string
+			payload   []byte
+			metadata  map[string]string
+			recipient string
+			response  []byte
+		}
+		want      string
+		wantError error
+	}{
+		{
+			description: "successful",
+			input: struct {
+				accountID string
+				directive string
+				payload   []byte
+				metadata  map[string]string
+				recipient string
+				response  []byte
+			}{
+				accountID: "000001",
+				directive: "test",
+				payload:   []byte(`"test"`),
+				metadata:  nil,
+				recipient: "test",
+				response:  []byte(`{"id":"0afbfb55-a2af-43f2-84da-a0896f03f067"}`),
+			},
+			want: `0afbfb55-a2af-43f2-84da-a0896f03f067`,
+		},
 	}
 
-	results, err := connector.GetConnections(context.Background(), "0000001")
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			config.DefaultConfig.CloudConnectorClientID = "test"
+			config.DefaultConfig.CloudConnectorPSK = "test"
 
-	assert.Nil(t, err)
-	assert.Equal(t, len(results), 0, "results should exist, but there should be no connections")
-}
+			mux := staticmux.StaticMux{}
+			mux.AddResponse("/message", 201, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
+			server := http.Server{Addr: config.DefaultConfig.CloudConnectorHost.Value.Host, Handler: &mux}
+			defer server.Close()
+			go func() {
+				if err := server.ListenAndServe(); err != nil {
+					log.Print(err)
+				}
+			}()
 
-func TestSendMessageSuccess(t *testing.T) {
-	response := `{"id": "0afbfb55-a2af-43f2-84da-a0896f03f067"}`
+			connector, err := NewCloudConnectorClient()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
-	config.DefaultConfig.CloudConnectorClientID = "test"
-	config.DefaultConfig.CloudConnectorPSK = "test"
+			got, err := connector.SendMessage(context.Background(), test.input.accountID, test.input.directive, test.input.payload, test.input.metadata, test.input.recipient)
 
-	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 201))
-	if err != nil {
-		t.Error(err)
+			if test.wantError != nil {
+				if !cmp.Equal(err, test.wantError, cmpopts.EquateErrors()) {
+					t.Errorf("%#v != %#v", err, test.wantError)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !cmp.Equal(got, test.want) {
+					t.Errorf("%v", cmp.Diff(got, test.want))
+				}
+			}
+		})
 	}
-
-	results, err := connector.SendMessage(context.Background(), "0000001", "test", []byte(`"test"`), nil, "test")
-
-	assert.Nil(t, err)
-	assert.Equal(t, "0afbfb55-a2af-43f2-84da-a0896f03f067", results, "the id from the response should be 0afbfb55-a2af-43f2-84da-a0896f03f067")
 }
 
 func TestGetConnectionStatus(t *testing.T) {
-	response := `{"status":"connected","dispatchers": {"rhc-worker-playbook": {}}}`
-
-	config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://test")
-	config.DefaultConfig.CloudConnectorClientID = "test"
-	config.DefaultConfig.CloudConnectorPSK = "test"
-
-	connector, err := NewCloudConnectorClientWithDoer(utils.SetupMockHTTPClient(response, 200))
-	if err != nil {
-		t.Error(err)
+	type response struct {
+		status      string
+		dispatchers map[string]interface{}
 	}
 
-	status, results, err := connector.GetConnectionStatus(context.Background(), "0000001", "test")
+	tests := []struct {
+		description string
+		input       struct {
+			accountID string
+			recipient string
+			response  []byte
+		}
+		want      response
+		wantError error
+	}{
+		{
+			description: "connected with rhc-worker-playbook dispatcher",
+			input: struct {
+				accountID string
+				recipient string
+				response  []byte
+			}{
+				accountID: "000001",
+				recipient: "test",
+				response:  []byte(`{"status":"connected","dispatchers":{"rhc-worker-playbook":{}}}`),
+			},
+			want: response{
+				status: "connected",
+				dispatchers: map[string]interface{}{
+					"rhc-worker-playbook": map[string]interface{}{},
+				},
+			},
+		},
+	}
 
-	assert.Nil(t, err)
-	assert.Equal(t, "connected", status, "status should be connected")
-	assert.Equal(t, map[string]interface{}{"rhc-worker-playbook": map[string]interface{}{}}, results, "the dispatchers from the response should contain rhc-worker-playbook")
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			config.DefaultConfig.CloudConnectorClientID = "test"
+			config.DefaultConfig.CloudConnectorPSK = "test"
+
+			mux := staticmux.StaticMux{}
+			mux.AddResponse("/connection/status", 200, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
+			server := http.Server{Addr: config.DefaultConfig.CloudConnectorHost.Value.Host, Handler: &mux}
+			defer server.Close()
+			go func() {
+				if err := server.ListenAndServe(); err != nil {
+					log.Print(err)
+				}
+			}()
+
+			connector, err := NewCloudConnectorClient()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var got response
+			got.status, got.dispatchers, err = connector.GetConnectionStatus(context.Background(), test.input.accountID, test.input.recipient)
+
+			if test.wantError != nil {
+				if !cmp.Equal(err, test.wantError, cmpopts.EquateErrors()) {
+					t.Errorf("%#v != %#v", err, test.wantError)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !cmp.Equal(got, test.want, cmp.AllowUnexported(response{})) {
+					t.Errorf("%v", cmp.Diff(got, test.want))
+				}
+			}
+		})
+	}
 }

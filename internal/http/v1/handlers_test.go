@@ -198,7 +198,7 @@ func TestPostStates(t *testing.T) {
 
 			config.DefaultConfig.InventoryHost.Value = url.MustParse("http://localhost:8000")
 			staticInventoryMux := staticmux.StaticMux{}
-			staticInventoryMux.AddResponse("/api/inventory/v1/hosts", 200, []byte(`{"count":1,"limit":0","offset":0","total":1,"page":1,"per_page":50","results":[{"id":"6a46563f-6c26-449a-89c4-de902d8c5ceb","account":"10064","org_id":"78606","display_name":"test","reporter":"test","system_profile":{"rhc_client_id":"7eb87461-a49b-4ce6-8042-2494200f6bf6","rhc_config_state":"connected"}}]}`))
+			staticInventoryMux.AddResponse("/api/inventory/v1/hosts", 200, []byte(`{"count":1,"limit":0","offset":0","total":1,"page":1,"per_page":50","results":[{"id":"6a46563f-6c26-449a-89c4-de902d8c5ceb","account":"10064","org_id":"78606","display_name":"test","reporter":"test","system_profile":{"rhc_client_id":"7eb87461-a49b-4ce6-8042-2494200f6bf6","rhc_config_state":"connected"}}]}`), map[string][]string{"Content-Type": {"application/json"}})
 			go func() {
 				if err := http.ListenAndServe(config.DefaultConfig.InventoryHost.Value.Host, &staticInventoryMux); err != nil {
 					log.Print(err)

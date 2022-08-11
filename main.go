@@ -1,11 +1,11 @@
 package main
 
 import (
-	"config-manager/infrastructure"
 	"config-manager/internal/cmd/dispatcherconsumer"
 	"config-manager/internal/cmd/httpapi"
 	"config-manager/internal/cmd/inventoryconsumer"
 	"config-manager/internal/config"
+	"config-manager/internal/db"
 	"config-manager/internal/logging/cloudwatch"
 	"context"
 	"flag"
@@ -25,6 +25,8 @@ import (
 
 	"github.com/peterbourgon/ff/v3"
 	"github.com/peterbourgon/ff/v3/ffcli"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
@@ -110,8 +112,20 @@ func main() {
 		}
 	}()
 
-	container := infrastructure.Container{}
-	container.Database()
+	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
+		config.DefaultConfig.DBUser,
+		config.DefaultConfig.DBPass,
+		config.DefaultConfig.DBName,
+		config.DefaultConfig.DBHost,
+		config.DefaultConfig.DBPort)
+
+	if err := db.Open("pgx", connectionString); err != nil {
+		log.Fatal().Err(err).Msg("cannot open database")
+	}
+
+	if err := db.Migrate("file://./db/migrations", false); err != nil {
+		log.Fatal().Err(err).Msg("cannot migrate database")
+	}
 
 	if err := root.Run(context.Background()); err != nil {
 		log.Fatal().Err(err).Msg("unable to run command")

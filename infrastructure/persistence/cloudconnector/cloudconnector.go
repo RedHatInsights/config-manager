@@ -33,7 +33,7 @@ type cloudConnectorClientImpl struct {
 // constructing a cloudconnector.Client, configured with request headers and
 // host information.
 func NewCloudConnectorClientWithDoer(doer HttpRequestDoer) (CloudConnectorClient, error) {
-	client, err := NewClientWithResponses(config.DefaultConfig.CloudConnectorHost.String(), WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+	client, err := NewClientWithResponses(config.DefaultConfig.CloudConnectorHost.Value.String(), WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-client-id", config.DefaultConfig.CloudConnectorClientID)
 		req.Header.Set("x-rh-cloud-connector-psk", config.DefaultConfig.CloudConnectorPSK)
 		req.Header.Set("x-rh-insights-request-id", uuid.New().String())
@@ -114,17 +114,17 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot post message")
 		return "", err
 	}
+	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
 	response, err := ParsePostMessageResponse(resp)
-	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot parse post message response")
 		return "", err
 	}
+	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
 
 	if response.JSON201 != nil {
 		return *response.JSON201.Id, nil
