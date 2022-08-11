@@ -1,14 +1,15 @@
-package persistence
+package inventory
 
 import (
 	"config-manager/internal"
-	"config-manager/utils"
+	"config-manager/internal/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/rs/zerolog/log"
@@ -36,7 +37,17 @@ type InventoryResponse struct {
 type InventoryClient struct {
 	InventoryHost string
 	InventoryImpl string
-	Client        utils.HTTPClient
+	Client        *http.Client
+}
+
+func NewInventoryClient() *InventoryClient {
+	return &InventoryClient{
+		InventoryHost: config.DefaultConfig.InventoryHost.Value.String(),
+		InventoryImpl: config.DefaultConfig.InventoryImpl.Value,
+		Client: &http.Client{
+			Timeout: time.Duration(int(time.Second) * config.DefaultConfig.InventoryTimeout),
+		},
+	}
 }
 
 // TODO this function should accept a map of params instead of hard coding them.

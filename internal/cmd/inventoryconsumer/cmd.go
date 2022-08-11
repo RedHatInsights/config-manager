@@ -1,7 +1,6 @@
 package inventoryconsumer
 
 import (
-	"config-manager/infrastructure"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
@@ -46,7 +45,6 @@ type InventoryEvent struct {
 }
 
 func handler(ctx context.Context, msg kafka.Message) {
-	container := infrastructure.Container{}
 	logger := log.With().Str("module", "inventory-consumer").Logger()
 
 	eventType, err := util.Kafka.GetHeader(msg, "event_type")
@@ -67,7 +65,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 		if value.Host.Reporter == "cloud-connector" {
 			if eventType == "created" {
 				logger.Info().Msg("new host detected; setting up for playbook execution")
-				messageID, err := container.CMService().SetupHost(ctx, value.Host)
+				messageID, err := internal.SetupHost(ctx, value.Host)
 				if err != nil {
 					logger.Error().Err(err).Msgf("error setting up host: %v", value.Host)
 					return
@@ -123,7 +121,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 				logger.Info().Msgf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
 					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.ID.String(), profile.AccountID.String)
 				client := []internal.Host{value.Host}
-				responses, err := container.CMService().ApplyState(ctx, *profile, client)
+				responses, err := internal.ApplyProfile(ctx, profile, client)
 				if err != nil {
 					logger.Error().Err(err).Msg("error applying state")
 				}

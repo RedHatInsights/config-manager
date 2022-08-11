@@ -39,7 +39,7 @@ type dispatcherClientImpl struct {
 func NewDispatcherClientWithDoer(doer HttpRequestDoer) DispatcherClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: config.DefaultConfig.DispatcherHost.String(),
+			Server: config.DefaultConfig.DispatcherHost.Value.String(),
 			Client: doer,
 			RequestEditors: []RequestEditorFn{
 				func(ctx context.Context, req *http.Request) error {
@@ -71,11 +71,11 @@ func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput)
 	logger := log.With().Str("http_client", "playbook-dispatcher").Logger()
 
 	res, err := dc.client.ApiInternalRunsCreateWithResponse(ctx, inputs)
-	logger.Debug().Str("http_status", res.Status()).Msg("received response from playbook-dispatcher")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot create runs with response")
 		return nil, err
 	}
+	logger.Debug().Str("http_status", res.Status()).Msg("received response from playbook-dispatcher")
 
 	if res.HTTPResponse.StatusCode != 207 {
 		err := fmt.Errorf("unexpected HTTP response - %v (%v)", res.StatusCode(), string(res.Body))

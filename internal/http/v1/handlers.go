@@ -2,11 +2,10 @@ package v1
 
 import (
 	"config-manager/api/instrumentation"
-	"config-manager/infrastructure"
+	"config-manager/infrastructure/persistence/inventory"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
-	"config-manager/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -78,7 +77,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Trace().Interface("current_profile", currentProfile).Msg("found current profile")
 
-	equal, err := utils.VerifyStatePayload(currentProfile.StateConfig(), statemap)
+	equal, err := internal.VerifyStatePayload(currentProfile.StateConfig(), statemap)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
 		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to verify state map: %v", err), logger)
@@ -111,8 +110,8 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var clients []internal.Host
-	container := infrastructure.Container{}
-	inventoryResp, err := container.InventoryRepo().GetInventoryClients(r.Context(), 1)
+	inventoryClient := inventory.NewInventoryClient()
+	inventoryResp, err := inventoryClient.GetInventoryClients(r.Context(), 1)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("uanble to get inventory clients: %v", err), logger)
@@ -122,7 +121,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 
 	for len(clients) < inventoryResp.Total {
 		page := inventoryResp.Page + 1
-		res, err := container.InventoryRepo().GetInventoryClients(r.Context(), page)
+		res, err := inventoryClient.GetInventoryClients(r.Context(), page)
 		if err != nil {
 			instrumentation.UpdateAccountStateError()
 			renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
@@ -132,7 +131,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		results, err := container.CMService().ApplyState(r.Context(), newProfile, clients)
+		results, err := internal.ApplyProfile(r.Context(), &newProfile, clients)
 		if err != nil {
 			instrumentation.UpdateAccountStateError()
 			logger.Error().Err(err).Msg("error applying state")
@@ -382,8 +381,7 @@ func getStatesIDPlaybook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	container := infrastructure.Container{}
-	playbook, err := container.CMService().PlaybookGenerator.GeneratePlaybook(profile.StateConfig())
+	playbook, err := internal.GeneratePlaybook(profile.StateConfig())
 	if err != nil {
 		instrumentation.PlaybookRequestError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)
@@ -420,8 +418,7 @@ func postStatesPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	container := infrastructure.Container{}
-	playbook, err := container.CMService().PlaybookGenerator.GeneratePlaybook(stateConfig)
+	playbook, err := internal.GeneratePlaybook(stateConfig)
 	if err != nil {
 		instrumentation.PlaybookRequestError()
 		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)

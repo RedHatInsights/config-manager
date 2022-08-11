@@ -1,77 +1,130 @@
-package dispatcher_test
+package dispatcher
 
 import (
-	"config-manager/infrastructure/persistence/dispatcher"
-	"config-manager/utils"
+	"config-manager/internal/config"
+	"config-manager/internal/http/staticmux"
+	"config-manager/internal/url"
 	"context"
+	"log"
+	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 )
 
-var inputs = []dispatcher.RunInput{
-	dispatcher.RunInput{
-		Recipient: "276c4685-fdfb-4172-930f-4148b8340c2e",
-		Account:   "0000001",
-		Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
-		Labels: &dispatcher.RunInput_Labels{
-			AdditionalProperties: map[string]string{
-				"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+func TestDispatch(t *testing.T) {
+	tests := []struct {
+		description string
+		input       struct {
+			runs     []RunInput
+			response []byte
+		}
+		want []RunCreated
+	}{
+		{
+			description: "two responses",
+			input: struct {
+				runs     []RunInput
+				response []byte
+			}{
+				runs: []RunInput{
+					{
+						Recipient: "276c4685-fdfb-4172-930f-4148b8340c2e",
+						Account:   "0000001",
+						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Labels: &RunInput_Labels{
+							AdditionalProperties: map[string]string{
+								"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+							},
+						},
+					},
+					{
+						Recipient: "9a76b28b-0e09-41c8-bf01-79d1bef72646",
+						Account:   "0000001",
+						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Labels: &RunInput_Labels{
+							AdditionalProperties: map[string]string{
+								"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+							},
+						},
+					},
+				},
+				response: []byte(`[{"code":200,"id":"3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},{"code":200,"id":"74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"}]`),
+			},
+			want: []RunCreated{
+				{
+					Code: 200,
+					Id:   func(s string) *string { return &s }("3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"),
+				},
+				{
+					Code: 200,
+					Id:   func(s string) *string { return &s }("74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"),
+				},
 			},
 		},
-	},
-	dispatcher.RunInput{
-		Recipient: "9a76b28b-0e09-41c8-bf01-79d1bef72646",
-		Account:   "0000001",
-		Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
-		Labels: &dispatcher.RunInput_Labels{
-			AdditionalProperties: map[string]string{
-				"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+		{
+			description: "missing responses",
+			input: struct {
+				runs     []RunInput
+				response []byte
+			}{
+				runs: []RunInput{
+					{
+						Recipient: "276c4685-fdfb-4172-930f-4148b8340c2e",
+						Account:   "0000001",
+						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Labels: &RunInput_Labels{
+							AdditionalProperties: map[string]string{
+								"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+							},
+						},
+					},
+					{
+						Recipient: "9a76b28b-0e09-41c8-bf01-79d1bef72646",
+						Account:   "0000001",
+						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Labels: &RunInput_Labels{
+							AdditionalProperties: map[string]string{
+								"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
+							},
+						},
+					},
+				},
+				response: []byte(`[{"code":404},{"code":404}]`),
+			},
+			want: []RunCreated{
+				{
+					Code: 404,
+				},
+				{
+					Code: 404,
+				},
 			},
 		},
-	},
-}
+	}
 
-func TestDispatchSuccess(t *testing.T) {
-	response := `[
-		{"code": 200, "id": "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7"},
-		{"code": 200, "id": "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4"}
-	]`
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			config.DefaultConfig.DispatcherHost.Value = url.MustParse("http://localhost:8080")
 
-	doer := utils.SetupMockHTTPClient(response, 207)
+			mux := staticmux.StaticMux{}
+			mux.AddResponse("/internal/dispatch", 207, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
+			server := http.Server{Addr: config.DefaultConfig.DispatcherHost.Value.Host, Handler: &mux}
+			defer server.Close()
+			go func() {
+				if err := server.ListenAndServe(); err != nil {
+					log.Print(err)
+				}
+			}()
 
-	dispatcher := dispatcher.NewDispatcherClientWithDoer(doer)
+			got, err := NewDispatcherClient().Dispatch(context.Background(), test.input.runs)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	results, err := dispatcher.Dispatch(context.Background(), inputs)
-
-	assert.Nil(t, err)
-	assert.Equal(t, len(results), 2, "there should be two response objects")
-
-	assert.Equal(t, results[0].Code, 200, "the response code should be 200")
-	assert.Equal(t, *results[0].Id, "3d711f8b-77d0-4ed5-a5b5-1d282bf930c7", "The id from the response should be included")
-
-	assert.Equal(t, results[1].Code, 200, "the response code should be 200")
-	assert.Equal(t, *results[1].Id, "74368f32-4e6d-4ea2-9b8f-22dac89f9ae4", "The id from the response should be included")
-}
-
-func TestDispatchNotFound(t *testing.T) {
-	response := `[
-		{"code": 404},
-		{"code": 404}
-	]`
-
-	doer := utils.SetupMockHTTPClient(response, 207)
-
-	dispatcher := dispatcher.NewDispatcherClientWithDoer(doer)
-
-	results, err := dispatcher.Dispatch(context.Background(), inputs)
-
-	assert.Nil(t, err)
-	assert.Equal(t, len(results), 2, "there should be two response objects")
-
-	assert.Equal(t, results[0].Code, 404, "the response code should be 404")
-	assert.Nil(t, results[0].Id)
-
-	assert.Equal(t, results[1].Code, 404, "the response code should be 404")
-	assert.Nil(t, results[1].Id)
+			if !cmp.Equal(got, test.want) {
+				t.Errorf("%v", cmp.Diff(got, test.want))
+			}
+		})
+	}
 }
