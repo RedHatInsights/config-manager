@@ -1,0 +1,5 @@
+package: cloudconnector
+generate:
+  client: true
+  models: true
+output: cloudconnector.gen.go
