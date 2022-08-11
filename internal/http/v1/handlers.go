@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"config-manager/api/instrumentation"
 	"config-manager/infrastructure/persistence/inventory"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
+	"config-manager/internal/instrumentation"
 	"encoding/json"
 	"fmt"
 	"io"
