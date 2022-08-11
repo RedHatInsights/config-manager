@@ -5,9 +5,12 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -105,7 +108,10 @@ func TestDispatch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			config.DefaultConfig.DispatcherHost.Value = url.MustParse("http://localhost:8080")
+			rand.Seed(time.Now().UnixNano())
+			port := uint32(rand.Int31n(10000-8080) + 8080)
+
+			config.DefaultConfig.DispatcherHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 
 			mux := staticmux.StaticMux{}
 			mux.AddResponse("/internal/dispatch", 207, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
