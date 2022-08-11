@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"config-manager/internal/config"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -56,7 +55,7 @@ func GeneratePlaybook(state map[string]string) (string, error) {
 
 			for _, f := range files {
 				if fi, err := os.Stat(f); !os.IsNotExist(err) {
-					content, err := ioutil.ReadFile(f)
+					content, err := os.ReadFile(f)
 					if err != nil {
 						log.Fatal().Err(err).Str("filename", f).Msg("cannot read file")
 					}
