@@ -6,9 +6,12 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -71,7 +74,10 @@ func TestGetInventoryClients(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			config.DefaultConfig.InventoryHost.Value = url.MustParse("http://localhost:8080")
+			rand.Seed(time.Now().UnixNano())
+			port := uint32(rand.Int31n(10000-8080) + 8080)
+
+			config.DefaultConfig.InventoryHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 
 			mux := staticmux.StaticMux{}
 			mux.AddResponse("/api/inventory/v1/hosts", 200, test.input.response, map[string][]string{"Content-Type": {"application/json"}})

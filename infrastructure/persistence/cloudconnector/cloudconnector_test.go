@@ -5,9 +5,12 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -49,7 +52,10 @@ func TestGetConnections(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			rand.Seed(time.Now().UnixNano())
+			port := uint32(rand.Int31n(10000-8080) + 8080)
+
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 			config.DefaultConfig.CloudConnectorClientID = "test"
 			config.DefaultConfig.CloudConnectorPSK = "test"
 
@@ -123,7 +129,10 @@ func TestSendMessage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			rand.Seed(time.Now().UnixNano())
+			port := uint32(rand.Int31n(10000-8080) + 8080)
+
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 			config.DefaultConfig.CloudConnectorClientID = "test"
 			config.DefaultConfig.CloudConnectorPSK = "test"
 
@@ -198,7 +207,10 @@ func TestGetConnectionStatus(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse("http://localhost:8080")
+			rand.Seed(time.Now().UnixNano())
+			port := uint32(rand.Int31n(10000-8080) + 8080)
+
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 			config.DefaultConfig.CloudConnectorClientID = "test"
 			config.DefaultConfig.CloudConnectorPSK = "test"
 
