@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
+	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.44.36
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.17.0
@@ -29,7 +30,6 @@ require (
 )
 
 require (
-	github.com/RedHatInsights/tenant-utils v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
