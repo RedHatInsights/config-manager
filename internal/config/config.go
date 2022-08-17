@@ -129,11 +129,23 @@ func init() {
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
-		if clowder.LoadedConfig.Kafka.Brokers != nil {
-			broker := clowder.LoadedConfig.Kafka.Brokers[0]
-			if broker.Authtype != nil {
-				DefaultConfig.KafkaUsername = *broker.Sasl.Username
-				DefaultConfig.KafkaPassword = *broker.Sasl.Password
+		if clowder.LoadedConfig.Kafka != nil {
+			if len(clowder.LoadedConfig.Kafka.Brokers) >= 1 {
+				broker := clowder.LoadedConfig.Kafka.Brokers[0]
+				if broker.Authtype != nil {
+					DefaultConfig.KafkaUsername = *broker.Sasl.Username
+					DefaultConfig.KafkaPassword = *broker.Sasl.Password
+				}
+			}
+			for requestedName, topicConfig := range clowder.KafkaTopics {
+				switch requestedName {
+				case "platform.inventory.events":
+					DefaultConfig.KafkaInventoryTopic = topicConfig.Name
+				case "platform.playbook-dispatcher.runs":
+					DefaultConfig.KafkaDispatcherTopic = topicConfig.Name
+				case "platform.inventory.system-profile":
+					DefaultConfig.KafkaSystemProfileTopic = topicConfig.Name
+				}
 			}
 		}
 		DefaultConfig.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
