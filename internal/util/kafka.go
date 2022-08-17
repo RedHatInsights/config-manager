@@ -16,64 +16,49 @@ type kafkautil struct{}
 
 // NewReader creates a configured kafka.Reader.
 func (k kafkautil) NewReader(topic string) *kafka.Reader {
+	var dialer *kafka.Dialer
+
 	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
-		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaUsername,
-			Password: config.DefaultConfig.KafkaPassword,
+		dialer = &kafka.Dialer{
+			Timeout:   10 * time.Second,
+			DualStack: true,
+			SASLMechanism: plain.Mechanism{
+				Username: config.DefaultConfig.KafkaUsername,
+				Password: config.DefaultConfig.KafkaPassword,
+			},
 		}
-		dialer := &kafka.Dialer{
-			Timeout:       10 * time.Second,
-			DualStack:     true,
-			SASLMechanism: mechanism,
-		}
-		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
-			Topic:       topic,
-			GroupID:     config.DefaultConfig.KafkaGroupID,
-			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-			Dialer:      dialer,
-		})
-
-		return consumer
-	} else {
-		consumer := kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     config.DefaultConfig.KafkaBrokers.Values,
-			Topic:       topic,
-			GroupID:     config.DefaultConfig.KafkaGroupID,
-			StartOffset: config.DefaultConfig.KafkaConsumerOffset,
-		})
-
-		return consumer
 	}
+
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     config.DefaultConfig.KafkaBrokers.Values,
+		Topic:       topic,
+		GroupID:     config.DefaultConfig.KafkaGroupID,
+		StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+		Dialer:      dialer,
+	})
 }
 
 // NewWriter creates a configured kafka.Writer.
 func (k kafkautil) NewWriter(topic string) *kafka.Writer {
+	var transport *kafka.Transport
+
 	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
-		mechanism := plain.Mechanism{
-			Username: config.DefaultConfig.KafkaUsername,
-			Password: config.DefaultConfig.KafkaPassword,
-		}
-		sharedTransport := &kafka.Transport{
-			SASL: mechanism,
+		transport = &kafka.Transport{
+			SASL: plain.Mechanism{
+				Username: config.DefaultConfig.KafkaUsername,
+				Password: config.DefaultConfig.KafkaPassword,
+			},
 			TLS: &tls.Config{
 				MinVersion: tls.VersionTLS12,
 			},
 		}
-		producer := &kafka.Writer{
-			Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-			Topic:     topic,
-			Transport: sharedTransport,
-		}
 
-		return producer
-	} else {
-		producer := &kafka.Writer{
-			Addr:  kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
-			Topic: topic,
-		}
+	}
 
-		return producer
+	return &kafka.Writer{
+		Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+		Topic:     topic,
+		Transport: transport,
 	}
 }
 
