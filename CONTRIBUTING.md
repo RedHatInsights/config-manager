@@ -40,6 +40,18 @@ You only need to do this once.
 
 ### Start `minikube`
 
+`minikube` runs as a libvirt domain. Setting the default libvirt connection URI
+and adding your user account to the `libvirt` UNIX group makes interacting with
+libvirt easier.
+
+```sh
+echo "LIBVIRT_DEFAULT_URI=qemu:////system" >> ~/.bashrc
+sudo usermod -a -G libvirt $USER
+```
+
+Log out or reboot after adding yourself to the group to ensure the seat is
+completely logged out.
+
 ```sh
 minikube start --cpus 8 --disk-size 36GB --memory 16GB --addons=registry --driver=kvm2
 ```
