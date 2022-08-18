@@ -52,84 +52,84 @@ func handler(ctx context.Context, msg kafka.Message) {
 		logger.Error().Err(err).Msg("error getting event_type")
 		return
 	}
-	logger.Trace().Msgf("event_type = %v", eventType)
+	logger = logger.With().Str("event_type", eventType).Logger()
 
-	if eventType == "created" || eventType == "updated" {
-		value := &InventoryEvent{}
+	event := &InventoryEvent{}
 
-		if err := json.Unmarshal(msg.Value, &value); err != nil {
-			logger.Error().Err(err).Msg("couldn't unmarshal inventory event")
+	if err := json.Unmarshal(msg.Value, event); err != nil {
+		logger.Error().Err(err).Msg("cannot unmarshal inventory event")
+		return
+	}
+
+	if event.Host.Reporter != "cloud-connector" {
+		logger.Info().Str("reporter", event.Host.Reporter).Msg("ignoring host")
+		return
+	}
+
+	switch eventType {
+	case "created":
+		logger.Info().Msg("setting up new host for remote host configuration")
+		messageID, err := internal.SetupHost(ctx, event.Host)
+		if err != nil {
+			logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up up host")
+			return
+		}
+		logger.Info().Str("message_id", messageID).Msg("setup message sent to host")
+		fallthrough
+	case "updated":
+		var defaultState map[string]string
+		if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
+			logger.Error().Err(err).Msg("cannot unmarshal service config")
 			return
 		}
 
-		if value.Host.Reporter == "cloud-connector" {
-			if eventType == "created" {
-				logger.Info().Msg("new host detected; setting up for playbook execution")
-				messageID, err := internal.SetupHost(ctx, value.Host)
+		profile, err := db.GetOrInsertCurrentProfile(event.Host.OrgID, db.NewProfile(event.Host.OrgID, event.Host.Account, defaultState))
+		if err != nil {
+			logger.Error().Err(err).Str("org_id", event.Host.OrgID).Msg("cannot get profile from database")
+			return
+		}
+
+		if !profile.OrgID.Valid {
+			logger.Debug().Msg("profile missing org ID")
+			if config.DefaultConfig.TenantTranslatorHost != "" {
+				translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
+				orgID, err := translator.EANToOrgID(ctx, profile.AccountID.String)
 				if err != nil {
-					logger.Error().Err(err).Msgf("error setting up host: %v", value.Host)
+					logger.Error().Err(err).Msg("cannot translate EAN to orgID")
 					return
 				}
-				logger.Info().Msgf("Cloud-connector setup host message id: %v", messageID)
-			}
+				logger.Debug().Str("org_id", orgID).Str("account_number", profile.AccountID.String).Msg("translated EAN to orgID")
+				profile.OrgID.Valid = orgID != ""
+				profile.OrgID.String = orgID
 
-			var defaultState map[string]string
-			if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
-				log.Printf("cannot unmarshal data: %v", err)
+				if err := db.InsertProfile(*profile); err != nil {
+					logger.Error().Err(err).Msg("cannot insert profile")
+					return
+				}
+				logger.Debug().Msg("inserted new profile")
+			}
+		}
+
+		reqID, err := util.Kafka.GetHeader(msg, "request_id")
+		if err != nil {
+			logger.Error().Err(err).Msg("cannot get request_id header")
+			reqID = uuid.New().String()
+			logger.Debug().Str("request_id", reqID).Msg("created request ID")
+			ctx = context.WithValue(ctx, requestIDkey("request_id"), reqID)
+		}
+		logger = logger.With().Str("request_id", reqID).Logger()
+
+		if event.Host.SystemProfile.RHCState != profile.ID.String() {
+			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
+			host := []internal.Host{event.Host}
+			responses, err := internal.ApplyProfile(ctx, profile, host)
+			if err != nil {
+				logger.Error().Err(err).Msg("cannot apply state configuration")
 				return
 			}
-			profile, err := db.GetOrInsertCurrentProfile(value.Host.OrgID, db.NewProfile(value.Host.OrgID, value.Host.Account, defaultState))
-			if err != nil {
-				logger.Error().Err(err).Msgf("Error retrieving state for account: %v", value.Host.Account)
-				return
-			}
-
-			if !profile.OrgID.Valid {
-				logger.Debug().Msg("profile missing org ID")
-				if config.DefaultConfig.TenantTranslatorHost != "" {
-					translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
-					orgID, err := translator.EANToOrgID(ctx, profile.AccountID.String)
-					if err != nil {
-						logger.Error().Err(err).Msg("unable to translate EAN to orgID")
-						return
-					}
-					logger.Debug().Str("org_id", orgID).Str("account_number", profile.AccountID.String).Msg("translated EAN to orgID")
-					profile.OrgID.Valid = orgID != ""
-					profile.OrgID.String = orgID
-
-					if err := db.InsertProfile(*profile); err != nil {
-						log.Error().Err(err).Msg("unable to insert profile")
-						return
-					}
-					logger.Debug().Msg("inserted new profile")
-				}
-			}
-
-			reqID, err := util.Kafka.GetHeader(msg, "request_id")
-			if err != nil {
-				logger.Error().Err(err).Msg("Error getting request_id header")
-				k := requestIDkey("request_id")
-				reqID = uuid.New().String()
-				logger.Info().Msgf("Creating new request_id and adding to context: %v", reqID)
-				ctx = context.WithValue(ctx, k, reqID)
-			}
-			logger = logger.With().Str("request_id", reqID).Logger()
-
-			logger.Info().Msgf("Cloud-connector inventory event request_id: %s, data: %+v", reqID, value)
-
-			if value.Host.SystemProfile.RHCState != profile.ID.String() {
-				logger.Info().Msgf("rhc_state_id %s for client %s does not match current state id %s for account %s. Updating.",
-					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.ID.String(), profile.AccountID.String)
-				client := []internal.Host{value.Host}
-				responses, err := internal.ApplyProfile(ctx, profile, client)
-				if err != nil {
-					logger.Error().Err(err).Msg("error applying state")
-				}
-				logger.Info().Msgf("Message sent to the dispatcher. Results: %v", responses)
-			} else {
-				logger.Info().Msgf("rhc_state_id %s for client %s is up to date for account %s. Not updating.",
-					value.Host.SystemProfile.RHCState, value.Host.SystemProfile.RHCID, profile.AccountID.String)
-			}
+			logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
+		} else {
+			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 		}
 	}
 }
