@@ -13,6 +13,31 @@ apps:
           CM_CLOUD_CONNECTOR_HOST: http://cloud-connector:8080/
           TENANT_TRANSLATOR_HOST: mock
           TENANT_TRANSLATOR_IMPL: mock
+  - name: cloud-connector
+    components:
+      - name: cloud-connector-api
+        host: github
+        repo: RedHatInsights/cloud-connector
+        path: deploy/clowdapp.yml
+        parameters:
+          LOG_FORMAT: "TEXT"
+          MQTT_BROKER_TLS_SKIP_VERIFY: true
+          MQTT_BROKER_ADDRESS: tcp://mosquitto:1883
+          CLIENT_ID_TO_ACCOUNT_ID_IMPL: config_file_based
+          CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ACCOUNT_ID: "6399897"
+          CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID: "12671438"
+          SOURCES_RECORDER_IMPL: fake
+          CONNECTED_CLIENT_RECORDER_IMPL: inventory
+          INVENTORY_KAFKA_BATCH_SIZE: 1
+          RHC_MESSAGE_KAFKA_BATCH_SIZE: 1
+          API_SERVER_CONNECTION_LOOKUP_IMPL: relaxed
+          TENANT_TRANSLATOR_HOST: mock
+          TENANT_TRANSLATOR_IMPL: mock
+          TENANT_TRANSLATOR_MOCK_MAPPING: '{"12671438": "6399897"}'
+      - name: mosquitto-broker
+        host: github
+        repo: RedHatInsights/cloud-connector
+        path: deploy/mosquitto.yml
   - name: playbook-dispatcher
     components:
       - name: playbook-dispatcher
