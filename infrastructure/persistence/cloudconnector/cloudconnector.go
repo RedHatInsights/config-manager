@@ -145,11 +145,11 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
-	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connection status")
 		return "unknown", nil, err
 	}
+	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
 	response, err := ParsePostConnectionStatusResponse(resp)
 	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
 	if err != nil {
