@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/infrastructure/persistence/inventory"
 	"config-manager/internal"
 	"config-manager/internal/config"
@@ -130,12 +131,13 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		results, err := internal.ApplyProfile(r.Context(), &newProfile, clients)
+		internal.ApplyProfile(r.Context(), &newProfile, clients, func(results []dispatcher.RunCreated) {
+			logger.Info().Interface("results", results).Msg("response from dispatcher")
+		})
 		if err != nil {
 			instrumentation.UpdateAccountStateError()
 			logger.Error().Err(err).Msg("error applying state")
 		}
-		logger.Info().Interface("results", results).Msg("response from dispatcher")
 	}()
 
 	resp := accountState{
