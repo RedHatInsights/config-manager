@@ -1,6 +1,7 @@
 package inventoryconsumer
 
 import (
+	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
@@ -122,12 +123,9 @@ func handler(ctx context.Context, msg kafka.Message) {
 		if event.Host.SystemProfile.RHCState != profile.ID.String() {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
 			host := []internal.Host{event.Host}
-			responses, err := internal.ApplyProfile(ctx, profile, host)
-			if err != nil {
-				logger.Error().Err(err).Msg("cannot apply state configuration")
-				return
-			}
-			logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
+			internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
+				logger.Info().Interface("responses", responses).Msg("received response from playbook-worker")
+			})
 		} else {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 		}

@@ -5,6 +5,7 @@ import (
 	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
+	"config-manager/internal/util"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -27,63 +28,52 @@ type Host struct {
 }
 
 // ApplyProfile applies the current profile to the specified hosts.
-func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host) ([]dispatcher.RunCreated, error) {
-	var err error
-	var results []dispatcher.RunCreated
-	var inputs []dispatcher.RunInput
+func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn func(resp []dispatcher.RunCreated)) {
+	logger := log.With().Str("account_id", profile.AccountID.String).Str("org_id", profile.OrgID.String).Logger()
 
 	if !profile.Active {
-		log.Info().Msgf("account_state.apply_state is false; skipping configuration")
-		return []dispatcher.RunCreated{}, nil
+		logger.Info().Interface("profile", profile).Msg("skipping application of inactive profile")
+		return
 	}
 
-	log.Info().Interface("state", profile.StateConfig()).Interface("clients", hosts).Msgf("start applying state")
-	for i, client := range hosts {
-		logger := log.With().Str("client_id", client.SystemProfile.RHCID).Interface("client", client).Logger()
+	logger.Debug().Int("num_hosts", len(hosts)).Msg("applying profile for hosts")
 
-		if client.Reporter == "cloud-connector" {
-			logger.Debug().Msg("setting up host for playbook execution")
-			if _, err := SetupHost(context.Background(), client); err != nil {
-				logger.Error().Err(err).Msg("cannot set up host for playbook execution")
-				continue
-			}
+	runs := make([]dispatcher.RunInput, 0, len(hosts))
+	for _, host := range hosts {
+		if host.Reporter != "cloud-connector" {
+			continue
 		}
-
-		logger.Info().Msg("dispatching work for client")
-		input := dispatcher.RunInput{
-			Recipient: client.SystemProfile.RHCID,
+		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
+		run := dispatcher.RunInput{
+			Recipient: host.SystemProfile.RHCID,
 			Account:   profile.AccountID.String,
 			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
 			Labels: &dispatcher.RunInput_Labels{
 				AdditionalProperties: map[string]string{
 					"state_id": profile.ID.String(),
-					"id":       client.ID,
+					"id":       host.ID,
 				},
 			},
 		}
-		logger.Debug().Interface("run_input", input).Msg("created run input")
-
-		inputs = append(inputs, input)
-
-		if len(inputs) == config.DefaultConfig.DispatcherBatchSize || i == len(hosts)-1 {
-			if inputs != nil {
-				logger.Debug().Interface("inputs", inputs).Msg("dispatching runs to playbook-dispatcher")
-				client := dispatcher.NewDispatcherClient()
-				res, err := client.Dispatch(ctx, inputs)
-				if err != nil {
-					logger.Error().Err(err).Msg("cannot dispatch work to playbook dispatcher - giving up")
-					continue
-				}
-
-				results = append(results, res...)
-				inputs = nil
-				logger.Debug().Interface("results", results).Msg("results from dispatch")
-			}
-		}
+		runs = append(runs, run)
 	}
-	log.Info().Msg("finish applying state")
 
-	return results, err
+	if err := util.Batch.All(len(runs), config.DefaultConfig.DispatcherBatchSize, func(start, end int) error {
+		go func() {
+			log.Debug().Interface("batch_run", runs[start:end]).Msg("batching runs")
+
+			resp, err := dispatcher.NewDispatcherClient().Dispatch(ctx, runs[start:end])
+			if err != nil {
+				logger.Error().Err(err).Msg("cannot dispatch to playbook-dispatcher")
+				return
+			}
+			logger.Trace().Interface("runs_created", resp).Msg("dispatched work to playbook-dispatcher")
+			fn(resp)
+		}()
+		return nil
+	}); err != nil {
+		logger.Error().Err(err).Msg("cannot batch work")
+	}
 }
 
 // SetupHost sends a message to the host through cloud-connector to install the
