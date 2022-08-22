@@ -60,7 +60,7 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 
 	if err := util.Batch.All(len(runs), config.DefaultConfig.DispatcherBatchSize, func(start, end int) error {
 		go func() {
-			log.Debug().Interface("batch_run", runs[start:end]).Msg("batching runs")
+			log.Debug().Int("start", start).Int("end", end).Msg("batching runs")
 
 			resp, err := dispatcher.NewDispatcherClient().Dispatch(ctx, runs[start:end])
 			if err != nil {
