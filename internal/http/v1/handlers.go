@@ -114,7 +114,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	inventoryResp, err := inventoryClient.GetInventoryClients(r.Context(), 1)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("uanble to get inventory clients: %v", err), logger)
+		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
 		return
 	}
 	clients = append(clients, inventoryResp.Results...)
