@@ -124,7 +124,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
 			host := []internal.Host{event.Host}
 			internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
-				logger.Info().Interface("responses", responses).Msg("received response from playbook-worker")
+				logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
 			})
 		} else {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
