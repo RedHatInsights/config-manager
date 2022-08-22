@@ -60,9 +60,9 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 
 	if err := util.Batch.All(len(runs), config.DefaultConfig.DispatcherBatchSize, func(start, end int) error {
 		go func() {
-			log.Debug().Int("start", start).Int("end", end).Msg("batching runs")
+			log.Debug().Int("start", start).Int("end+1", end+1).Msg("batching runs")
 
-			resp, err := dispatcher.NewDispatcherClient().Dispatch(ctx, runs[start:end])
+			resp, err := dispatcher.NewDispatcherClient().Dispatch(ctx, runs[start:end+1])
 			if err != nil {
 				logger.Error().Err(err).Msg("cannot dispatch to playbook-dispatcher")
 				return
