@@ -57,6 +57,7 @@ func (c *InventoryClient) buildURL(page int) string {
 	}
 	Url.Path += "/api/inventory/v1/hosts"
 	params := url.Values{}
+	params.Add("registered_with", "cloud-connector")
 	params.Add("filter[system_profile][rhc_client_id]", "not_nil")
 	params.Add("fields[system_profile]", "rhc_client_id,rhc_config_state")
 	params.Add("page", fmt.Sprintf("%d", page))

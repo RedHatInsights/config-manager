@@ -42,6 +42,7 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 	runs := make([]dispatcher.RunInput, 0, len(hosts))
 	for _, host := range hosts {
 		if _, has := host.PerReporterStaleness["cloud-connector"]; !has {
+			logger.Warn().Str("client_id", host.SystemProfile.RHCID).Msg("detected host without cloud-connector as a reporter")
 			continue
 		}
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
