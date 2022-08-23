@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,6 +11,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -24,6 +26,9 @@ var (
 	statements map[string]*sqlx.Stmt
 	driver     string
 )
+
+//go:embed migrations
+var migrations embed.FS
 
 // ParseError represents an error that ocurred when parsing URL query parameters
 // such as offset, orderBy and limit.
@@ -209,8 +214,8 @@ func CountProfiles(orgID string) (int, error) {
 // Migrate inspects the current active migration version and runs all necessary
 // steps to migrate all the way up. If reset is true, everything is deleted in
 // the database before applying migrations.
-func Migrate(migrationsPath string, reset bool) error {
-	m, err := newMigrate(db.DB, driver, migrationsPath)
+func Migrate(reset bool) error {
+	m, err := newMigrate(db.DB, driver)
 	if err != nil {
 		return fmt.Errorf("cannot create migration: %w", err)
 	}
@@ -223,7 +228,7 @@ func Migrate(migrationsPath string, reset bool) error {
 		// exists. In the postgres driver, an unexported function, ensureVersionTable,
 		// is called inside WithInstance. So we just reinitialize m to a new
 		// Migrate instance.
-		m, err = newMigrate(db.DB, driver, migrationsPath)
+		m, err = newMigrate(db.DB, driver)
 		if err != nil {
 			return fmt.Errorf("cannot create migration: %w", err)
 		}
@@ -272,7 +277,7 @@ func preparedStatement(query string) (*sqlx.Stmt, error) {
 	return stmt, nil
 }
 
-func newMigrate(db *sql.DB, driverName string, migrationsPath string) (*migrate.Migrate, error) {
+func newMigrate(db *sql.DB, driverName string) (*migrate.Migrate, error) {
 	var driver database.Driver
 	var err error
 	switch driverName {
@@ -285,7 +290,12 @@ func newMigrate(db *sql.DB, driverName string, migrationsPath string) (*migrate.
 		return nil, fmt.Errorf("unsupported driver: %v", driverName)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, driverName, driver)
+	migrationSource, err := iofs.New(migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create migration source: %w", err)
+	}
+
+	m, err := migrate.NewWithInstance("iofs", migrationSource, driverName, driver)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create migration: %w", err)
 	}

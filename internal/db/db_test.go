@@ -88,7 +88,7 @@ func TestInsertProfile(t *testing.T) {
 				}
 			}()
 
-			if err := Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -129,7 +129,7 @@ func TestGetCurrentProfile(t *testing.T) {
 				}
 			}()
 
-			if err := Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -179,7 +179,7 @@ func TestGetProfile(t *testing.T) {
 				}
 			}()
 
-			if err := Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -258,7 +258,7 @@ func TestGetProfiles(t *testing.T) {
 				}
 			}()
 
-			if err := Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -303,7 +303,7 @@ func TestCountProfiles(t *testing.T) {
 				}
 			}()
 
-			if err := Migrate("file://../../db/migrations", true); err != nil {
+			if err := Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 

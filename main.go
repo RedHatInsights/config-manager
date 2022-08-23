@@ -123,7 +123,7 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot open database")
 	}
 
-	if err := db.Migrate("file://./db/migrations", false); err != nil {
+	if err := db.Migrate(false); err != nil {
 		log.Fatal().Err(err).Msg("cannot migrate database")
 	}
 

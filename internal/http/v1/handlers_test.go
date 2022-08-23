@@ -108,7 +108,7 @@ func TestGetStates(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -188,7 +188,7 @@ func TestPostStates(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -272,7 +272,7 @@ func TestGetCurrentState(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -335,7 +335,7 @@ func TestGetStateByID(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -398,7 +398,7 @@ func TestPostManage(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -462,7 +462,7 @@ func TestGetStatesIDPlaybook(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
@@ -526,7 +526,7 @@ func TestPostStatesPreview(t *testing.T) {
 				}
 			}()
 
-			if err := db.Migrate("file://../../../db/migrations", true); err != nil {
+			if err := db.Migrate(true); err != nil {
 				t.Fatalf("failed to migrate database: %v", err)
 			}
 
