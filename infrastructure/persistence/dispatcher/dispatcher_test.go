@@ -109,7 +109,7 @@ func TestDispatch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			rand.Seed(time.Now().UnixNano())
-			port := uint32(rand.Int31n(10000-8080) + 8080)
+			port := uint32(rand.Int31n(65535-55535) + 55535)
 
 			config.DefaultConfig.DispatcherHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 
