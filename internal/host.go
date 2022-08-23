@@ -16,12 +16,13 @@ import (
 
 // Host represents a system record from the Inventory application.
 type Host struct {
-	ID            string `json:"id"`
-	Account       string `json:"account"`
-	OrgID         string `json:"org_id"`
-	DisplayName   string `json:"display_name"`
-	Reporter      string `json:"reporter"`
-	SystemProfile struct {
+	ID                   string                 `json:"id"`
+	Account              string                 `json:"account"`
+	OrgID                string                 `json:"org_id"`
+	DisplayName          string                 `json:"display_name"`
+	Reporter             string                 `json:"reporter"`
+	PerReporterStaleness map[string]interface{} `json:"per_reporter_staleness"`
+	SystemProfile        struct {
 		RHCID    string `json:"rhc_client_id"`
 		RHCState string `json:"rhc_config_state"`
 	} `json:"system_profile"`
@@ -40,7 +41,7 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 
 	runs := make([]dispatcher.RunInput, 0, len(hosts))
 	for _, host := range hosts {
-		if host.Reporter != "cloud-connector" {
+		if _, has := host.PerReporterStaleness["cloud-connector"]; !has {
 			continue
 		}
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
