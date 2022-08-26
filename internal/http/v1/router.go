@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"path"
 
-	chiprometheus "github.com/766b/chi-prometheus"
 	oapimiddleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -31,13 +30,12 @@ func NewMux() (*chi.Mux, error) {
 		JSON:     config.DefaultConfig.LogFormat.Value == "json",
 	})))
 	router.Use(identity.EnforceIdentity)
-	router.Use(chiprometheus.NewMiddleware("config-manager"))
 	router.Use(middleware.RequestID)
-	router.Get(path.Join(config.DefaultConfig.URLBasePath(), "openapi.json"), func(w http.ResponseWriter, r *http.Request) {
+	router.Get(path.Join("/", "openapi.json"), func(w http.ResponseWriter, r *http.Request) {
 		render.RenderJSON(w, r, http.StatusOK, spec, log.Logger)
 	})
 
-	router.Route(config.DefaultConfig.URLBasePath(), func(r chi.Router) {
+	router.Route("/", func(r chi.Router) {
 		r.Use(oapimiddleware.OapiRequestValidator(spec))
 		r.Post("/states", postStates)
 		r.Get("/states", getStates)
