@@ -209,13 +209,13 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 
 	for _, profile := range profiles {
 		s := stateArchive{
-			Account:   profile.AccountID.String,
+			Account:   db.JSONNullStringSafeValue(profile.AccountID),
 			ID:        profile.ID.String(),
-			Label:     profile.Label.String,
-			Initiator: profile.Creator.String,
+			Label:     db.JSONNullStringSafeValue(profile.Label),
+			Initiator: db.JSONNullStringSafeValue(profile.Creator),
 			CreatedAt: profile.CreatedAt.UTC(),
 			State:     make(map[string]string),
-			OrgID:     profile.OrgID.String,
+			OrgID:     db.JSONNullStringSafeValue(profile.OrgID),
 		}
 		s.State = profile.StateConfig()
 
@@ -269,12 +269,12 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := accountState{
-		Account:    profile.AccountID.String,
+		Account:    db.JSONNullStringSafeValue(profile.AccountID),
 		State:      profile.StateConfig(),
 		ID:         profile.ID.String(),
-		Label:      profile.Label.String,
+		Label:      db.JSONNullStringSafeValue(profile.Label),
 		ApplyState: profile.Active,
-		OrgID:      profile.OrgID.String,
+		OrgID:      db.JSONNullStringSafeValue(profile.OrgID),
 	}
 	render.RenderJSON(w, r, http.StatusOK, resp, logger)
 }
@@ -306,13 +306,13 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := stateArchive{
-		Account:   profile.AccountID.String,
+		Account:   db.JSONNullStringSafeValue(profile.AccountID),
 		ID:        profile.ID.String(),
-		Label:     profile.Label.String,
-		Initiator: profile.Creator.String,
+		Label:     db.JSONNullStringSafeValue(profile.Label),
+		Initiator: db.JSONNullStringSafeValue(profile.Creator),
 		CreatedAt: profile.CreatedAt.UTC(),
 		State:     profile.StateConfig(),
-		OrgID:     profile.OrgID.String,
+		OrgID:     db.JSONNullStringSafeValue(profile.OrgID),
 	}
 	render.RenderJSON(w, r, http.StatusOK, resp, logger)
 }

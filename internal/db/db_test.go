@@ -111,8 +111,8 @@ func TestGetCurrentProfile(t *testing.T) {
 			input: "2",
 			want: &Profile{
 				ID:        uuid.MustParse("84d3724c-1944-41d1-a12a-235eddca7771"),
-				AccountID: sql.NullString{Valid: true, String: "1"},
-				OrgID:     sql.NullString{Valid: true, String: "2"},
+				AccountID: &JSONNullString{NullString: sql.NullString{Valid: true, String: "1"}},
+				OrgID:     &JSONNullString{NullString: sql.NullString{Valid: true, String: "2"}},
 				CreatedAt: time.Unix(0, 0),
 			},
 		},
@@ -161,8 +161,8 @@ func TestGetProfile(t *testing.T) {
 			input: "84d3724c-1944-41d1-a12a-235eddca7771",
 			want: &Profile{
 				ID:        uuid.MustParse("84d3724c-1944-41d1-a12a-235eddca7771"),
-				AccountID: sql.NullString{Valid: true, String: "1"},
-				OrgID:     sql.NullString{Valid: true, String: "2"},
+				AccountID: &JSONNullString{NullString: sql.NullString{Valid: true, String: "1"}},
+				OrgID:     &JSONNullString{NullString: sql.NullString{Valid: true, String: "2"}},
 				CreatedAt: time.Unix(0, 0),
 			},
 		},
@@ -227,8 +227,8 @@ func TestGetProfiles(t *testing.T) {
 			want: []Profile{
 				{
 					ID:           uuid.MustParse("b5db9cbc-4ecd-464b-b416-3a6cd67af87a"),
-					AccountID:    sql.NullString{Valid: true, String: "1"},
-					OrgID:        sql.NullString{Valid: true, String: "2"},
+					AccountID:    &JSONNullString{NullString: sql.NullString{Valid: true, String: "1"}},
+					OrgID:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "2"}},
 					CreatedAt:    time.Unix(0, 0),
 					Insights:     false,
 					Remediations: false,
@@ -236,8 +236,8 @@ func TestGetProfiles(t *testing.T) {
 				},
 				{
 					ID:           uuid.MustParse("3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf"),
-					AccountID:    sql.NullString{Valid: true, String: "1"},
-					OrgID:        sql.NullString{Valid: true, String: "2"},
+					AccountID:    &JSONNullString{NullString: sql.NullString{Valid: true, String: "1"}},
+					OrgID:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "2"}},
 					CreatedAt:    time.Unix(0, 0),
 					Insights:     true,
 					Remediations: true,

@@ -2,33 +2,34 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Profile struct {
-	ID           uuid.UUID      `db:"profile_id"`
-	Name         sql.NullString `db:"name"`
-	Label        sql.NullString `db:"label"`
-	AccountID    sql.NullString `db:"account_id"`
-	OrgID        sql.NullString `db:"org_id"`
-	CreatedAt    time.Time      `db:"created_at"`
-	Active       bool           `db:"active"`
-	Creator      sql.NullString `db:"creator"`
-	Insights     bool           `db:"insights"`
-	Remediations bool           `db:"remediations"`
-	Compliance   bool           `db:"compliance"`
+	ID           uuid.UUID       `json:"profile_id" db:"profile_id"`
+	Name         *JSONNullString `json:"name,omitempty" db:"name"`
+	Label        *JSONNullString `json:"label,omitempty" db:"label"`
+	AccountID    *JSONNullString `json:"account_id,omitempty" db:"account_id"`
+	OrgID        *JSONNullString `json:"org_id,omitempty" db:"org_id"`
+	CreatedAt    time.Time       `json:"created_at" db:"created_at"`
+	Active       bool            `json:"active" db:"active"`
+	Creator      *JSONNullString `json:"creator,omitempty" db:"creator"`
+	Insights     bool            `json:"insights" db:"insights"`
+	Remediations bool            `json:"remediations" db:"remediations"`
+	Compliance   bool            `json:"compliance" db:"compliance"`
 }
 
 // NewProfile creates a new, default Profile.
 func NewProfile(orgID string, accountID string, state map[string]string) *Profile {
 	profile := Profile{
 		ID:        uuid.New(),
-		Label:     sql.NullString{Valid: true, String: accountID + "-" + uuid.New().String()},
-		AccountID: sql.NullString{Valid: accountID != "", String: accountID},
-		OrgID:     sql.NullString{Valid: orgID != "", String: orgID},
-		Creator:   sql.NullString{Valid: true, String: "redhat"},
+		Label:     &JSONNullString{NullString: sql.NullString{Valid: true, String: accountID + "-" + uuid.New().String()}},
+		AccountID: &JSONNullString{NullString: sql.NullString{Valid: accountID != "", String: accountID}},
+		OrgID:     &JSONNullString{NullString: sql.NullString{Valid: orgID != "", String: orgID}},
+		Creator:   &JSONNullString{NullString: sql.NullString{Valid: true, String: "redhat"}},
 		CreatedAt: time.Now(),
 		Active:    true,
 	}
@@ -43,7 +44,7 @@ func CopyProfile(from Profile) Profile {
 	return Profile{
 		ID:           uuid.New(),
 		Name:         from.Name,
-		Label:        sql.NullString{Valid: true, String: from.AccountID.String + "-" + uuid.New().String()},
+		Label:        &JSONNullString{NullString: sql.NullString{Valid: true, String: from.AccountID.String + "-" + uuid.New().String()}},
 		AccountID:    from.AccountID,
 		OrgID:        from.OrgID,
 		CreatedAt:    time.Now(),
@@ -126,6 +127,45 @@ func (n *JSONNullBool) UnmarshalJSON(data []byte) error {
 		n.Valid = false
 		n.Bool = false
 	}
+
+	return nil
+}
+
+// JSONNullString represents a string that may be null simultaneously in a SQL
+// data field and a JSON value. JSONNullString implements the json.Marshaler and
+// json.Unmarshaler interfaces so it can be marshalled and unmarshalled to and
+// from a JSON value.
+type JSONNullString struct {
+	sql.NullString
+}
+
+// JSONNullStringSafeValue returns the string value of n if it is a valid value,
+// otherwise it returns "".
+func JSONNullStringSafeValue(n *JSONNullString) string {
+	if n != nil && n.Valid {
+		return n.String
+	}
+	return ""
+}
+
+func (n JSONNullString) MarshalJSON() ([]byte, error) {
+	if n.Valid {
+		return json.Marshal(n.String)
+	}
+	return []byte(`""`), nil
+}
+
+func (n *JSONNullString) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		n.Valid = false
+		n.String = ""
+		return nil
+	}
+	err := json.Unmarshal(data, &n.String)
+	if err != nil {
+		return err
+	}
+	n.Valid = err == nil
 
 	return nil
 }
