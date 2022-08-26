@@ -1,4 +1,4 @@
-package v1
+package render
 
 import (
 	"net/http"
@@ -7,7 +7,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func renderPlain(w http.ResponseWriter, r *http.Request, statusCode int, body string, logger zerolog.Logger) {
+// RenderPlain writes a plain text response to the response writer, logging the
+// response at a level appropriate to the status code.
+func RenderPlain(w http.ResponseWriter, r *http.Request, statusCode int, body string, logger zerolog.Logger) {
 	render.Status(r, statusCode)
 	render.PlainText(w, r, body)
 
@@ -23,7 +25,9 @@ func renderPlain(w http.ResponseWriter, r *http.Request, statusCode int, body st
 	}
 }
 
-func renderJSON(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}, logger zerolog.Logger) {
+// RenderJSON writes a JSON object response to the response writer, logging the
+// response at a level appropriate to the status code.
+func RenderJSON(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}, logger zerolog.Logger) {
 	render.Status(r, statusCode)
 	render.JSON(w, r, body)
 
@@ -39,7 +43,9 @@ func renderJSON(w http.ResponseWriter, r *http.Request, statusCode int, body int
 	}
 }
 
-func renderNone(w http.ResponseWriter, r *http.Request, statusCode int, logger zerolog.Logger) {
+// RenderNone writes only the status code to the response writer, logging the
+// response at a level appropriate to the status code.
+func RenderNone(w http.ResponseWriter, r *http.Request, statusCode int, logger zerolog.Logger) {
 	render.Status(r, statusCode)
 
 	logger = logger.With().Int("status_code", statusCode).Str("status_text", http.StatusText(statusCode)).Logger()
