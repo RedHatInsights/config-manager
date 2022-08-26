@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	fields = `profile_id, name, label, account_id, org_id, created_at, active, creator, insights, remediations, compliance`
+	fields = `profile_id, name, label, account_id, org_id, timezone('UTC', created_at) AS created_at, active, creator, insights, remediations, compliance`
 )
 
 var (
