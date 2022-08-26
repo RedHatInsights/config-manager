@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 	"time"
 
 	"github.com/sgreben/flagvar"
@@ -15,7 +15,6 @@ import (
 
 // Config stores values that are used to configure the application.
 type Config struct {
-	APIVersion              string
 	AppName                 string
 	AWSAccessKeyId          string
 	AWSRegion               string
@@ -60,14 +59,13 @@ type Config struct {
 	WebPort                 int
 }
 
-func (c *Config) URLBasePath() string {
-	return filepath.Join("/", c.URLPathPrefix, c.AppName, c.APIVersion)
+func (c *Config) URLBasePath(apiVersion string) string {
+	return path.Join("/", c.URLPathPrefix, c.AppName, apiVersion)
 }
 
 // DefaultConfig is the default configuration variable, providing access to
 // configuration values globally.
 var DefaultConfig Config = Config{
-	APIVersion:              "v1",
 	AppName:                 "config-manager",
 	AWSAccessKeyId:          os.Getenv("CW_AWS_ACCESS_KEY_ID"),
 	AWSRegion:               "us-east-1",
@@ -160,7 +158,6 @@ func init() {
 func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, errorHandling)
 
-	fs.StringVar(&DefaultConfig.APIVersion, "api-version", DefaultConfig.APIVersion, "API version used in the URL path")
 	fs.StringVar(&DefaultConfig.AppName, "app-name", DefaultConfig.AppName, "name of the application used in the URL path")
 	fs.StringVar(&DefaultConfig.AWSAccessKeyId, "aws-access-key-id", DefaultConfig.AWSAccessKeyId, "CloudWatch access key ID")
 	fs.StringVar(&DefaultConfig.AWSRegion, "aws-region", DefaultConfig.AWSRegion, "CloudWatch AWS region")

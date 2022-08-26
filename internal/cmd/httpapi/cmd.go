@@ -6,7 +6,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
 
+	chiprometheus "github.com/766b/chi-prometheus"
+	"github.com/go-chi/chi/v5"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/rs/zerolog/log"
 )
@@ -17,12 +20,18 @@ var Command ffcli.Command = ffcli.Command{
 	Exec: func(ctx context.Context, args []string) error {
 		log.Info().Str("command", "http-api").Msg("starting command")
 
-		router, err := v1.NewMux()
+		v1r, err := v1.NewMux()
 		if err != nil {
 			return fmt.Errorf("cannot create HTTP router: %w", err)
 		}
 
-		if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.WebPort), router); err != nil {
+		router := chi.NewMux()
+		router.Use(chiprometheus.NewMiddleware(config.DefaultConfig.AppName))
+		router.Mount(path.Join("/", config.DefaultConfig.URLPathPrefix, config.DefaultConfig.AppName, "v1"), v1r)
+
+		addr := fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.WebPort)
+		log.Info().Str("addr", addr).Msg("listening and serving")
+		if err := http.ListenAndServe(addr, router); err != nil {
 			return fmt.Errorf("cannot listen on port %v: %w", config.DefaultConfig.WebPort, err)
 		}
 
