@@ -4,6 +4,7 @@ package v1
 
 import (
 	"config-manager/internal/config"
+	"config-manager/internal/http/render"
 	"fmt"
 	"net/http"
 	"path"
@@ -33,7 +34,7 @@ func NewMux() (*chi.Mux, error) {
 	router.Use(chiprometheus.NewMiddleware("config-manager"))
 	router.Use(middleware.RequestID)
 	router.Get(path.Join(config.DefaultConfig.URLBasePath(), "openapi.json"), func(w http.ResponseWriter, r *http.Request) {
-		renderJSON(w, r, http.StatusOK, spec, log.Logger)
+		render.RenderJSON(w, r, http.StatusOK, spec, log.Logger)
 	})
 
 	router.Route(config.DefaultConfig.URLBasePath(), func(r chi.Router) {

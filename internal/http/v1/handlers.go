@@ -6,6 +6,7 @@ import (
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
+	"config-manager/internal/http/render"
 	"config-manager/internal/instrumentation"
 	"encoding/json"
 	"fmt"
@@ -49,7 +50,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 	logger = log.With().Interface("identity", id).Logger()
@@ -57,7 +58,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to read request body: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to read request body: %v", err), logger)
 		return
 	}
 	defer r.Body.Close()
@@ -65,14 +66,14 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	var statemap map[string]string
 	if err := json.Unmarshal(data, &statemap); err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to unmarshal json: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to unmarshal json: %v", err), logger)
 		return
 	}
 
 	currentProfile, err := db.GetCurrentProfile(id.Identity.OrgID)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get current profile for account: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get current profile for account: %v", err), logger)
 		return
 	}
 	logger.Trace().Interface("current_profile", currentProfile).Msg("found current profile")
@@ -80,7 +81,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	equal, err := internal.VerifyStatePayload(currentProfile.StateConfig(), statemap)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to verify state map: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to verify state map: %v", err), logger)
 		return
 	}
 
@@ -93,7 +94,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 			OrgID:      currentProfile.OrgID.String,
 			State:      currentProfile.StateConfig(),
 		}
-		renderJSON(w, r, http.StatusOK, resp, logger)
+		render.RenderJSON(w, r, http.StatusOK, resp, logger)
 		return
 	}
 
@@ -105,7 +106,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 
 	if err := db.InsertProfile(newProfile); err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to insert new profile: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to insert new profile: %v", err), logger)
 		return
 	}
 
@@ -114,7 +115,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	inventoryResp, err := inventoryClient.GetInventoryClients(r.Context(), 1)
 	if err != nil {
 		instrumentation.UpdateAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
 		return
 	}
 	clients = append(clients, inventoryResp.Results...)
@@ -124,7 +125,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		res, err := inventoryClient.GetInventoryClients(r.Context(), page)
 		if err != nil {
 			instrumentation.UpdateAccountStateError()
-			renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
+			render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
 			return
 		}
 		clients = append(clients, res.Results...)
@@ -148,7 +149,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		OrgID:      newProfile.OrgID.String,
 		State:      newProfile.StateConfig(),
 	}
-	renderJSON(w, r, http.StatusOK, resp, logger)
+	render.RenderJSON(w, r, http.StatusOK, resp, logger)
 }
 
 // getStates returns a list of state archive records as filtered by the sortBy,
@@ -162,7 +163,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
 		instrumentation.GetStateChangesError()
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 	logger = log.With().Interface("identity", id).Logger()
@@ -182,7 +183,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 			i, err := strconv.ParseInt(r.URL.Query().Get(key), 10, 64)
 			if err != nil {
 				instrumentation.GetStateChangesError()
-				renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to parse '%v': %v", key, err), logger)
+				render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("unable to parse '%v': %v", key, err), logger)
 				return
 			}
 			*val = int(i)
@@ -192,7 +193,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 	total, err := db.CountProfiles(id.Identity.OrgID)
 	if err != nil {
 		instrumentation.GetStateChangesError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to count profiles: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to count profiles: %v", err), logger)
 		return
 	}
 	logger.Debug().Int("total", total).Msg("found profiles for account")
@@ -200,7 +201,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 	profiles, err := db.GetProfiles(id.Identity.OrgID, sortBy, limit, offset)
 	if err != nil {
 		instrumentation.GetStateChangesError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profiles: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profiles: %v", err), logger)
 		return
 	}
 
@@ -235,7 +236,7 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 		Results: states,
 	}
 
-	renderJSON(w, r, http.StatusOK, response, logger)
+	render.RenderJSON(w, r, http.StatusOK, response, logger)
 }
 
 // getCurrentState returns the current account state by selecting the current
@@ -248,7 +249,7 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity", logger)
 		return
 	}
 	logger = log.With().Interface("identity", id).Logger()
@@ -256,14 +257,14 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 	var defaultState map[string]string
 	if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to unmarshal json: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to unmarshal json: %v", err), logger)
 		return
 	}
 
 	profile, err := db.GetOrInsertCurrentProfile(id.Identity.OrgID, db.NewProfile(id.Identity.OrgID, id.Identity.AccountNumber, defaultState))
 	if err != nil {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profile: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get profile: %v", err), logger)
 		return
 	}
 
@@ -275,7 +276,7 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 		ApplyState: profile.Active,
 		OrgID:      profile.OrgID.String,
 	}
-	renderJSON(w, r, http.StatusOK, resp, logger)
+	render.RenderJSON(w, r, http.StatusOK, resp, logger)
 }
 
 // getStateByID returns an "account state" for the given ID.
@@ -285,7 +286,7 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 	logger = log.With().Interface("identity", id).Logger()
@@ -293,14 +294,14 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 	profileID := chi.URLParam(r, "id")
 	if profileID == "" {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusBadRequest, "cannot get ID from URL", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "cannot get ID from URL", logger)
 		return
 	}
 
 	profile, err := db.GetProfile(profileID)
 	if err != nil {
 		instrumentation.GetAccountStateError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get profile for ID: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get profile for ID: %v", err), logger)
 		return
 	}
 
@@ -313,7 +314,7 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 		State:     profile.StateConfig(),
 		OrgID:     profile.OrgID.String,
 	}
-	renderJSON(w, r, http.StatusOK, resp, logger)
+	render.RenderJSON(w, r, http.StatusOK, resp, logger)
 }
 
 // postManage sets the value of the apply_state field on the current account
@@ -323,19 +324,19 @@ func postManage(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot read request body: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot read request body: %v", err), logger)
 		return
 	}
 
 	var enabled bool
 	if err := json.Unmarshal(data, &enabled); err != nil {
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot unmarshal json: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot unmarshal json: %v", err), logger)
 		return
 	}
 
@@ -343,7 +344,7 @@ func postManage(w http.ResponseWriter, r *http.Request) {
 
 	currentProfile, err := db.GetCurrentProfile(id.Identity.OrgID)
 	if err != nil {
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get current profile: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get current profile: %v", err), logger)
 		return
 	}
 
@@ -351,11 +352,11 @@ func postManage(w http.ResponseWriter, r *http.Request) {
 	newProfile.Active = enabled
 
 	if err := db.InsertProfile(newProfile); err != nil {
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot insert profile: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot insert profile: %v", err), logger)
 		return
 	}
 
-	renderNone(w, r, http.StatusOK, logger)
+	render.RenderNone(w, r, http.StatusOK, logger)
 }
 
 func getStatesIDPlaybook(w http.ResponseWriter, r *http.Request) {
@@ -363,7 +364,7 @@ func getStatesIDPlaybook(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 	logger = logger.With().Interface("identity", id).Logger()
@@ -371,26 +372,26 @@ func getStatesIDPlaybook(w http.ResponseWriter, r *http.Request) {
 	profileID := chi.URLParam(r, "id")
 	if profileID == "" {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusBadRequest, "cannot get ID from URL", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "cannot get ID from URL", logger)
 		return
 	}
 
 	profile, err := db.GetProfile(profileID)
 	if err != nil {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get profile for ID: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get profile for ID: %v", err), logger)
 		return
 	}
 
 	playbook, err := internal.GeneratePlaybook(profile.StateConfig())
 	if err != nil {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)
 		return
 	}
 
 	instrumentation.PlaybookRequestOK()
-	renderPlain(w, r, http.StatusOK, playbook, logger)
+	render.RenderPlain(w, r, http.StatusOK, playbook, logger)
 }
 
 // postStatesPreview renders a playbook with the contents of the HTTP request
@@ -400,7 +401,7 @@ func postStatesPreview(w http.ResponseWriter, r *http.Request) {
 
 	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
 	if !ok {
-		renderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, "unable to assert X-Rh-Identity header", logger)
 		return
 	}
 	logger = logger.With().Interface("identity", id).Logger()
@@ -408,23 +409,23 @@ func postStatesPreview(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot read request body: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot read request body: %v", err), logger)
 		return
 	}
 
 	var stateConfig map[string]string
 	if err := json.Unmarshal(data, &stateConfig); err != nil {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot unmarshal request body: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusBadRequest, fmt.Sprintf("cannot unmarshal request body: %v", err), logger)
 		return
 	}
 
 	playbook, err := internal.GeneratePlaybook(stateConfig)
 	if err != nil {
 		instrumentation.PlaybookRequestError()
-		renderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)
+		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot generate playbook: %v", err), logger)
 		return
 	}
 
-	renderPlain(w, r, http.StatusOK, playbook, logger)
+	render.RenderPlain(w, r, http.StatusOK, playbook, logger)
 }
