@@ -10,6 +10,9 @@ const (
 	labelGetAccountState    = "get_account_state"
 	labelUpdateAccountState = "update_account_state"
 	labelGetStateChanges    = "get_state_changes"
+	labelGetProfiles        = "get_profiles"
+	labelGetProfile         = "get_profile"
+	labelCreateProfile      = "create_profile"
 )
 
 var (
@@ -59,6 +62,22 @@ func UpdateAccountStateError() {
 
 func GetStateChangesError() {
 	internalErrorTotal.WithLabelValues(labelDb, labelGetStateChanges).Inc()
+}
+
+func GetProfilesError() {
+	internalErrorTotal.WithLabelValues(labelDb, labelGetProfiles).Inc()
+}
+
+func GetProfileError() {
+	internalErrorTotal.WithLabelValues(labelDb, labelGetProfile).Inc()
+}
+
+func CreateProfileError() {
+	internalErrorTotal.WithLabelValues(labelDb, labelCreateProfile).Inc()
+}
+
+func GetPlaybookError() {
+	playbookRequestErrorTotal.Inc()
 }
 
 func PayloadVerificationError() {

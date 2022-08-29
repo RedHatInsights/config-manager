@@ -59,3 +59,24 @@ func RenderNone(w http.ResponseWriter, r *http.Request, statusCode int, logger z
 		logger.Debug().Msg("sent HTTP response")
 	}
 }
+
+// RenderRaw writes sets a Content-Type header and writes body to the response
+// writer unmodified, logging the response at a level appropriate to the status
+// code.
+func RenderRaw(w http.ResponseWriter, r *http.Request, statusCode int, contentType string, body []byte, logger zerolog.Logger) {
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(statusCode)
+	if _, err := w.Write(body); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	switch {
+	case statusCode >= 400:
+		logger.Error().Msg("sent HTTP response")
+	case statusCode >= 300:
+		logger.Info().Msg("sent HTTP response")
+	case statusCode >= 200:
+		logger.Debug().Msg("sent HTTP response")
+	}
+}

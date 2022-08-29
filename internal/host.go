@@ -30,7 +30,13 @@ type Host struct {
 
 // ApplyProfile applies the current profile to the specified hosts.
 func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn func(resp []dispatcher.RunCreated)) {
-	logger := log.With().Str("account_id", profile.AccountID.String).Str("org_id", profile.OrgID.String).Logger()
+	logger := log.With().Logger()
+	if profile.AccountID != nil && profile.AccountID.Valid {
+		logger = logger.With().Str("account_id", profile.AccountID.String).Logger()
+	}
+	if profile.OrgID != nil && profile.OrgID.Valid {
+		logger = logger.With().Str("org_id", profile.OrgID.String).Logger()
+	}
 
 	if !profile.Active {
 		logger.Info().Interface("profile", profile).Msg("skipping application of inactive profile")

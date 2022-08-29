@@ -96,3 +96,23 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (In
 	}
 	return results, nil
 }
+
+func (c *InventoryClient) GetAllInventoryClients(ctx context.Context) ([]internal.Host, error) {
+	var clients []internal.Host
+	inventoryResp, err := c.GetInventoryClients(ctx, 1)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get inventory clients: %w", err)
+	}
+	clients = append(clients, inventoryResp.Results...)
+
+	for len(clients) < inventoryResp.Total {
+		page := inventoryResp.Page + 1
+		res, err := c.GetInventoryClients(ctx, page)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get inventory clients: %w", err)
+		}
+		clients = append(clients, res.Results...)
+	}
+
+	return clients, nil
+}
