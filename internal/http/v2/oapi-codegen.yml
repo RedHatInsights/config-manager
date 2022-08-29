@@ -1,0 +1,4 @@
+package: v2
+generate:
+  embedded-spec: true
+output: v2.gen.go

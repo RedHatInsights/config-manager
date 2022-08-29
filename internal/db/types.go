@@ -42,9 +42,21 @@ func NewProfile(orgID string, accountID string, state map[string]string) *Profil
 // where appropriate.
 func CopyProfile(from Profile) Profile {
 	return Profile{
-		ID:           uuid.New(),
-		Name:         from.Name,
-		Label:        &JSONNullString{NullString: sql.NullString{Valid: true, String: from.AccountID.String + "-" + uuid.New().String()}},
+		ID:   uuid.New(),
+		Name: from.Name,
+		Label: func() *JSONNullString {
+			var val string
+			if from.AccountID != nil && from.AccountID.Valid {
+				val = from.AccountID.String + "-"
+			}
+			val = val + uuid.New().String()
+			return &JSONNullString{
+				NullString: sql.NullString{
+					Valid:  true,
+					String: val,
+				},
+			}
+		}(),
 		AccountID:    from.AccountID,
 		OrgID:        from.OrgID,
 		CreatedAt:    time.Now(),
@@ -54,6 +66,10 @@ func CopyProfile(from Profile) Profile {
 		Remediations: from.Remediations,
 		Compliance:   from.Compliance,
 	}
+}
+
+func (p Profile) Equal(q Profile) bool {
+	return p.Active == q.Active && p.Insights == q.Insights && p.Compliance == q.Compliance && p.Remediations == q.Remediations
 }
 
 // StateConfig formats the profile's state values as a "state map".
