@@ -61,7 +61,7 @@ apps:
       - name: host-inventory
         host: github
         repo: RedHatInsights/insights-host-inventory
-        path: deployment.yaml
+        path: deploy/clowdapp.yml
         parameters:
           BYPASS_RBAC: "true"
           XJOIN_SEARCH_HOST: xjoin-search
