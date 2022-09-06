@@ -9,6 +9,22 @@ if [ "${GITLAB_TOKEN}" == "" ]; then
     exit 1
 fi
 
+declare -a PROGRAMS
+PROGRAMS+=(
+    git
+    ht
+    jq
+    mktemp
+    yq
+)
+
+for PROGRAM in "${PROGRAMS[@]}"; do
+    if ! which "${PROGRAM}"; then
+        echo "missing required program: ${PROGRAM}"
+        exit 1
+    fi
+done
+
 TMPDIR=$(mktemp -d)
 
 SHORT_REF=$(git rev-parse --short HEAD)
