@@ -321,7 +321,7 @@
                     "org_id": {
                         "type": "string"
                     },
-                    "profile_id": {
+                    "id": {
                         "type": "string"
                     },
                     "compliance": {

@@ -9,7 +9,7 @@ import (
 )
 
 type Profile struct {
-	ID           uuid.UUID       `json:"profile_id" db:"profile_id"`
+	ID           uuid.UUID       `json:"id" db:"profile_id"`
 	Name         *JSONNullString `json:"name,omitempty" db:"name"`
 	Label        *JSONNullString `json:"label,omitempty" db:"label"`
 	AccountID    *JSONNullString `json:"account_id,omitempty" db:"account_id"`

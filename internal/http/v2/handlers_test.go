@@ -87,7 +87,7 @@ func TestGetProfiles(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"profile_id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false},{"profile_id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":true,"remediations":true,"compliance":true}]}`),
+				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false},{"id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":true,"remediations":true,"compliance":true}]}`),
 			},
 		},
 	}
@@ -151,7 +151,7 @@ func TestGetProfile(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"profile_id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false}`),
+				body: []byte(`{"id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false}`),
 			},
 		},
 		{
@@ -166,7 +166,7 @@ func TestGetProfile(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"profile_id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false}`),
+				body: []byte(`{"id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","account_id":"10064","org_id":"78606","created_at":"1970-01-01T00:00:00Z","active":false,"insights":false,"remediations":false,"compliance":false}`),
 			},
 		},
 	}
@@ -227,7 +227,7 @@ func TestCreateProfile(t *testing.T) {
 			description: "new profile values",
 			seed:        []byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at, insights, remediations, compliance) VALUES ('b5db9cbc-4ecd-464b-b416-3a6cd67af87a', '10064', '78606', '` + UNIXTime + `', FALSE, FALSE, FALSE);`),
 			ignoreMapEntries: func(k string, v interface{}) bool {
-				return k == "profile_id" || k == "label" || k == "created_at"
+				return k == "id" || k == "label" || k == "created_at"
 			},
 			input: request{
 				method: http.MethodGet,
@@ -268,7 +268,7 @@ func TestCreateProfile(t *testing.T) {
 				body: map[string]interface{}{
 					"account_id":   "10064",
 					"org_id":       "78606",
-					"profile_id":   "b5db9cbc-4ecd-464b-b416-3a6cd67af87a",
+					"id":           "b5db9cbc-4ecd-464b-b416-3a6cd67af87a",
 					"insights":     false,
 					"compliance":   false,
 					"remediations": false,
