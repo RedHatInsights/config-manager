@@ -32,7 +32,7 @@ func TestProfileMarshalJSON(t *testing.T) {
 				Remediations: true,
 				Compliance:   true,
 			},
-			want: []byte(`{"profile_id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
+			want: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
 		},
 	}
 
@@ -64,7 +64,7 @@ func TestProfileUnmarshalJSON(t *testing.T) {
 		wantError   error
 	}{
 		{
-			input: []byte(`{"profile_id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
+			input: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
 			want: Profile{
 				ID:           uuid.MustParse("a863569d-6e57-4082-ba80-20e0089738ff"),
 				Name:         &JSONNullString{NullString: sql.NullString{Valid: true, String: "default"}},
