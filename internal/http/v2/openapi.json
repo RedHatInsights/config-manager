@@ -72,6 +72,8 @@
                                     "required": [
                                         "total",
                                         "count",
+                                        "limit",
+                                        "offset",
                                         "results"
                                     ]
                                 }
