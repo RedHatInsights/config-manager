@@ -7,14 +7,6 @@
     "servers": [
         {
             "url": "/api/config-manager/v2"
-        },
-        {
-            "url": "https://api.console.stage.redhat.com/api/config-manager/v2",
-            "description": "Stage"
-        },
-        {
-            "url": "https://api.console.redhat.com/api/config-manager/v2",
-            "description": "Production"
         }
     ],
     "paths": {
