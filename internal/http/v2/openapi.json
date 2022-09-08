@@ -29,7 +29,8 @@
                         "in": "query",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "integer",
+                            "default": 50
                         }
                     },
                     {
@@ -37,7 +38,7 @@
                         "in": "query",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
