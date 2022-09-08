@@ -50,16 +50,16 @@
                                     "type": "object",
                                     "properties": {
                                         "total": {
-                                            "type": "number"
+                                            "type": "integer"
                                         },
                                         "count": {
-                                            "type": "number"
+                                            "type": "integer"
                                         },
                                         "limit": {
-                                            "type": "number"
+                                            "type": "integer"
                                         },
                                         "offset": {
-                                            "type": "number"
+                                            "type": "integer"
                                         },
                                         "results": {
                                             "type": "array",
