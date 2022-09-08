@@ -73,24 +73,10 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/400"
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/500"
                     }
                 }
             },
@@ -151,24 +137,10 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/400"
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/500"
                     }
                 }
             }
@@ -200,34 +172,13 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/400"
                     },
                     "404": {
-                        "description": "Not Found",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/404"
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/500"
                     }
                 }
             }
@@ -259,34 +210,13 @@
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/400"
                     },
                     "404": {
-                        "description": "Not Found",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/404"
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/500"
                     }
                 }
             }
@@ -326,6 +256,38 @@
                     },
                     "remediations": {
                         "type": "boolean"
+                    }
+                }
+            }
+        },
+        "responses": {
+            "400": {
+                "description": "Bad Request",
+                "content": {
+                    "text/plain": {
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "404": {
+                "description": "Not Found",
+                "content": {
+                    "text/plain": {
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "500": {
+                "description": "Internal Server Error",
+                "content": {
+                    "text/plain": {
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
