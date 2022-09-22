@@ -26,6 +26,9 @@ func (k kafkautil) NewReader(topic string) *kafka.Reader {
 				Username: config.DefaultConfig.KafkaUsername,
 				Password: config.DefaultConfig.KafkaPassword,
 			},
+			TLS: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
 		}
 	}
 
