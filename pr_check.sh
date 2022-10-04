@@ -1,4 +1,22 @@
 #!/bin/bash
+# --------------------------------------------
+# Export vars for helper scripts to use
+# --------------------------------------------
+# name of app-sre "application" folder this component lives in; needs to match for the push to quay.
+export COMPONENT="config-manager"
+# Needs to match the quay repo name set by app.yaml in app-interface
+export IMAGE="quay.io/cloudservices/config-manager"
+export WORKSPACE=${WORKSPACE:-$APP_ROOT}  # if running in jenkins, use the build's workspace
+export APP_ROOT=$(pwd)
+export NODE_BUILD_VERSION=16
+COMMON_BUILDER=https://raw.githubusercontent.com/RedHatInsights/insights-frontend-builder-common/master
+
+# --------------------------------------------
+# Options that must be configured by app owner
+# --------------------------------------------
+IQE_PLUGINS="config-manager"
+IQE_MARKER_EXPRESSION="smoke"
+IQE_FILTER_EXPRESSION=""
 #
 # Derived from:
 # https://github.com/RedHatInsights/bonfire/blob/master/cicd/examples/pr_check_template.sh
