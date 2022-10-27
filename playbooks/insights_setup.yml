@@ -37,5 +37,11 @@
           - rhc
           - rhc-worker-playbook
         state: latest
-    - name: Register Insights Client
+    - name: Discover whether insights-client is registered
+      command: insights-client --status
+      changed_when: false
+      failed_when: false
+      register: result
+    - name: Register insights-client
       command: insights-client --register
+      when: result.rc != 0
