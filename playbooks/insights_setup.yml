@@ -30,17 +30,12 @@
       aHpXbE41U1QwS1BXRTRja1lLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
       PQ==
   tasks:
-    - name: Update to the latest version of rhc
+    - name: Install latest insights-client, rhc, rhc-worker-playbook
       yum:
-        name: rhc
-        state: latest
-    - name: Update to the latest version of rhc-worker-playbook
-      yum:
-        name: rhc-worker-playbook
-        state: latest
-    - name: Install the latest version of 'insights-client'
-      yum:
-        name: insights-client
+        name:
+          - insights-client
+          - rhc
+          - rhc-worker-playbook
         state: latest
     - name: Register Insights Client
       command: insights-client --register
