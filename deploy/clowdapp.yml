@@ -308,7 +308,6 @@ objects:
     jobs:
       - org-id-populator
     
-
 parameters:
 - name: IMAGE_TAG
   required: true
