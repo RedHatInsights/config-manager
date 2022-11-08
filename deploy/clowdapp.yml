@@ -54,6 +54,7 @@ objects:
       webServices:
         public:
           enabled: True
+          apiPath: config-manager
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
