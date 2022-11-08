@@ -48,6 +48,7 @@ objects:
       partitions: 16
       topicName: platform.inventory.system-profile
 
+
     deployments:
     - name: service
       minReplicas: ${{REPLICAS}}
