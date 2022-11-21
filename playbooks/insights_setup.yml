@@ -47,3 +47,7 @@
     - name: Register insights-client
       command: insights-client --register
       when: '"NOT registered" in result.stdout or "unregistered" in result.stdout'
+
+    # insights_remove.yml stops and disables insights-client.timer, but leaves host registered.
+    - name: Schedule insights-client runs
+      command: insights-client --enable-schedule
