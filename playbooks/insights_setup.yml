@@ -36,11 +36,14 @@
           - rhc
           - rhc-worker-playbook
         state: latest
-    - name: Discover whether insights-client is registered
+
+    # With legacy_upload=True: Insights API says this machine is NOT registered.
+    # With legacy_upload=False: This host is unregistered.
+    - name: Get insights-client's status
       command: insights-client --status
       changed_when: false
       failed_when: false
       register: result
     - name: Register insights-client
       command: insights-client --register
-      when: result.rc != 0
+      when: '"NOT registered" in result.stdout or "unregistered" in result.stdout'
