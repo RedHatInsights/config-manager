@@ -9,24 +9,24 @@
     insights_signature_exclude: /hosts,/vars/insights_signature
     insights_signature: !!binary |
       TFMwdExTMUNSVWRKVGlCUVIxQWdVMGxIVGtGVVZWSkZMUzB0TFMwS1ZtVnljMmx2YmpvZ1IyNTFV
-      RWNnZGpFS0NtbFJTVlpCZDFWQldUSnNNREpqZG5jMU9FUXJhalZ3VGtGUloyNXJVUzh2WTJadVV6
-      Z3JSSFV6VGxCNWVqaHZOemhOU20wNVRUbG9UREZsTTNWeVR6Z0tSRm8wYWtkVVdrSlZZVmhOV0ZO
-      SlJHdEhUMVJYZDIxUWVubHRVVEJFV25Kc2EyRnhVREIwUTJSNlFrRTFhamRuT1V0eFpWbFpVMnBW
-      U2twUGNXeGxNZ3BKYWpoamVpdG9lVFJPYVhGWldERklUREp0TlRCbFdGUkdhRVJwYTNkT1Z6TkpO
-      V1ZrYTNGSGVHWk1SVzFhZDNGWVNVOWFkRGxYU0hOT2QySldZVEY1Q20xRWNHTlVUbmh0U3psSWNG
-      bzBabmRhU0dsVlpEUlJlRVV4VERsMlMyNUZkRE15TWtsMWFWTlplWEJ4TURORllVVmhjbmRhWlVZ
-      M2RGbzJhRXB1T0VJS1NuUTFXVFpvVWtSV1psTTNiQ3MwTDFjclUzWmFVVE5aU0hNMU1WVnViWGd4
-      VW5Sb1YxVmpiVUowZFhNeVFpOVpXU3R1TlRreFRrdDVSVEJzZGpGTWRBcGtSaTh4ZWpCWVVsUTBj
-      VmhVV0hCV2NrVm9WR1Z6Y210MFRWTnZNQ3N3ZDNoTk1EaDRNMWhhYkROMWJ6UlNVM0pzVTNOWlMz
-      ZEVWalpQVjNVeE1uaFRDa0YxYkVWTFpWSXdkWE5RWVc1VVl5OXFlRlZUZUVkc1RFZHFlbko0Ym1a
-      SGFEaEVSVXBFVGxwWVdXaFdRMUpxVFc1emVXczJkVWxTV1dWSGVWcDVRMHdLVWs0NWFFVlFSV0ZE
-      ZEZKTE56WnJTMVp2ZW5CRmJVRmthbUVyVUV0Q0wySXpWa2xYTWtnMGRFUndRVXd4ZURneFJIVm9W
-      bTFoTTJKSFdpOWlZMmhKYVFvM1ExaG5UbE5SZVc5UE9FTlNjWEJrZVd4eVZYZHZZbVZJYzJ0Vk1E
-      azFaMlpZY2xwcloxQjBSVlZrUlVrd2NWbHlaWGN4WkVSVFJHSXpjMDlKYlRSMUNqVndTVXQ1ZUM5
-      Sll5OXpjbkZLWjFGeFpsaFZOM0ZrVFZCYU5tdHBOMUZ0TTNoUlpHSkdhUzlyY0VwSWRtRTBTRU13
-      ZUhkRmNIcHdkM05CZVRVMVkwd0tWamxzY0VoNWEyOUlabGxXZDNGR1REbHBUSGh1TDA1eWVXUXdi
-      M0kwV2tndlRpczFkMVJTY1c0cmIyMVlUV2xVVFhsb09HWlplRnBHUTNKdFYxbG5NUXBKT1ZOcVJY
-      VlhRVGhTYnowS1BYWTFOMHdLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
+      RWNnZGpFS0NtbFJTVlpCZDFWQldUTjJXbXhOZG5jMU9FUXJhalZ3VGtGUmFXZDVVa0ZCYmxodVEz
+      QnROWGRGVTNoNFIyMXhXRE5YYjFsQ1NUaEdLMUZ4TDFGR1lVa0tVVkZOV21oM1kzWkZaRk4wZDBk
+      WGNYcHdTMDA0UzNSSVlWQXlRaTlsUlc1MWVISnhNbXRLV0RGSVNVRTJlRE13TkRkbWMxQXdRVXBH
+      UmtKWVRqVjNUZ3BqZWtWR1QwMVJRM1UwYjJGT2EzSXhOVkJSYWxSdGNUVnBWekI0ZEhGMWFtOW1U
+      RXRMWnpOclZuTm5aVEF5YTBOUk1EZGlSMHBCUVhWVE9VOXVTVlpFQ2xSb1VFTkhjSGt5V0VJNFVF
+      czBNV0ZNT1RFeGRtOWhaWGN3ZWk4MVdWQXliRXh2YUZwNU5HVllWa1FyYVhscVNIazFhRTlPYnpW
+      R1dVWldMek5GVDI4S2VteHJPVzFJTVU5SFdFWldSekJOT1V0UU0ycDVSVkpqT0hwbVRHSm1ZM1JO
+      V2xGak1XVnJiVWxaYVhoVVdXRTJla2htY1VsclkybFplbUprUWtaME1ncEtiVU0zVVd0eFdubzBa
+      MDVLV1VkUFEzaG9VME5pY1d4alJUWkxUSFpXUWtsSWVTODVSM0F2VUc1NlZUUTNkRzFSTWt4Q2Jt
+      bEtkV3RDYW5OV1pHRnRDbGhGZUhSRFZTc3JTMkpSTVc5a01pczJNSFJVU2s1MVMxb3hiR1J5UW1w
+      NVUzVXZURUZDUVdkb2VrOUJUeTlMUkVsSmR6VjJOV3BJVm1GQ1JWRjBPV0VLWkZkR2JpOU9RMjR4
+      YVhGek9XaE1NbVJ1Y25ndmEwWjJNR3RVTDBsUVprTndka3RhYTFOME5FMUNSbG81YzJWcFpscENl
+      RFJqTUV0SFlUaHFibFpDV1FveFEyZDRTM04zZERWS2FFbENiRXQxTW5kbE1sTlZXRmxUZGtaRFdV
+      NUNZa1V4UzFsYUswY3daalZwUjI1elEydEhOMHN5VlRsMFpsWkNRMlkyVHpJeUNpdG9iaklyZWtW
+      T1MwdHRVM2xsTVhKVlVVUkZORmQxYVRKT2MwVm5WMU0zYkZCdFQyZFZUall2UkRKTldDdGxSM2hP
+      VGs1NFJUazVNSGR6VkN0M1R6a0tRM2hyY0RKS2VYaEZhREU1V2xkalNrbENTelptWjNkMVpYbHha
+      RFo1V2pCMFFrbEdSRzQzTjI5U2NrNUxXV3M1TkVsSVIyUlJRbmMyVjB4NVZEQlROd3B1Y1hFclVt
+      UjVXa2d6UlQwS1BVRjFUSEVLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
       PQ==
   tasks:
     - name: Install latest insights-client, rhc, rhc-worker-playbook
@@ -37,8 +37,8 @@
           - rhc-worker-playbook
         state: latest
 
-    # With legacy_upload=True: Insights API says this machine is NOT registered.
-    # With legacy_upload=False: This host is unregistered.
+# With legacy_upload=True: Insights API says this machine is NOT registered.
+# With legacy_upload=False: This host is unregistered.
     - name: Get insights-client's status
       command: insights-client --status
       changed_when: false
@@ -48,6 +48,6 @@
       command: insights-client --register
       when: '"NOT registered" in result.stdout or "unregistered" in result.stdout'
 
-    # insights_remove.yml stops and disables insights-client.timer, but leaves host registered.
+# insights_remove.yml stops and disables insights-client.timer, but leaves host registered.
     - name: Schedule insights-client runs
       command: insights-client --enable-schedule
