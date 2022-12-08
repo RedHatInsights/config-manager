@@ -57,11 +57,12 @@ git -C "${TMPDIR}/app-interface" add data/services/insights/${PROJECT_NAME}/depl
 git -C "${TMPDIR}/app-interface" commit -m "deploy(${PROJECT_NAME}): release ${SHORT_REF} to production"
 git -C "${TMPDIR}/app-interface" show -1
 git -C "${TMPDIR}/app-interface" push -u origin "${BRANCH_NAME}"
+DESCRIPTION=$'\n'$(git log "${OLD_REF}"..."${LONG_REF}")$'\n'
 ht POST https://gitlab.cee.redhat.com/api/v4/projects/"${FORK_ID}"/merge_requests "PRIVATE-TOKEN:${GITLAB_TOKEN}" \
     source_branch="${BRANCH_NAME}" \
     target_branch=master \
     target_project_id=13582 \
     title="deploy(${PROJECT_NAME}): release ${SHORT_REF} to production" \
-    description="\`\`\`$(git log "${OLD_REF}"..."${LONG_REF}")\`\`\`" \
+    description="\`\`\`${DESCRIPTION}\`\`\`" \
     remove_source_branch=true | jq -r .web_url
 rm -rf "${TMPDIR}"
