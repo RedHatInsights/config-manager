@@ -43,7 +43,7 @@ func (k kafkautil) NewReader(topic string) *kafka.Reader {
 
 // NewWriter creates a configured kafka.Writer.
 func (k kafkautil) NewWriter(topic string) *kafka.Writer {
-	var transport *kafka.Transport
+	var transport *kafka.Transport = kafka.DefaultTransport.(*kafka.Transport)
 
 	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
 		transport = &kafka.Transport{
