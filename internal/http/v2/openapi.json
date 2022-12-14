@@ -93,16 +93,20 @@
                                 "type": "object",
                                 "properties": {
                                     "active": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Remote host configuration enabled state"
                                     },
                                     "compliance": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Remote configuration status for running Compliance data collection"
                                     },
                                     "insights": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Remote configuration status for running Insights data collection"
                                     },
                                     "remediations": {
-                                        "type": "boolean"
+                                        "type": "boolean",
+                                        "description": "Remote configuration status for running Remediation playbooks"
                                     }
                                 },
                                 "required": [
@@ -228,34 +232,44 @@
                 "type": "object",
                 "properties": {
                     "account_id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Red Hat account number"
                     },
                     "active": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Remote host configuration enabled state"
                     },
                     "created_at": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Time of profile creation"
                     },
                     "creator": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Username of the profile creator"
                     },
                     "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Descriptive name for the profile"
                     },
                     "org_id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Red Hat organization identity value"
                     },
                     "id": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Profile unique identity value"
                     },
                     "compliance": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Remote configuration status for running Compliance data collection"
                     },
                     "insights": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Remote configuration status for running Insights data collection"
                     },
                     "remediations": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Remote configuration status for running Remediation playbooks"
                     }
                 }
             }
