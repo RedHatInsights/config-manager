@@ -3,368 +3,367 @@ kind: Template
 metadata:
   name: config-manager
 objects:
-# The below secrets are used for testing in ephemeral environments only.
-- apiVersion: v1
-  kind: Secret
-  metadata:
-    name: psk-playbook-dispatcher
-  stringData:
-    key: ${PSK_CONFIG_MANAGER}
-- apiVersion: v1
-  kind: Secret
-  metadata:
-    name: psk-cloud-connector
-  stringData:
-    client-id: ${ID_CLOUD_CONNECTOR}
-    client-psk: ${PSK_CLOUD_CONNECTOR}
+  # The below secrets are used for testing in ephemeral environments only.
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: psk-playbook-dispatcher
+    stringData:
+      key: ${PSK_CONFIG_MANAGER}
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: psk-cloud-connector
+    stringData:
+      client-id: ${ID_CLOUD_CONNECTOR}
+      client-psk: ${PSK_CLOUD_CONNECTOR}
 
-- apiVersion: cloud.redhat.com/v1alpha1
-  kind: ClowdApp
-  metadata:
-    name: config-manager
-  spec:
-    testing:
-      iqePlugin: config-manager
-
-    envName: ${ENV_NAME}
-
-    optionalDependencies:
-    - cloud-connector-api
-    - playbook-dispatcher
-    - host-inventory
-
-    database:
+  - apiVersion: cloud.redhat.com/v1alpha1
+    kind: ClowdApp
+    metadata:
       name: config-manager
-      version: 10
+    spec:
+      testing:
+        iqePlugin: config-manager
 
-    kafkaTopics:
-    - replicas: 3
-      partitions: 16
-      topicName: platform.playbook-dispatcher.runs
-    - replicas: 3
-      partitions: 16
-      topicName: platform.inventory.events
-    - replicas: 3
-      partitions: 16
-      topicName: platform.inventory.system-profile
+      envName: ${ENV_NAME}
 
-    deployments:
-    - name: service
-      minReplicas: ${{REPLICAS}}
-      webServices:
-        public:
-          enabled: True
-          apiPath: config-manager
-      podSpec:
-        image: ${IMAGE}:${IMAGE_TAG}
-        args:
-        - http-api
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        env:
-          - name: CM_LOG_LEVEL
-            value: ${CM_LOG_LEVEL}
-          - name: CM_LOG_FORMAT
-            value: ${CM_LOG_FORMAT}
-          - name: CLOWDER_ENABLED
-            value: "true"
-          - name: CM_DISPATCHER_PSK
-            valueFrom:
-              secretKeyRef:
-                key: key
-                name: psk-playbook-dispatcher
-          - name: CM_KAFKA_USERNAME
-            valueFrom:
-              secretKeyRef:
-                key: username
-                name: clowder-oauth
-                optional: true
-          - name: CM_KAFKA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                key: password
-                name: clowder-oauth
-                optional: true
-          - name: CM_DISPATCHER_HOST
-            value: ${CM_DISPATCHER_HOST}
-          - name: CM_CLOUD_CONNECTOR_PSK
-            valueFrom:
-              secretKeyRef:
-                key: client-psk
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                key: client-id
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_HOST
-            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
-          - name: CM_INVENTORY_HOST
-            value: ${CM_INVENTORY_HOST}
-          - name: CM_PLAYBOOK_HOST
-            value: ${CM_PLAYBOOK_HOST}
-          - name: CM_TENANT_TRANSLATOR_HOST
-            value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-        resources:
-          limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
-          requests:
-            cpu: 250m
-            memory: 256Mi
+      optionalDependencies:
+        - cloud-connector-api
+        - playbook-dispatcher
+        - host-inventory
 
-    - name: dispatcher-consumer
-      minReplicas: ${{REPLICAS}}
-      web: false
-      podSpec:
-        image: ${IMAGE}:${IMAGE_TAG}
-        args:
-        - dispatcher-consumer
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        env:
-          - name: CM_LOG_LEVEL
-            value: ${CM_LOG_LEVEL}
-          - name: CM_LOG_FORMAT
-            value: ${CM_LOG_FORMAT}
-          - name: CLOWDER_ENABLED
-            value: "true"
-          - name: CM_DISPATCHER_PSK
-            valueFrom:
-              secretKeyRef:
-                key: key
-                name: psk-playbook-dispatcher
-          - name: CM_DISPATCHER_HOST
-            value: ${CM_DISPATCHER_HOST}
-          - name: CM_CLOUD_CONNECTOR_PSK
-            valueFrom:
-              secretKeyRef:
-                key: client-psk
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                key: client-id
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_HOST
-            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
-          - name: CM_INVENTORY_HOST
-            value: ${CM_INVENTORY_HOST}
-          - name: CM_PLAYBOOK_HOST
-            value: ${CM_PLAYBOOK_HOST}
-          - name: CM_TENANT_TRANSLATOR_HOST
-            value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-        resources:
-          limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
-          requests:
-            cpu: 250m
-            memory: 256Mi
+      database:
+        name: config-manager
+        version: 10
 
-    - name: inventory-consumer
-      minReplicas: ${{REPLICAS}}
-      web: false
-      podSpec:
-        image: ${IMAGE}:${IMAGE_TAG}
-        args:
-        - inventory-consumer
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: 9000
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          successThreshold: 1
-          timeoutSeconds: 5
-        env:
-          - name: CM_LOG_LEVEL
-            value: ${CM_LOG_LEVEL}
-          - name: CM_LOG_FORMAT
-            value: ${CM_LOG_FORMAT}
-          - name: CLOWDER_ENABLED
-            value: "true"
-          - name: CM_DISPATCHER_PSK
-            valueFrom:
-              secretKeyRef:
-                key: key
-                name: psk-playbook-dispatcher
-          - name: CM_DISPATCHER_HOST
-            value: ${CM_DISPATCHER_HOST}
-          - name: CM_CLOUD_CONNECTOR_PSK
-            valueFrom:
-              secretKeyRef:
-                key: client-psk
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                key: client-id
-                name: psk-cloud-connector
-          - name: CM_CLOUD_CONNECTOR_HOST
-            value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
-          - name: CM_PLAYBOOK_HOST
-            value: ${CM_PLAYBOOK_HOST}
-          - name: CM_TENANT_TRANSLATOR_HOST
-            value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-        resources:
-          limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
-          requests:
-            cpu: 250m
-            memory: 256Mi
+      kafkaTopics:
+        - replicas: 3
+          partitions: 16
+          topicName: platform.playbook-dispatcher.runs
+        - replicas: 3
+          partitions: 16
+          topicName: platform.inventory.events
+        - replicas: 3
+          partitions: 16
+          topicName: platform.inventory.system-profile
 
-    jobs:
-    - name: org-id-populator
-      restartPolicy: OnFailure
-      podSpec:
-        image: ${POPULATOR_IMAGE}:${POPULATOR_IMAGE_TAG}
-        command:
-          - ./org-id-column-populator
-          - -C
-          - -a
-          - account_id
-          - -o
-          - org_id
-          - -t
-          - profiles
-          - --ean-translator-addr
-          - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-          - --prometheus-push-addr
-          - ${PROMETHEUS_PUSHGATEWAY}
-          - --db-operation-timeout
-          - ${POPULATOR_OPERATION_TIMEOUT}
-          - --batch-size
-          - ${POPULATOR_BATCH_SIZE}
-        env:
-          - name: LOG_FORMAT
-            value: ${POPULATOR_LOG_FORMAT}
-          - name: LOG_BATCH_FREQUENCY
-            value: '1s'
-        resources:
-          limits:
-            cpu: 300m
-            memory: 1Gi
-          requests:
-            cpu: 50m
-            memory: 512Mi
+      deployments:
+        - name: service
+          minReplicas: ${{REPLICAS}}
+          webServices:
+            public:
+              enabled: True
+              apiPath: config-manager
+          podSpec:
+            image: ${IMAGE}:${IMAGE_TAG}
+            args:
+              - http-api
+            livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            env:
+              - name: CM_LOG_LEVEL
+                value: ${CM_LOG_LEVEL}
+              - name: CM_LOG_FORMAT
+                value: ${CM_LOG_FORMAT}
+              - name: CLOWDER_ENABLED
+                value: "true"
+              - name: CM_DISPATCHER_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: key
+                    name: psk-playbook-dispatcher
+              - name: CM_KAFKA_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: username
+                    name: clowder-oauth
+                    optional: true
+              - name: CM_KAFKA_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: clowder-oauth
+                    optional: true
+              - name: CM_DISPATCHER_HOST
+                value: ${CM_DISPATCHER_HOST}
+              - name: CM_CLOUD_CONNECTOR_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: client-psk
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    key: client-id
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_HOST
+                value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
+              - name: CM_INVENTORY_HOST
+                value: ${CM_INVENTORY_HOST}
+              - name: CM_PLAYBOOK_HOST
+                value: ${CM_PLAYBOOK_HOST}
+              - name: CM_TENANT_TRANSLATOR_HOST
+                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+            resources:
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
+              requests:
+                cpu: 250m
+                memory: 256Mi
 
-- apiVersion: cloud.redhat.com/v1alpha1
-  kind: ClowdJobInvocation
-  metadata:
-    name: cm-populate-org-id-column-${POPULATOR_RUN_NUMBER}
-  spec:
-    appName: config-manager
-    jobs:
-      - org-id-populator
-    
+        - name: dispatcher-consumer
+          minReplicas: ${{REPLICAS}}
+          web: false
+          podSpec:
+            image: ${IMAGE}:${IMAGE_TAG}
+            args:
+              - dispatcher-consumer
+            livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            env:
+              - name: CM_LOG_LEVEL
+                value: ${CM_LOG_LEVEL}
+              - name: CM_LOG_FORMAT
+                value: ${CM_LOG_FORMAT}
+              - name: CLOWDER_ENABLED
+                value: "true"
+              - name: CM_DISPATCHER_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: key
+                    name: psk-playbook-dispatcher
+              - name: CM_DISPATCHER_HOST
+                value: ${CM_DISPATCHER_HOST}
+              - name: CM_CLOUD_CONNECTOR_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: client-psk
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    key: client-id
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_HOST
+                value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
+              - name: CM_INVENTORY_HOST
+                value: ${CM_INVENTORY_HOST}
+              - name: CM_PLAYBOOK_HOST
+                value: ${CM_PLAYBOOK_HOST}
+              - name: CM_TENANT_TRANSLATOR_HOST
+                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+            resources:
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
+              requests:
+                cpu: 250m
+                memory: 256Mi
+
+        - name: inventory-consumer
+          minReplicas: ${{REPLICAS}}
+          web: false
+          podSpec:
+            image: ${IMAGE}:${IMAGE_TAG}
+            args:
+              - inventory-consumer
+            livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /metrics
+                port: 9000
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 5
+            env:
+              - name: CM_LOG_LEVEL
+                value: ${CM_LOG_LEVEL}
+              - name: CM_LOG_FORMAT
+                value: ${CM_LOG_FORMAT}
+              - name: CLOWDER_ENABLED
+                value: "true"
+              - name: CM_DISPATCHER_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: key
+                    name: psk-playbook-dispatcher
+              - name: CM_DISPATCHER_HOST
+                value: ${CM_DISPATCHER_HOST}
+              - name: CM_CLOUD_CONNECTOR_PSK
+                valueFrom:
+                  secretKeyRef:
+                    key: client-psk
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    key: client-id
+                    name: psk-cloud-connector
+              - name: CM_CLOUD_CONNECTOR_HOST
+                value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/v1/
+              - name: CM_PLAYBOOK_HOST
+                value: ${CM_PLAYBOOK_HOST}
+              - name: CM_TENANT_TRANSLATOR_HOST
+                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+            resources:
+              limits:
+                cpu: ${CPU_LIMIT}
+                memory: ${MEMORY_LIMIT}
+              requests:
+                cpu: 250m
+                memory: 256Mi
+
+      jobs:
+        - name: org-id-populator
+          restartPolicy: OnFailure
+          podSpec:
+            image: ${POPULATOR_IMAGE}:${POPULATOR_IMAGE_TAG}
+            command:
+              - ./org-id-column-populator
+              - -C
+              - -a
+              - account_id
+              - -o
+              - org_id
+              - -t
+              - profiles
+              - --ean-translator-addr
+              - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+              - --prometheus-push-addr
+              - ${PROMETHEUS_PUSHGATEWAY}
+              - --db-operation-timeout
+              - ${POPULATOR_OPERATION_TIMEOUT}
+              - --batch-size
+              - ${POPULATOR_BATCH_SIZE}
+            env:
+              - name: LOG_FORMAT
+                value: ${POPULATOR_LOG_FORMAT}
+              - name: LOG_BATCH_FREQUENCY
+                value: "1s"
+            resources:
+              limits:
+                cpu: 300m
+                memory: 1Gi
+              requests:
+                cpu: 50m
+                memory: 512Mi
+
+  - apiVersion: cloud.redhat.com/v1alpha1
+    kind: ClowdJobInvocation
+    metadata:
+      name: cm-populate-org-id-column-${POPULATOR_RUN_NUMBER}
+    spec:
+      appName: config-manager
+      jobs:
+        - org-id-populator
 
 parameters:
-- name: IMAGE_TAG
-  required: true
-- name: IMAGE
-  value: quay.io/cloudservices/config-manager
-- description : ClowdEnvironment name
-  name: ENV_NAME
-  required: true
+  - name: IMAGE_TAG
+    required: true
+  - name: IMAGE
+    value: quay.io/cloudservices/config-manager
+  - description: ClowdEnvironment name
+    name: ENV_NAME
+    required: true
 
-- name: CM_LOG_LEVEL
-  value: debug
-- name: CM_LOG_FORMAT
-  value: json
-- name: CPU_LIMIT
-  value: 500m
-- name: MEMORY_LIMIT
-  value: 512Mi
+  - name: CM_LOG_LEVEL
+    value: trace
+  - name: CM_LOG_FORMAT
+    value: json
+  - name: CPU_LIMIT
+    value: 500m
+  - name: MEMORY_LIMIT
+    value: 512Mi
 
-- name: REPLICAS
-  value: "2"
+  - name: REPLICAS
+    value: "2"
 
-- name: CM_DISPATCHER_HOST
-  required: true
+  - name: CM_DISPATCHER_HOST
+    required: true
 
-- name: CM_CLOUD_CONNECTOR_HOST
-  required: true
+  - name: CM_CLOUD_CONNECTOR_HOST
+    required: true
 
-- name: CM_INVENTORY_HOST
-  required: true
+  - name: CM_INVENTORY_HOST
+    required: true
 
-- name: CM_PLAYBOOK_HOST
-  required: true
+  - name: CM_PLAYBOOK_HOST
+    required: true
 
-# Used for testing in ephemeral environments only.
-- name: PSK_CONFIG_MANAGER
-  value: FLYdxYZGpq
-- name: ID_CLOUD_CONNECTOR
-  value: config-manager
-- name: PSK_CLOUD_CONNECTOR
-  value: swordfish
+  # Used for testing in ephemeral environments only.
+  - name: PSK_CONFIG_MANAGER
+    value: FLYdxYZGpq
+  - name: ID_CLOUD_CONNECTOR
+    value: config-manager
+  - name: PSK_CLOUD_CONNECTOR
+    value: swordfish
 
-# Used for org_id populator job
-- name: TENANT_TRANSLATOR_HOST
-  required: true
-- name: TENANT_TRANSLATOR_PORT
-  value: '8892'
-- name: POPULATOR_LOG_FORMAT
-  value: cloudwatch
-- name: POPULATOR_IMAGE
-  value: quay.io/cloudservices/tenant-utils
-- name: POPULATOR_IMAGE_TAG
-  value: latest
-- name: POPULATOR_RUN_NUMBER # in case we need to run populator again, just increment this
-  value: "2"
-- name: POPULATOR_OPERATION_TIMEOUT
-  value: "10"
-- name: PROMETHEUS_PUSHGATEWAY
-  value: "localhost"
-- name: POPULATOR_BATCH_SIZE
-  value: "50"
+  # Used for org_id populator job
+  - name: TENANT_TRANSLATOR_HOST
+    required: true
+  - name: TENANT_TRANSLATOR_PORT
+    value: "8892"
+  - name: POPULATOR_LOG_FORMAT
+    value: cloudwatch
+  - name: POPULATOR_IMAGE
+    value: quay.io/cloudservices/tenant-utils
+  - name: POPULATOR_IMAGE_TAG
+    value: latest
+  - name: POPULATOR_RUN_NUMBER # in case we need to run populator again, just increment this
+    value: "2"
+  - name: POPULATOR_OPERATION_TIMEOUT
+    value: "10"
+  - name: PROMETHEUS_PUSHGATEWAY
+    value: "localhost"
+  - name: POPULATOR_BATCH_SIZE
+    value: "50"
