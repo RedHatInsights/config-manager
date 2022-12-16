@@ -31,6 +31,7 @@ var Command ffcli.Command = ffcli.Command{
 				log.Error().Err(err).Msg("unable to read message")
 				continue
 			}
+			log.Trace().Str("key", string(m.Key)).Msg("read kafka message")
 			go handler(ctx, m)
 		}
 	},
