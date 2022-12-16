@@ -26,16 +26,13 @@ var Command ffcli.Command = ffcli.Command{
 		reader := util.Kafka.NewReader(config.DefaultConfig.KafkaInventoryTopic)
 
 		for {
-			m, err := reader.FetchMessage(ctx)
+			m, err := reader.ReadMessage(ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("unable to read message")
 				continue
 			}
 			log.Trace().Str("key", string(m.Key)).Msg("read kafka message")
-			handler(ctx, m)
-			if err := reader.CommitMessages(ctx, m); err != nil {
-				log.Error().Err(err).Msg("cannot commit message")
-			}
+			go handler(ctx, m)
 		}
 	},
 }
