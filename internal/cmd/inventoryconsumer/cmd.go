@@ -63,7 +63,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 	}
 
 	if event.Host.Reporter != "cloud-connector" {
-		logger.Info().Str("reporter", event.Host.Reporter).Msg("ignoring host")
+		logger.Debug().Str("reporter", event.Host.Reporter).Msg("ignoring host")
 		return
 	}
 
