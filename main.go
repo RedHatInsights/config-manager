@@ -104,13 +104,15 @@ func main() {
 
 	log.Logger = log.Output(zerolog.MultiLevelWriter(writers...))
 
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle(config.DefaultConfig.MetricsPath, promhttp.Handler())
-		if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.MetricsPort), mux); err != nil {
-			log.Fatal().Err(err).Int("metrics-port", config.DefaultConfig.MetricsPort).Msg("cannot listen on port")
-		}
-	}()
+	if config.DefaultConfig.MetricsPort > 0 {
+		go func() {
+			mux := http.NewServeMux()
+			mux.Handle(config.DefaultConfig.MetricsPath, promhttp.Handler())
+			if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.MetricsPort), mux); err != nil {
+				log.Fatal().Err(err).Int("metrics-port", config.DefaultConfig.MetricsPort).Msg("cannot listen on port")
+			}
+		}()
+	}
 
 	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
 		config.DefaultConfig.DBUser,
