@@ -36,7 +36,7 @@ func (k kafkautil) NewReader(topic string) *kafka.Reader {
 		Brokers:     config.DefaultConfig.KafkaBrokers.Values,
 		Topic:       topic,
 		GroupID:     config.DefaultConfig.KafkaGroupID,
-		StartOffset: config.DefaultConfig.KafkaConsumerOffset,
+		StartOffset: kafka.LastOffset,
 		Dialer:      dialer,
 	})
 }
