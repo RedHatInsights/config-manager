@@ -48,7 +48,7 @@ type InventoryEvent struct {
 func handler(ctx context.Context, msg kafka.Message) {
 	logger := log.With().Str("module", "inventory-consumer").Logger()
 
-	logger.Trace().Str("key", string(msg.Key)).Msg("handling kafka message")
+	logger.Trace().Int64("offset", msg.Offset).Msg("handling kafka message")
 
 	eventType, err := util.Kafka.GetHeader(msg, "event_type")
 	if err != nil {
