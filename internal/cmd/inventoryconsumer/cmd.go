@@ -64,11 +64,6 @@ func handler(ctx context.Context, msg kafka.Message) {
 		return
 	}
 
-	if event.Host.Reporter != "cloud-connector" {
-		logger.Trace().Str("reporter", event.Host.Reporter).Msg("ignoring host")
-		return
-	}
-
 	switch eventType {
 	case "created":
 		logger.Info().Msg("setting up new host for remote host configuration")
