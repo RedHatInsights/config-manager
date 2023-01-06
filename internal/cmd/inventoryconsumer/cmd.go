@@ -64,8 +64,11 @@ func handler(ctx context.Context, msg kafka.Message) {
 		return
 	}
 
-	if event.Host.Reporter != "cloud-connector" {
-		logger.Trace().Str("reporter", event.Host.Reporter).Msg("ignoring host")
+	for k := range event.Host.PerReporterStaleness {
+		if k == "cloud-connector" {
+			break
+		}
+		logger.Trace().Interface("per_reporter_staleness", event.Host.PerReporterStaleness).Msg("ignoring host")
 		return
 	}
 
