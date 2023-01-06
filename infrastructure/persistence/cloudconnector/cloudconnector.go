@@ -142,7 +142,7 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 	}
 	resp, err := c.PostConnectionStatus(ctx, PostConnectionStatusJSONRequestBody(body), func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-account", accountID)
-		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
+		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Interface("body", body).Msg("sending HTTP request")
 		return nil
 	})
 	if err != nil {
@@ -172,5 +172,5 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 		return status, dispatchers, nil
 	}
 
-	return "unknown", map[string]interface{}{}, fmt.Errorf("unknown connection status")
+	return "", map[string]interface{}{}, fmt.Errorf("unknown connection status: %v", fmt.Errorf("%v: %v", response.Status(), string(response.Body)))
 }
