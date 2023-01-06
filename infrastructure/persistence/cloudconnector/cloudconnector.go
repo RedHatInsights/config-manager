@@ -142,20 +142,22 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 	}
 	resp, err := c.PostConnectionStatus(ctx, PostConnectionStatusJSONRequestBody(body), func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-account", accountID)
-		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Interface("body", body).Msg("sending HTTP request")
+		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Interface("body", body).Logger()
+		logger.Trace().Msg("sending HTTP request")
 		return nil
 	})
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connection status")
 		return "unknown", nil, err
 	}
-	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
+	logger = logger.With().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Logger()
 	response, err := ParsePostConnectionStatusResponse(resp)
-	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot parse connection status response")
 		return "unknown", nil, err
 	}
+	logger = logger.With().Str("response", string(response.Body)).Logger()
+	logger.Trace().Msg("received HTTP response")
 
 	if response.JSON200 != nil {
 		var status string
