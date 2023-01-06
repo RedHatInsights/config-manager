@@ -16,13 +16,14 @@ import (
 
 // Host represents a system record from the Inventory application.
 type Host struct {
-	ID                   string                 `json:"id"`
-	Account              string                 `json:"account"`
-	OrgID                string                 `json:"org_id"`
-	DisplayName          string                 `json:"display_name"`
-	Reporter             string                 `json:"reporter"`
-	PerReporterStaleness map[string]interface{} `json:"per_reporter_staleness"`
-	SystemProfile        struct {
+	ID                    string                 `json:"id"`
+	Account               string                 `json:"account"`
+	OrgID                 string                 `json:"org_id"`
+	DisplayName           string                 `json:"display_name"`
+	Reporter              string                 `json:"reporter"`
+	PerReporterStaleness  map[string]interface{} `json:"per_reporter_staleness"`
+	SubscriptionManagerID string                 `json:"subscription_manager_id"`
+	SystemProfile         struct {
 		RHCID    string `json:"rhc_client_id"`
 		RHCState string `json:"rhc_config_state"`
 	} `json:"system_profile"`
@@ -95,7 +96,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		logger.Error().Err(err).Msg("cannot get cloud-connector client")
 		return "", err
 	}
-	status, dispatchers, err := client.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
+	status, dispatchers, err := client.GetConnectionStatus(ctx, host.Account, host.SubscriptionManagerID)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 		return "", err
