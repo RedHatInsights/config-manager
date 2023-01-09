@@ -69,7 +69,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 		logger.Info().Msg("setting up new host for remote host configuration")
 		messageID, err := internal.SetupHost(ctx, event.Host)
 		if err != nil {
-			logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up up host")
+			logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
 			return
 		}
 		logger.Info().Str("message_id", messageID).Msg("setup message sent to host")
