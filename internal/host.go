@@ -104,12 +104,26 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		logger.Error().Err(err).Msg("cannot get cloud-connector client")
 		return "", err
 	}
-	status, dispatchers, err := client.GetConnectionStatus(ctx, host.Account, host.SubscriptionManagerID)
-	if err != nil {
-		logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
-		return "", err
+
+	var status string
+	var dispatchers map[string]interface{}
+	started := time.Now()
+	for {
+		if time.Now().After(started.Add(180 * time.Second)) {
+			return "", fmt.Errorf("cannot get connected status after %v, aborting", time.Since(started))
+		}
+
+		status, dispatchers, err = client.GetConnectionStatus(ctx, host.Account, host.SubscriptionManagerID)
+		if err != nil {
+			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
+			return "", err
+		}
+		logger.Debug().Str("status", status).Interface("dispatchers", dispatchers).Msg("connection status from cloud-connector")
+		if status == "connected" {
+			break
+		}
+		time.Sleep(30 * time.Second)
 	}
-	logger.Debug().Str("status", status).Interface("dispatchers", dispatchers).Msg("connection status from cloud-connector")
 
 	if status != "connected" {
 		err := fmt.Errorf("host not connected")
@@ -144,7 +158,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		return "", err
 	}
 
-	started := time.Now()
+	started = time.Now()
 	for {
 		if time.Now().After(started.Add(180 * time.Second)) {
 			return "", fmt.Errorf("unable to detect rhc-worker-playbook after %v, aborting", time.Since(started))
