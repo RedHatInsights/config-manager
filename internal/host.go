@@ -89,7 +89,15 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 // rhc-worker-playbook RPM, enabling the host to receive and execute playbooks
 // sent through playbook-dispatcher.
 func SetupHost(ctx context.Context, host Host) (string, error) {
-	logger := log.With().Str("account_id", host.Account).Str("client_id", host.SystemProfile.RHCID).Logger()
+	logger := log.With().Str("account_id", host.Account).Str("subscription_manager_id", host.SubscriptionManagerID).Logger()
+
+	if host.Account == "" {
+		return "", fmt.Errorf("cannot setup host: missing value for 'account' field")
+	}
+
+	if host.SubscriptionManagerID == "" {
+		return "", fmt.Errorf("cannot setup host: missing value for 'subscription_manager_id' field")
+	}
 
 	client, err := cloudconnector.NewCloudConnectorClient()
 	if err != nil {
@@ -104,7 +112,9 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 	logger.Debug().Str("status", status).Interface("dispatchers", dispatchers).Msg("connection status from cloud-connector")
 
 	if status != "connected" {
-		return "", fmt.Errorf("cannot set up host: host connection status = %v", status)
+		err := fmt.Errorf("host not connected")
+		logger.Error().Str("status", status).Err(err).Msg("cannot setup host")
+		return "", fmt.Errorf("cannot setup host: %w", err)
 	}
 
 	if _, has := dispatchers["package-manager"]; !has {
