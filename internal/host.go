@@ -157,7 +157,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		logger.Error().Err(err).Msg("cannot send message to host")
 		return "", err
 	}
-	logger.Debug().Str("directive", "package-manager").Interface("payload", payload).Msg("sent message to directive")
+	logger.Debug().Str("directive", "package-manager").Interface("payload", payload).Msg("sent message to host")
 
 	started = time.Now()
 	for {
