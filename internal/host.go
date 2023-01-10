@@ -132,7 +132,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 	}
 
 	if _, has := dispatchers["package-manager"]; !has {
-		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SystemProfile.RHCID)
+		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SubscriptionManagerID)
 	}
 
 	if _, has := dispatchers["rhc-worker-playbook"]; has {
@@ -152,7 +152,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		return "", fmt.Errorf("cannot marshal payload: %v", err)
 	}
 
-	messageID, err := client.SendMessage(ctx, host.Account, "package-manager", data, nil, host.SystemProfile.RHCID)
+	messageID, err := client.SendMessage(ctx, host.Account, "package-manager", data, nil, host.SubscriptionManagerID)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot send message to host")
 		return "", err
@@ -164,7 +164,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		if time.Now().After(started.Add(180 * time.Second)) {
 			return "", fmt.Errorf("unable to detect rhc-worker-playbook after %v, aborting", time.Since(started))
 		}
-		status, dispatchers, err := client.GetConnectionStatus(ctx, host.Account, host.SystemProfile.RHCID)
+		status, dispatchers, err := client.GetConnectionStatus(ctx, host.Account, host.SubscriptionManagerID)
 		if err != nil {
 			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 			return "", err
