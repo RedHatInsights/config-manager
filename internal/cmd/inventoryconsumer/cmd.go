@@ -117,14 +117,25 @@ func handler(ctx context.Context, msg kafka.Message) {
 		}
 		logger = logger.With().Str("request_id", reqID).Logger()
 
-		if event.Host.SystemProfile.RHCState != profile.ID.String() {
-			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
-			host := []internal.Host{event.Host}
-			internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
-				logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
-			})
-		} else {
+		if event.Host.SystemProfile.RHCState == profile.ID.String() {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
+			return
 		}
+
+		if _, err := db.CountConfiguring(event.Host.SubscriptionManagerID, profile.ID.String()); err != nil {
+			logger.Warn().Str("profile_id", profile.ID.String()).Msg("host under configuration")
+			return
+		}
+
+		if err := db.InsertConfiguring(event.Host.SubscriptionManagerID, profile.ID.String()); err != nil {
+			logger.Error().Err(err).Msg("cannot insert host into configuring table")
+			return
+		}
+
+		logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
+		host := []internal.Host{event.Host}
+		internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
+			logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
+		})
 	}
 }

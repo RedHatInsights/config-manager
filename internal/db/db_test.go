@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -409,6 +410,207 @@ func TestParseOrderBy(t *testing.T) {
 				}
 				if !cmp.Equal(got, test.want, cmp.AllowUnexported(orderBy{})) {
 					t.Errorf("%#v != %#v", got, test.want)
+				}
+			}
+		})
+	}
+}
+
+func TestInsertConfiguring(t *testing.T) {
+	tests := []struct {
+		description string
+		seed        [][]byte
+		input       struct {
+			hostID    string
+			profileID string
+		}
+		want error
+	}{
+		{
+			description: "unique host ID and profile ID",
+			seed: [][]byte{
+				[]byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b', '1', '2', '` + UNIXTime + `');`),
+			},
+			input: struct {
+				hostID    string
+				profileID string
+			}{"9336cd00-2ff0-4f43-bc71-939e5e044a92", "dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b"},
+			want: nil,
+		},
+		{
+			description: "duplicate host ID, unique profile ID",
+			seed: [][]byte{
+				[]byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b', '1', '2', '` + UNIXTime + `'), ('49e518ac-c258-476e-8f0c-cece1453b031', '1', '2', '` + UNIXTime + `');`),
+				[]byte(`INSERT INTO configuring (host_id, profile_id) VALUES ('9336cd00-2ff0-4f43-bc71-939e5e044a92', 'dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b');`),
+			},
+			input: struct {
+				hostID    string
+				profileID string
+			}{"9336cd00-2ff0-4f43-bc71-939e5e044a92", "49e518ac-c258-476e-8f0c-cece1453b031"},
+			want: nil,
+		},
+		{
+			description: "duplicate host ID, duplicate profile ID",
+			seed: [][]byte{
+				[]byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b', '1', '2', '` + UNIXTime + `');`),
+				[]byte(`INSERT INTO configuring (host_id, profile_id) VALUES ('9336cd00-2ff0-4f43-bc71-939e5e044a92', 'dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b');`),
+			},
+			input: struct {
+				hostID    string
+				profileID string
+			}{"9336cd00-2ff0-4f43-bc71-939e5e044a92", "dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b"},
+			want: cmpopts.AnyError,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			if err := Open("pgx", DSN); err != nil {
+				t.Fatalf("failed to open database: %v", err)
+			}
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
+
+			if err := Migrate(true); err != nil {
+				t.Fatalf("failed to migrate database: %v", err)
+			}
+
+			for _, seed := range test.seed {
+				if err := SeedData(seed); err != nil {
+					t.Fatalf("failed to seed database: %v", err)
+				}
+			}
+
+			err := InsertConfiguring(test.input.hostID, test.input.profileID)
+
+			if test.want != nil {
+				if !errors.Is(test.want, err) {
+					t.Errorf("%v != %v", err, test.want)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("got error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestCountConfiguring(t *testing.T) {
+	tests := []struct {
+		description string
+		seed        [][]byte
+		input       struct {
+			hostID    string
+			profileID string
+		}
+		want int
+	}{
+		{
+			seed: [][]byte{
+				[]byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b', '1', '2', '` + UNIXTime + `');`),
+				[]byte(`INSERT INTO configuring (host_id, profile_id) VALUES ('9b37f476-1acc-4354-9bd6-57ea55e1aa7a', 'dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b');`),
+			},
+			input: struct {
+				hostID    string
+				profileID string
+			}{
+				"9b37f476-1acc-4354-9bd6-57ea55e1aa7a",
+				"dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b",
+			},
+			want: 1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			if err := Open("pgx", DSN); err != nil {
+				t.Fatalf("failed to open database: %v", err)
+			}
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
+
+			if err := Migrate(true); err != nil {
+				t.Fatalf("failed to migrate database: %v", err)
+			}
+
+			for _, seed := range test.seed {
+				if err := SeedData(seed); err != nil {
+					t.Fatalf("failed to seed database: %v", err)
+				}
+			}
+
+			got, err := CountConfiguring(test.input.hostID, test.input.profileID)
+			if err != nil {
+				t.Fatalf("failed to get profile: %v", err)
+			}
+
+			if !cmp.Equal(got, test.want) {
+				t.Errorf("%v", cmp.Diff(got, test.want))
+			}
+		})
+	}
+}
+
+func TestDeleteConfiguring(t *testing.T) {
+	tests := []struct {
+		description string
+		seed        [][]byte
+		input       struct {
+			hostID    string
+			profileID string
+		}
+		want error
+	}{
+		{
+			seed: [][]byte{
+				[]byte(`INSERT INTO profiles (profile_id, account_id, org_id, created_at) VALUES ('dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b', '1', '2', '` + UNIXTime + `');`),
+				[]byte(`INSERT INTO configuring (host_id, profile_id) VALUES ('9336cd00-2ff0-4f43-bc71-939e5e044a92', 'dcffcd46-b380-4ef5-bf1c-4a7df1f8ca8b');`),
+			},
+			input: struct {
+				hostID    string
+				profileID string
+			}{"9336cd00-2ff0-4f43-bc71-939e5e044a92", "49e518ac-c258-476e-8f0c-cece1453b031"},
+			want: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			if err := Open("pgx", DSN); err != nil {
+				t.Fatalf("failed to open database: %v", err)
+			}
+			defer func() {
+				if err := Close(); err != nil {
+					t.Fatalf("failed to close database: %v", err)
+				}
+			}()
+
+			if err := Migrate(true); err != nil {
+				t.Fatalf("failed to migrate database: %v", err)
+			}
+
+			for _, seed := range test.seed {
+				if err := SeedData(seed); err != nil {
+					t.Fatalf("failed to seed database: %v", err)
+				}
+			}
+
+			err := DeleteConfiguring(test.input.hostID, test.input.profileID)
+
+			if test.want != nil {
+				if !errors.Is(test.want, err) {
+					t.Errorf("%v != %v", err, test.want)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("got error: %v", err)
 				}
 			}
 		})

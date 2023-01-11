@@ -206,7 +206,7 @@ ht GET http://localhost:8080/api/config-manager/v1/states/current x-rh-identity:
 
 ```sh
 # Identify the environment name and export it
-export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+export CONFIG_MANAGER_ENV=$(minikube kubectl -- -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
 minikube kubectl -- -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events
 ```
 
@@ -214,6 +214,6 @@ minikube kubectl -- -n fog run -it --rm --image=edenhill/kcat:1.7.1 kcat -- -b $
 
 ```sh
 # Identify the environment name and export it
-export CONFIG_MANAGER_ENV=$(kubectl -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
-jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | minikube kubectl -- -n fog run -i --rm --image=edenhill/kcat:1.7.1 $(mktemp XXXXXX) -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events -P -H event_type=created 
+export CONFIG_MANAGER_ENV=$(minikube kubectl -- -n fog get svc -l env=env-fog,app.kubernetes.io/name=kafka -o json | jq '.items[0].metadata.labels["app.kubernetes.io/instance"]' -r)
+jq --compact-output --null-input --arg id $(uuidgen | tr -d "\n") '{"type":"created","host":{"id":$id,"subscription_manager_id":$id,"account":"0000001","reporter":"cloud-connector","system_profile":{"rhc_client_id":$id}}}' | minikube kubectl -- -n fog run -i --rm --image=edenhill/kcat:1.7.1 $(pwgen -1 --no-capitalize --no-numerals 8) -- -b $CONFIG_MANAGER_ENV-kafka-bootstrap.fog.svc.cluster.local:9092 -t platform.inventory.events -P -H event_type=created 
 ```

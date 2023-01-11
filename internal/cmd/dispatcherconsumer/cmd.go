@@ -2,6 +2,7 @@ package dispatcherconsumer
 
 import (
 	"config-manager/internal/config"
+	"config-manager/internal/db"
 	"config-manager/internal/util"
 	"context"
 	"encoding/json"
@@ -120,6 +121,11 @@ func handler(ctx context.Context, writer *kafka.Writer, msg kafka.Message) {
 					Value: data,
 				},
 			)
+
+			if err := db.DeleteConfiguring(value.Payload.Recipient, value.Payload.Labels["state_id"]); err != nil {
+				log.Error().Err(err).Str("host_id", value.Payload.Recipient).Str("profile_id", value.Payload.Labels["state_id"]).Msg("cannot delete row from configuring table")
+			}
+
 			if err != nil {
 				log.Info().Msgf("Error producing message to system profile topic. request_id: %v", reqID.String())
 			} else {
