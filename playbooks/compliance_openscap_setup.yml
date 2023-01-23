@@ -1,7 +1,7 @@
 ---
 # This playbook will install the required OpenSCAP packages to get your systems ready to be used
 # with Insights Compliance service.
-# 
+#
 # After running this playbook, perform the following steps manually:
 # 1. Create a Compliance policy in cloud.redhat.com and associate the required systems.
 # 2. Run `insights-client --compliance` on your system to report Compliance to cloud.redhat.com
@@ -34,6 +34,11 @@
       PQ==
   tasks:
     - name: Install OpenSCAP packages for Compliance service
-      yum:
-        name: openscap, openscap-scanner, scap-security-guide
+      ansible.builtin.package:
+        name:
+          - openscap
+          - openscap-scanner
+          - scap-security-guide
         state: latest
+        when:
+          - ansible_facts.ansible_cmdline.ostree is undefined
