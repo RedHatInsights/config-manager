@@ -33,7 +33,16 @@
       bDRNR281VFQwS1BWUm5iVFlLTFMwdExTMUZUa1FnVUVkUUlGTkpSMDVCVkZWU1JTMHRMUzB0Q2c9
       PQ==
   tasks:
-    - name: Install OpenSCAP packages for Compliance service
+    - name: Check if yum or dnf is installed
+      shell: which yum || which dnf
+      register: package_manager
+    - name: Install OpenSCAP packages for Compliance service using yum
+      when: package_manager.stdout == 'yum\n'
       yum:
+        name: openscap, openscap-scanner, scap-security-guide
+        state: latest
+    - name: Install OpenSCAP packages for Compliance service using dnf
+      when: package_manager.stdout == 'dnf\n'
+      dnf:
         name: openscap, openscap-scanner, scap-security-guide
         state: latest
