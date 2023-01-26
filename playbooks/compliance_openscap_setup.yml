@@ -39,5 +39,5 @@
           - openscap-scanner
           - scap-security-guide
         state: latest
-        when:
-          - ansible_facts.ansible_cmdline.ostree is undefined
+      when:
+        - ansible_facts.ansible_cmdline.ostree is undefined
