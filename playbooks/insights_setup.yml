@@ -30,12 +30,14 @@
       PQ==
   tasks:
     - name: Install latest insights-client, rhc, rhc-worker-playbook
-      yum:
+      ansible.builtin.package:
         name:
           - insights-client
           - rhc
           - rhc-worker-playbook
         state: latest
+      when:
+        - ansible_facts.ansible_cmdline.ostree is undefined
 
 # With legacy_upload=True: Insights API says this machine is NOT registered.
 # With legacy_upload=False: This host is unregistered.
