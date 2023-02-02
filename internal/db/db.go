@@ -211,6 +211,56 @@ func CountProfiles(orgID string) (int, error) {
 	return count, nil
 }
 
+// InsertConfiguring creates a row in the configuring table with the provided
+// host ID and profile ID.
+func InsertConfiguring(hostID string, profileID string) error {
+	stmt, err := preparedStatement(`INSERT INTO configuring (host_id, profile_id) VALUES ($1, $2);`)
+	if err != nil {
+		return fmt.Errorf("cannot prepare INSERT: %w", err)
+	}
+
+	_, err = stmt.Exec(hostID, profileID)
+	if err != nil {
+		return fmt.Errorf("cannot execute INSERT: %w", err)
+	}
+
+	return nil
+}
+
+// CountConfiguring returns a count of all rows in the configuring table with
+// the given host ID and profile ID.
+func CountConfiguring(hostID string, profileID string) (int, error) {
+	query := "SELECT COUNT(*) FROM configuring WHERE host_id = $1 AND profile_id = $2;"
+
+	stmt, err := preparedStatement(query)
+	if err != nil {
+		return -1, fmt.Errorf("cannot prepare SELECT: %w", err)
+	}
+
+	var count int
+	if err := stmt.Get(&count, hostID, profileID); err != nil {
+		return -1, fmt.Errorf("cannot execute SELECT: %w", err)
+	}
+
+	return count, nil
+}
+
+// DeleteConfiguring deletes all rows from the configuring table with the given
+// host ID and profile ID.
+func DeleteConfiguring(hostID string, profileID string) error {
+	stmt, err := preparedStatement(`DELETE FROM configuring WHERE host_id = $1 and profile_id = $2;`)
+	if err != nil {
+		return fmt.Errorf("cannot prepare DELETE: %w", err)
+	}
+
+	_, err = stmt.Exec(hostID, profileID)
+	if err != nil {
+		return fmt.Errorf("cannot execute DELETE: %w", err)
+	}
+
+	return nil
+}
+
 // Migrate inspects the current active migration version and runs all necessary
 // steps to migrate all the way up. If reset is true, everything is deleted in
 // the database before applying migrations.
