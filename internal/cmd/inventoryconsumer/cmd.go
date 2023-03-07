@@ -1,6 +1,7 @@
 package inventoryconsumer
 
 import (
+	"config-manager/infrastructure/persistence/cloudconnector"
 	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/internal"
 	"config-manager/internal/config"
@@ -118,11 +119,24 @@ func handler(ctx context.Context, msg kafka.Message) {
 		logger = logger.With().Str("request_id", reqID).Logger()
 
 		if event.Host.SystemProfile.RHCState != profile.ID.String() {
-			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
-			host := []internal.Host{event.Host}
-			internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
-				logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
-			})
+			client, err := cloudconnector.NewCloudConnectorClient()
+			if err != nil {
+				logger.Error().Err(err).Msg("cannot get cloud-connector client")
+				return
+			}
+
+			status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.Account, event.Host.SubscriptionManagerID)
+			if err != nil {
+				logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
+				return
+			}
+			if _, has := dispatchers["rhc-worker-playbook"]; has && status == "connected" {
+				logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
+				host := []internal.Host{event.Host}
+				internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
+					logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
+				})
+			}
 		} else {
 			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 		}
