@@ -92,12 +92,12 @@ func handler(ctx context.Context, msg kafka.Message) {
 			logger.Debug().Msg("profile missing org ID")
 			if config.DefaultConfig.TenantTranslatorHost != "" {
 				translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
-				orgID, err := translator.EANToOrgID(ctx, profile.AccountID.String)
+				orgID, err := translator.EANToOrgID(ctx, db.JSONNullStringSafeValue(profile.AccountID))
 				if err != nil {
 					logger.Error().Err(err).Msg("cannot translate EAN to orgID")
 					return
 				}
-				logger.Debug().Str("org_id", orgID).Str("account_number", profile.AccountID.String).Msg("translated EAN to orgID")
+				logger.Debug().Str("org_id", orgID).Str("account_number", db.JSONNullStringSafeValue(profile.AccountID)).Msg("translated EAN to orgID")
 				profile.OrgID.Valid = orgID != ""
 				profile.OrgID.String = orgID
 

@@ -33,7 +33,7 @@ type Host struct {
 func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn func(resp []dispatcher.RunCreated)) {
 	logger := log.With().Logger()
 	if profile.AccountID != nil && profile.AccountID.Valid {
-		logger = logger.With().Str("account_id", profile.AccountID.String).Logger()
+		logger = logger.With().Str("account_id", db.JSONNullStringSafeValue(profile.AccountID)).Logger()
 	}
 	if profile.OrgID != nil && profile.OrgID.Valid {
 		logger = logger.With().Str("org_id", profile.OrgID.String).Logger()
@@ -55,7 +55,7 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
 		run := dispatcher.RunInput{
 			Recipient: host.SystemProfile.RHCID,
-			Account:   profile.AccountID.String,
+			Account:   db.JSONNullStringSafeValue(profile.AccountID),
 			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
 			Labels: &dispatcher.RunInput_Labels{
 				AdditionalProperties: map[string]string{
