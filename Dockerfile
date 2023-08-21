@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.17 as builder
 WORKDIR /go/src/app
 COPY . .
 ENV CGO_ENABLED=0
