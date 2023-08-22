@@ -9,6 +9,7 @@ import (
 	"config-manager/internal/util"
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/google/uuid"
@@ -42,8 +43,9 @@ type requestIDkey string
 // InventoryEvent represents a message read off the inventory.events
 // topic.
 type InventoryEvent struct {
-	Type string        `json:"type"`
-	Host internal.Host `json:"host"`
+	Type      string        `json:"type"`
+	Timestamp time.Time     `json:"timestamp"`
+	Host      internal.Host `json:"host"`
 }
 
 func handler(ctx context.Context, msg kafka.Message) {
@@ -62,6 +64,11 @@ func handler(ctx context.Context, msg kafka.Message) {
 
 	if err := json.Unmarshal(msg.Value, event); err != nil {
 		logger.Error().Err(err).Msg("cannot unmarshal inventory event")
+		return
+	}
+
+	if !event.Timestamp.IsZero() && time.Since(event.Timestamp) > config.DefaultConfig.StaleEventDuration {
+		logger.Info().Msg("skipping stale inventory event")
 		return
 	}
 

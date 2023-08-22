@@ -54,6 +54,7 @@ type Config struct {
 	PlaybookHost            flagvar.URL
 	PlaybookPath            string
 	ServiceConfig           string
+	StaleEventDuration      time.Duration
 	TenantTranslatorHost    string
 	URLPathPrefix           string
 	WebPort                 int
@@ -111,6 +112,7 @@ var DefaultConfig Config = Config{
 	PlaybookHost:         flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
 	PlaybookPath:         "/api/config-manager/v1/states/%v/playbook",
 	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
+	StaleEventDuration:   24 * time.Hour,
 	TenantTranslatorHost: "",
 	URLPathPrefix:        "api",
 	WebPort:              8081,
@@ -197,6 +199,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.Var(&DefaultConfig.PlaybookHost, "playbook-host", fmt.Sprintf("default host from which to download playbooks (%v)", DefaultConfig.PlaybookHost.Help()))
 	fs.StringVar(&DefaultConfig.PlaybookPath, "playbook-path", DefaultConfig.PlaybookPath, "path component for playbook downloads")
 	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
+	fs.DurationVar(&DefaultConfig.StaleEventDuration, "stale-event-duration", DefaultConfig.StaleEventDuration, "duration of time after which inventory events are discarded")
 	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")
 	fs.IntVar(&DefaultConfig.WebPort, "web-port", DefaultConfig.WebPort, "port on which HTTP API server listens")
 	fs.StringVar(&DefaultConfig.URLPathPrefix, "url-path-prefix", DefaultConfig.URLPathPrefix, "generic prefix used in the URL path")
