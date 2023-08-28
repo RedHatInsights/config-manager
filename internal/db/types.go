@@ -45,11 +45,7 @@ func CopyProfile(from Profile) Profile {
 		ID:   uuid.New(),
 		Name: from.Name,
 		Label: func() *JSONNullString {
-			var val string
-			if from.AccountID != nil && from.AccountID.Valid {
-				val = from.AccountID.String + "-"
-			}
-			val = val + uuid.New().String()
+			val := JSONNullStringSafeValue(from.AccountID) + "-" + uuid.New().String()
 			return &JSONNullString{
 				NullString: sql.NullString{
 					Valid:  true,

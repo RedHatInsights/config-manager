@@ -87,7 +87,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 
 	if equal {
 		resp := accountState{
-			Account:    currentProfile.AccountID.String,
+			Account:    db.JSONNullStringSafeValue(currentProfile.AccountID),
 			ApplyState: currentProfile.Active,
 			ID:         currentProfile.ID.String(),
 			Label:      currentProfile.Label.String,
@@ -142,7 +142,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	resp := accountState{
-		Account:    newProfile.AccountID.String,
+		Account:    db.JSONNullStringSafeValue(newProfile.AccountID),
 		ApplyState: newProfile.Active,
 		ID:         newProfile.ID.String(),
 		Label:      newProfile.Label.String,
