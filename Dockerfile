@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:latest as builder
+FROM registry.access.redhat.com/ubi8/go-toolset as builder
 COPY --chown=default . .
 ENV CGO_ENABLED=0
 RUN ["go", "build", "-o", "config_manager", "."]
