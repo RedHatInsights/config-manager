@@ -23,7 +23,7 @@ Updating a host (all hosts) via the API:
 
 The REST interface can be used to view and update the current configuration for all hosts connected through RHC. It can also be used to view a history of previous configuration changes, and obtain logs related to those changes. 
 
-See the [OpenAPI Schema](./schema/api.spec.yaml) for details on interacting with the REST interface.
+See the [OpenAPI Schema](./internal/http/v1/openapi.yaml) for details on interacting with the REST interface.
 
 ## Event interface
 
