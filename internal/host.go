@@ -7,10 +7,12 @@ import (
 	"config-manager/internal/db"
 	"config-manager/internal/util"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,6 +31,14 @@ type Host struct {
 	} `json:"system_profile"`
 }
 
+type IdentityData struct {
+	Identity struct {
+		User struct {
+			Username string `json:"username"`
+		} `json:"user"`
+	} `json:"identity"`
+}
+
 // ApplyProfile applies the current profile to the specified hosts.
 func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn func(resp []dispatcher.RunCreated)) {
 	logger := log.With().Logger()
@@ -42,24 +52,42 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 		return
 	}
 
+	identity, ok := ctx.Value("identity").(string)
+	username := ""
+	if ok {
+		rawIdentity, err := base64.StdEncoding.DecodeString(identity)
+
+		if err != nil {
+			fmt.Println("Error decoding identity:", err)
+			return
+		}
+		identityData := &IdentityData{}
+
+		if err := json.Unmarshal(rawIdentity, &identityData); err != nil {
+			fmt.Println("Error parsing JSON:", err)
+			return
+		}
+		username = identityData.Identity.User.Username
+	}
+
 	logger.Debug().Int("num_hosts", len(hosts)).Msg("applying profile for hosts")
 
-	runs := make([]dispatcher.RunInput, 0, len(hosts))
+	runs := make([]dispatcher.RunInputV2, 0, len(hosts))
 	for _, host := range hosts {
 		if _, has := host.PerReporterStaleness["cloud-connector"]; !has {
 			logger.Warn().Str("client_id", host.SystemProfile.RHCID).Msg("detected host without cloud-connector as a reporter")
 			continue
 		}
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
-		run := dispatcher.RunInput{
-			Recipient: host.SystemProfile.RHCID,
-			Account:   db.JSONNullStringSafeValue(profile.AccountID),
+		run := dispatcher.RunInputV2{
+			Recipient: uuid.MustParse(host.SystemProfile.RHCID),
+			OrgId:     host.OrgID,
+			Principal: username,
 			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
-			Labels: &dispatcher.RunInput_Labels{
-				AdditionalProperties: map[string]string{
-					"state_id": profile.ID.String(),
-					"id":       host.ID,
-				},
+			Name:      profile.Name.String,
+			Labels: &dispatcher.Labels{
+				"state_id": profile.ID.String(),
+				"id":       host.ID,
 			},
 		}
 		runs = append(runs, run)

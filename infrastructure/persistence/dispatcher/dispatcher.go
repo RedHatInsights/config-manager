@@ -26,7 +26,7 @@ import (
 // DispatcherClient provides REST client API methods to interact with the
 // platform playbook-dispatcher application.
 type DispatcherClient interface {
-	Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error)
+	Dispatch(ctx context.Context, inputs []RunInputV2) ([]RunCreated, error)
 }
 
 // dispatcherClientImpl implements DispatcherClient interface.
@@ -67,10 +67,10 @@ func NewDispatcherClient() DispatcherClient {
 
 // Dispatch performs the CreateWithResponse API method of the
 // playbook-dispatcher service.
-func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInput) ([]RunCreated, error) {
+func (dc *dispatcherClientImpl) Dispatch(ctx context.Context, inputs []RunInputV2) ([]RunCreated, error) {
 	logger := log.With().Str("http_client", "playbook-dispatcher").Logger()
 
-	res, err := dc.client.ApiInternalRunsCreateWithResponse(ctx, inputs)
+	res, err := dc.client.ApiInternalV2RunsCreateWithResponse(ctx, inputs)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot create runs with response")
 		return nil, err
