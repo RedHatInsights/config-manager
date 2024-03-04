@@ -1,0 +1,358 @@
+version: "3.8"
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=32181
+      - ZOOKEEPER_SERVER_ID=1
+  kafka:
+    image: confluentinc/cp-kafka
+    restart: always
+    ports:
+      - 29092:29092
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+  kafka-create-topics:
+    image: confluentinc/cp-kafka
+    restart: on-failure
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                       cub kafka-ready -b kafka:29092 1 20 && \
+                       kafka-topics --create --if-not-exists --topic platform.playbook-dispatcher.runs --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic platform.inventory.events --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic platform.inventory.host-ingress --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic playbook-dispatcher-connect-config --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic playbook-dispatcher-connect-status --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic playbook-dispatcher-connect-offsets --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic platform.playbook-dispatcher.run-hosts --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic platform.playbook-dispatcher.runs --bootstrap-server kafka:29092 && \
+                       kafka-topics --create --if-not-exists --topic platform.inventory.system-profile --bootstrap-server kafka:29092'" 
+    depends_on:
+      - kafka
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: insights
+      POSTGRES_USER: insights
+      POSTGRES_DB: insights
+    ports:
+      - "5432:5432"
+
+  db-host-inventory:
+    image: debezium/postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: insights
+      POSTGRES_USER: insights
+      POSTGRES_DB: insights
+    ports:
+      - "15433:5432"
+  insights-inventory-mq:
+    image: quay.io/cloudservices/insights-inventory:latest
+    restart: always
+    command: "make upgrade_db run_inv_mq_service"
+    environment:
+      - APP_NAME=inventory
+      - PATH_PREFIX=api
+      - INVENTORY_DB_USER=insights
+      - INVENTORY_DB_PASS=insights
+      - INVENTORY_DB_HOST=db-host-inventory
+      - INVENTORY_DB_NAME=insights
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - PAYLOAD_TRACKER_ENABLED=false
+      - XJOIN_GRAPHQL_URL=http://xjoin:4000/graphql
+      - prometheus_multiproc_dir=/tmp
+    depends_on:
+      - kafka
+      - db-host-inventory
+  insights-inventory-web:
+    image: quay.io/cloudservices/insights-inventory:latest
+    command: "make upgrade_db run_inv_web_service"
+    restart: always
+    environment:
+      - APP_NAME=inventory
+      - PATH_PREFIX=api
+      - INVENTORY_DB_USER=insights
+      - INVENTORY_DB_PASS=insights
+      - INVENTORY_DB_HOST=db-host-inventory
+      - INVENTORY_DB_NAME=insights
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - PAYLOAD_TRACKER_ENABLED=false
+      - XJOIN_GRAPHQL_URL=http://xjoin:4000/graphql
+      - prometheus_multiproc_dir=/tmp
+    depends_on:
+      - insights-inventory-mq
+      - db-host-inventory
+    ports:
+      - 8001:8080
+  
+  debezium:
+    image: quay.io/cloudservices/xjoin-kafka-connect-strimzi
+    restart: always
+    entrypoint: /opt/kafka/kafka_connect_run.sh
+    volumes:
+      - "./xjoin-config/log4j.properties/:/opt/kafka/custom-config/log4j.properties"
+    environment:
+      - KAFKA_CONNECT_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_CONNECT_METRICS_ENABLED=false
+      - STRIMZI_KAFKA_GC_LOG_ENABLED=false
+      - |
+        KAFKA_CONNECT_CONFIGURATION=
+        offset.storage.topic=connect-cluster-offsets
+        value.converter=org.apache.kafka.connect.json.JsonConverter
+        config.storage.topic=connect-cluster-configs
+        key.converter=org.apache.kafka.connect.json.JsonConverter
+        group.id=connect-cluster
+        status.storage.topic=connect-cluster-status
+        config.storage.replication.factor=1
+        connector.client.config.override.policy=All
+        offset.storage.replication.factor=1
+        status.storage.replication.factor=1
+    depends_on:
+      - kafka
+      - db-host-inventory
+    ports:
+      - 8085:8083
+
+  elasticsearch:
+    restart: always
+    image: elasticsearch:7.10.1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - cluster.routing.allocation.disk.threshold_enabled=false
+  xjoin:
+    image: quay.io/cloudservices/xjoin-search:latest
+    restart: always
+    environment:
+      - LOG_LEVEL=debug
+      - LOG_PRETTY=false
+      - NODE_ENV=development
+      - ES_NODES=http://elasticsearch:9200
+      - HOSTS_INDEX=xjoin.inventory
+    ports:
+      - 4000:4000
+    depends_on:
+      - elasticsearch
+      - debezium
+
+# Cloud connector
+  db-cloud-connector:
+    image: postgres
+    restart: always
+    environment:
+        POSTGRES_PASSWORD: insights
+        POSTGRES_USER: insights
+        POSTGRES_DB: cloud-connector
+    ports:
+        - "25432:5432"
+  migrate:
+    image: quay.io/cloudservices/cloud-connector
+    environment:
+      - CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST=db-cloud-connector
+    entrypoint: /migrate_db upgrade
+    depends_on:
+      - db-cloud-connector
+  mqtt-broker:
+    image: eclipse-mosquitto
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "/usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"
+    volumes:
+      - "./mqtt/mosquitto:/mosquitto"
+    ports:
+      - "8883:8883"
+  mqtt-consumer:
+    image: quay.io/cloudservices/cloud-connector
+    ports:
+      - "8082:8082"
+    environment:
+      - CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BATCH_SIZE=1
+      - CLOUD_CONNECTOR_MQTT_MESSAGE_DISPATCHER_CONCURRENCY_LIMIT=100
+      - CLOUD_CONNECTOR_MQTT_CLIENT_ID=connector-service
+      - CLOUD_CONNECTOR_AUTH_GATEWAY_URL=http://FAKE/
+      - CLOUD_CONNECTOR_SOURCES_HTTP_CLIENT_TIMEOUT=51
+      - CLOUD_CONNECTOR_AUTH_GATEWAY_HTTP_CLIENT_TIMEOUT=5
+      - CLOUD_CONNECTOR_SOURCES_RECORDER_IMPL=fake
+      - CLOUD_CONNECTOR_CONNECTED_CLIENT_RECORDER_IMPL=inventory
+      - CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY=true
+      - CLOUD_CONNECTOR_SERVICE_TO_SERVICE_CREDENTIALS="{\"suraj\":\"surajskey\"}"
+      - CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC=platform.inventory.host-ingress
+      - CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST=db-cloud-connector
+      - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
+      - CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS=kafka:29092
+      - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+    entrypoint: /cloud-connector mqtt_message_consumer -l 0.0.0.0:8082
+    restart: always
+    depends_on:
+      - db-cloud-connector
+      - kafka-create-topics
+      - mqtt-broker
+  kafka-consumer:
+    image: quay.io/cloudservices/cloud-connector
+    ports:
+      - "8083:8083"
+    volumes:
+      - "./client_id_to_account_id_map.json:/data/client_id_to_account_id_map.json"
+    environment:
+      - LOG_LEVEL=TRACE
+      - CLOUD_CONNECTOR_LOG_LEVEL=TRACE
+      - CLOUD_CONNECTOR_MQTT_CLIENT_ID=kafka-consumer
+      - CLOUD_CONNECTOR_AUTH_GATEWAY_URL=http://FAKE/
+      - CLOUD_CONNECTOR_SOURCES_HTTO_CLIENT_TIMEOUT=51
+      - CLOUD_CONNECTOR_AUTH_GATEWAY_HTTP_CLIENT_TIMEOUT=5
+      - CLOUD_CONNECTOR_SLEEP_TIME_HACK=0
+      - CLOUD_CONNECTOR_SOURCES_RECORDER_IMPL=fake
+      - CLOUD_CONNECTOR_CONNECTED_CLIENT_RECORDER_IMPL=inventory
+      - CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY=true
+      - CLOUD_CONNECTOR_SERVICE_TO_SERVICE_CREDENTIALS="{\"suraj\":\"surajskey\"}"
+      - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_CONFIG_FILE=/data/client_id_to_account_id_map.json
+      - CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC=platform.inventory.host-ingress
+      - CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST=db-cloud-connector
+      - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
+      - CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS=kafka:29092
+      - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+    entrypoint: /cloud-connector kafka_message_consumer -l 0.0.0.0:8083
+    restart: always
+    depends_on:
+      - db-cloud-connector
+      - kafka-create-topics
+      - mqtt-consumer
+  cloud-connector-api:
+    image: quay.io/cloudservices/cloud-connector
+    ports:
+      - "8084:8081"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - CLOUD_CONNECTOR_LOG_LEVEL=DEBUG
+      - CLOUD_CONNECTOR_SERVICE_TO_SERVICE_CREDENTIALS={"suraj":"surajskey"}
+      - CLOUD_CONNECTOR_MQTT_CLIENT_ID=api-service
+      - CLOUD_CONNECTOR_SLEEP_TIME_HACK=0
+      - CLOUD_CONNECTOR_MQTT_BROKER_TLS_SKIP_VERIFY=true
+      - CLOUD_CONNECTOR_INVENTORY_KAFKA_TOPIC=platform.inventory.host-ingress
+      - CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST=db-cloud-connector
+      - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
+      - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+    entrypoint: /cloud-connector api_server -l 0.0.0.0:8081
+    restart: always
+    depends_on:
+      - db-cloud-connector
+      - kafka-consumer
+      - mqtt-consumer
+
+# playbook dispatcher
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":10000"
+    ports:
+      - '9000:9000'
+      - '10000:10000'
+    environment:
+      - MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+      - MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+  minio-createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" || exit 1;
+      /usr/bin/mc mb --ignore-existing myminio/insights-upload-perma;
+      /usr/bin/mc policy set upload myminio/insights-upload-perma;
+      "
+  ingress:
+    image: quay.io/cloudservices/insights-ingress:latest
+    ports:
+      - '8080:3000'
+    environment:
+      - INGRESS_STAGEBUCKET=insights-upload-perma
+      - INGRESS_VALIDTOPICS=playbook,playbook-sat
+      - OPENSHIFT_BUILD_COMMIT=somestring
+      - INGRESS_MAXSIZE=104857600
+      - INGRESS_MINIODEV=true
+      - INGRESS_MINIOACCESSKEY=$MINIO_ACCESS_KEY
+      - INGRESS_MINIOSECRETKEY=$MINIO_SECRET_KEY
+      - INGRESS_MINIOENDPOINT=minio:9000
+    depends_on:
+      - kafka
+  playbook-dispatcher-db:
+    image: debezium/postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: insights
+      POSTGRES_USER: insights
+      POSTGRES_DB: insights
+    ports:
+      - "35432:5432"
+  
+  dispatcher-connector:
+    image: quay.io/cloudservices/playbook-dispatcher-connect
+    ports:
+      - 8086:8083
+    environment:
+      KAFKA_CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_CONNECT_CONFIGURATION: |
+        group.id=playbook-dispatcher-connect
+        key.converter=org.apache.kafka.connect.json.JsonConverter
+        value.converter=org.apache.kafka.connect.json.JsonConverter
+        offset.storage.topic=playbook-dispatcher-connect-config
+        offset.storage.replication.factor=1
+        offset.storage.partitions=1
+        status.storage.topic=playbook-dispatcher-connect-status
+        status.storage.replication.factor=1
+        status.storage.partitions=1
+        config.storage.topic=playbook-dispatcher-connect-offsets
+        config.storage.replication.factor=1
+        config.storage.partitions=1
+        config.providers: file
+        config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
+      KAFKA_CONNECT_METRICS_ENABLED: "false"
+      STRIMZI_KAFKA_GC_LOG_ENABLED: "false"
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+    command: /opt/kafka/kafka_connect_run.sh
+    restart: always
+    depends_on:
+        - kafka
+  dispatcher-connector-start:
+    image: quay.io/cloudservices/playbook-dispatcher-connect
+    command: "curl -f -i -H 'Content-Type:application/json' -X POST dispatcher-connector:8086/connectors/ -d @/connector-local.json"
+    restart: on-failure
+    depends_on:
+      - dispatcher-connector
+  
+  dispatcher-api:
+    image: quay.io/cloudservices/playbook-dispatcher
+    command: "run -m api"
+    ports:
+      - 8002:8000
+    environment:
+      - CLOUD_CONNECTOR_IMPL=impl
+      - CLOUD_CONNECTOR_HOST=cloud-connector-api
+      - CLOUD_CONNECTOR_PORT=8084
+      - CLOUD_CONNECTOR_CLIENT_ID=suraj
+      - CLOUD_CONNECTOR_PSK=surajskey
+      - PSK_AUTH_CONFIG_MANAGER=surajskey
+      - RBAC_IMPL=mock
+      - DB_HOST=playbook-dispatcher-db
+      - DB_PORT=5432
+      - DB_NAME=insights
+      - DB_USERNAME=insights
+      - DB_PASSWORD=insights
+    depends_on:
+      - playbook-dispatcher-db
+      - cloud-connector-api
+      - dispatcher-connector
