@@ -5,12 +5,8 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
-	"fmt"
-	"log"
-	"math/rand"
-	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -53,22 +49,17 @@ func TestSendMessage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			rand.Seed(time.Now().UnixNano())
-			port := uint32(rand.Int31n(65535-55535) + 55535)
+			mux := staticmux.StaticMux{}
+			responseBody := test.input.response
+			headers := map[string][]string{"Content-Type": {"application/json"}}
+			mux.AddResponse("/v2/connections/"+test.input.recipient+"/message", 201, responseBody, headers)
 
-			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
+			server := httptest.NewServer(&mux)
+			defer server.Close()
+
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(server.URL)
 			config.DefaultConfig.CloudConnectorClientID = "test"
 			config.DefaultConfig.CloudConnectorPSK = "test"
-
-			mux := staticmux.StaticMux{}
-			mux.AddResponse("/v2/connections/"+test.input.recipient+"/message", 201, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
-			server := http.Server{Addr: config.DefaultConfig.CloudConnectorHost.Value.Host, Handler: &mux}
-			defer server.Close()
-			go func() {
-				if err := server.ListenAndServe(); err != nil {
-					log.Print(err)
-				}
-			}()
 
 			connector, err := NewCloudConnectorClient()
 			if err != nil {
@@ -131,22 +122,17 @@ func TestGetConnectionStatus(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			rand.Seed(time.Now().UnixNano())
-			port := uint32(rand.Int31n(65535-55535) + 55535)
+			mux := staticmux.StaticMux{}
+			responseBody := test.input.response
+			headers := map[string][]string{"Content-Type": {"application/json"}}
+			mux.AddResponse("/v2/connections/"+test.input.recipient+"/status", 200, responseBody, headers)
 
-			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
+			server := httptest.NewServer(&mux)
+			defer server.Close()
+
+			config.DefaultConfig.CloudConnectorHost.Value = url.MustParse(server.URL)
 			config.DefaultConfig.CloudConnectorClientID = "test"
 			config.DefaultConfig.CloudConnectorPSK = "test"
-
-			mux := staticmux.StaticMux{}
-			mux.AddResponse("/v2/connections/"+test.input.recipient+"/status", 200, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
-			server := http.Server{Addr: config.DefaultConfig.CloudConnectorHost.Value.Host, Handler: &mux}
-			defer server.Close()
-			go func() {
-				if err := server.ListenAndServe(); err != nil {
-					log.Print(err)
-				}
-			}()
 
 			connector, err := NewCloudConnectorClient()
 			if err != nil {

@@ -6,12 +6,9 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
-	"fmt"
-	"log"
-	"math/rand"
-	"net/http"
+
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -74,20 +71,16 @@ func TestGetInventoryClients(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			rand.Seed(time.Now().UnixNano())
-			port := uint32(rand.Int31n(65535-55535) + 55535)
-
-			config.DefaultConfig.InventoryHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
 
 			mux := staticmux.StaticMux{}
-			mux.AddResponse("/api/inventory/v1/hosts", 200, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
-			server := http.Server{Addr: config.DefaultConfig.InventoryHost.Value.Host, Handler: &mux}
+			responseBody := test.input.response
+			headers := map[string][]string{"Content-Type": {"application/json"}}
+			mux.AddResponse("/api/inventory/v1/hosts", 200, responseBody, headers)
+
+			server := httptest.NewServer(&mux)
 			defer server.Close()
-			go func() {
-				if err := server.ListenAndServe(); err != nil {
-					log.Print(err)
-				}
-			}()
+
+			config.DefaultConfig.InventoryHost.Value = url.MustParse(server.URL)
 
 			got, err := NewInventoryClient().GetInventoryClients(context.Background(), test.input.page)
 			if err != nil {
