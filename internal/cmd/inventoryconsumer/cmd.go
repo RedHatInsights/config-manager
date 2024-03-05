@@ -132,7 +132,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 				return
 			}
 
-			status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.Account, event.Host.SubscriptionManagerID)
+			status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.OrgID, event.Host.SubscriptionManagerID)
 			if err != nil {
 				logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 				return
