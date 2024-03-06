@@ -5,12 +5,8 @@ import (
 	"config-manager/internal/http/staticmux"
 	"config-manager/internal/url"
 	"context"
-	"fmt"
-	"log"
-	"math/rand"
-	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -108,20 +104,15 @@ func TestDispatch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			rand.Seed(time.Now().UnixNano())
-			port := uint32(rand.Int31n(65535-55535) + 55535)
-
-			config.DefaultConfig.DispatcherHost.Value = url.MustParse(fmt.Sprintf("http://localhost:%v", port))
-
 			mux := staticmux.StaticMux{}
-			mux.AddResponse("/internal/dispatch", 207, test.input.response, map[string][]string{"Content-Type": {"application/json"}})
-			server := http.Server{Addr: config.DefaultConfig.DispatcherHost.Value.Host, Handler: &mux}
+			responseBody := test.input.response
+			headers := map[string][]string{"Content-Type": {"application/json"}}
+			mux.AddResponse("/internal/dispatch", 207, responseBody, headers)
+
+			server := httptest.NewServer(&mux)
 			defer server.Close()
-			go func() {
-				if err := server.ListenAndServe(); err != nil {
-					log.Print(err)
-				}
-			}()
+
+			config.DefaultConfig.DispatcherHost.Value = url.MustParse(server.URL)
 
 			got, err := NewDispatcherClient().Dispatch(context.Background(), test.input.runs)
 			if err != nil {

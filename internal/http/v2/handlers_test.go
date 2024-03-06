@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	port = uint32(rand.Int31n(10000-9876) + 9876)
 	DSN = fmt.Sprintf("host=localhost port=%v user=postgres password=postgres dbname=postgres sslmode=disable", port)
 
-	runtimedir, err := os.MkdirTemp("", "config-manager-internal-http-v1.")
+	runtimedir, err := os.MkdirTemp("", "config-manager-internal-http-v2.")
 	if err != nil {
 		log.Fatalf("cannot make temp dir: %v", err)
 	}
