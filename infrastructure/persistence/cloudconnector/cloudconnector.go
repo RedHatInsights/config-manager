@@ -13,14 +13,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-//go:generate oapi-codegen -config oapi-codegen.yml https://github.com/RedHatInsights/cloud-connector/raw/f7b64dc76271a2293518c2da513676aa979febfd/internal/controller/api/api.spec.json
+//go:generate oapi-codegen -config oapi-codegen.yml https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 
 // CloundConnectorClient is an abstraction of the REST client API methods to
 // interact with the platform cloud-connector application.
 type CloudConnectorClient interface {
-	GetConnections(ctx context.Context, accountID string) ([]string, error)
-	GetConnectionStatus(ctx context.Context, accountID string, recipient string) (string, map[string]interface{}, error)
-	SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error)
+	GetConnectionStatus(ctx context.Context, orgID string, recipient string) (string, map[string]interface{}, error)
+	SendMessage(ctx context.Context, orgID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error)
 }
 
 // cloudConnectorClientImpl implements the CloudConnectorClient interface by
@@ -55,62 +54,26 @@ func NewCloudConnectorClient() (CloudConnectorClient, error) {
 	return NewCloudConnectorClientWithDoer(httpClient)
 }
 
-// GetConnections calls the GetConnectionAccount API method and formats the
-// response.
-func (c *cloudConnectorClientImpl) GetConnections(ctx context.Context, accountID string) ([]string, error) {
-	logger := log.With().Str("http_client", "cloud-connector").Logger()
-
-	resp, err := c.GetConnectionAccount(ctx, AccountID(accountID), func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("x-rh-cloud-connector-account", accountID)
-		logger.Debug().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
-		return nil
-	})
-	if err != nil {
-		logger.Error().Err(err).Msg("cannot get connections from cloud-connector")
-		return nil, err
-	}
-	logger.Debug().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("recieved HTTP response from cloud-connector")
-	response, err := ParseGetConnectionAccountResponse(resp)
-	logger.Debug().Str("response", string(response.Body)).Msg("parsed HTTP response")
-	if err != nil {
-		logger.Error().Err(err).Msg("cannot parse get connection account response")
-		return nil, err
-	}
-
-	if response.JSON200 != nil {
-		return *response.JSON200.Connections, nil
-	}
-
-	return nil, nil
-}
-
-func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error) {
+func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, orgID string, directive string, payload []byte, metadata map[string]string, recipient string) (string, error) {
 	logger := log.With().Str("http_client", "cloud-connector").Logger()
 
 	body := struct {
-		Account   string            `json:"account"`
 		Directive string            `json:"directive"`
 		Metadata  map[string]string `json:"metadata"`
 		Payload   json.RawMessage   `json:"payload"`
-		Recipient string            `json:"recipient"`
 	}{
-		Account:   accountID,
 		Directive: directive,
 		Metadata:  metadata,
 		Payload:   payload,
-		Recipient: recipient,
 	}
 	data, err := json.Marshal(body)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot marshal JSON body")
 		return "", err
 	}
-	// Using PostMessageWithBody here because the MessageRequest is incorrectly
-	// typed as *string rather than interface{}. Perhaps a newer version of the
-	// OpenAPI spec will correct that, and PostMessage with a MessageRequest
-	// struct can be used instead.
-	resp, err := c.PostMessageWithBody(ctx, "application/json", bytes.NewReader(data), func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("x-rh-cloud-connector-account", accountID)
+
+	resp, err := c.PostV2ConnectionsClientIdMessageWithBody(ctx, recipient, "application/json", bytes.NewReader(data), func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
 		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Msg("sending HTTP request")
 		return nil
 	})
@@ -119,7 +82,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 		return "", err
 	}
 	logger.Trace().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Msg("received HTTP response")
-	response, err := ParsePostMessageResponse(resp)
+	response, err := ParsePostV2ConnectionsClientIdMessageResponse(resp)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot parse post message response")
 		return "", err
@@ -133,16 +96,12 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, accountID st
 	return "", nil
 }
 
-func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, accountID string, recipient string) (string, map[string]interface{}, error) {
+func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, orgID string, recipient string) (string, map[string]interface{}, error) {
 	logger := log.With().Str("http_client", "cloud-connector").Logger()
 
-	body := ConnectionStatusRequest{
-		Account: &accountID,
-		NodeId:  &recipient,
-	}
-	resp, err := c.PostConnectionStatus(ctx, PostConnectionStatusJSONRequestBody(body), func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("x-rh-cloud-connector-account", accountID)
-		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Interface("body", body).Logger()
+	resp, err := c.V2ConnectionStatusMultiorg(ctx, recipient, func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
+		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Logger()
 		logger.Trace().Msg("sending HTTP request")
 		return nil
 	})
@@ -151,7 +110,7 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, acco
 		return "unknown", nil, err
 	}
 	logger = logger.With().Str("http_status", http.StatusText(resp.StatusCode)).Interface("headers", resp.Header).Logger()
-	response, err := ParsePostConnectionStatusResponse(resp)
+	response, err := ParseV2ConnectionStatusMultiorgResponse(resp)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot parse connection status response")
 		return "unknown", nil, err
