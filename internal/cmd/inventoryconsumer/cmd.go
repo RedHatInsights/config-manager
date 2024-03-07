@@ -39,17 +39,13 @@ var Command ffcli.Command = ffcli.Command{
 }
 
 type requestIDkey string
-type identityKey string
 
 // InventoryEvent represents a message read off the inventory.events
 // topic.
 type InventoryEvent struct {
-	Type             string        `json:"type"`
-	Timestamp        time.Time     `json:"timestamp"`
-	Host             internal.Host `json:"host"`
-	PlatformMetadata struct {
-		B64Identity string `json:"b64_identity"`
-	} `json:"platform_metadata"`
+	Type      string        `json:"type"`
+	Timestamp time.Time     `json:"timestamp"`
+	Host      internal.Host `json:"host"`
 }
 
 func handler(ctx context.Context, msg kafka.Message) {
@@ -75,8 +71,6 @@ func handler(ctx context.Context, msg kafka.Message) {
 		logger.Info().Msg("skipping stale inventory event")
 		return
 	}
-
-	ctx = context.WithValue(ctx, identityKey("identity"), event.PlatformMetadata.B64Identity)
 
 	switch eventType {
 	case "created":

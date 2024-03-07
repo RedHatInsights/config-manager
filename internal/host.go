@@ -7,7 +7,6 @@ import (
 	"config-manager/internal/db"
 	"config-manager/internal/util"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -31,14 +30,6 @@ type Host struct {
 	} `json:"system_profile"`
 }
 
-type IdentityData struct {
-	Identity struct {
-		User struct {
-			Username string `json:"username"`
-		} `json:"user"`
-	} `json:"identity"`
-}
-
 // ApplyProfile applies the current profile to the specified hosts.
 func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn func(resp []dispatcher.RunCreated)) {
 	logger := log.With().Logger()
@@ -52,24 +43,6 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 		return
 	}
 
-	identity, ok := ctx.Value("identity").(string)
-	username := ""
-	if ok {
-		rawIdentity, err := base64.StdEncoding.DecodeString(identity)
-
-		if err != nil {
-			fmt.Println("Error decoding identity:", err)
-			return
-		}
-		identityData := &IdentityData{}
-
-		if err := json.Unmarshal(rawIdentity, &identityData); err != nil {
-			fmt.Println("Error parsing JSON:", err)
-			return
-		}
-		username = identityData.Identity.User.Username
-	}
-
 	logger.Debug().Int("num_hosts", len(hosts)).Msg("applying profile for hosts")
 
 	runs := make([]dispatcher.RunInputV2, 0, len(hosts))
@@ -79,12 +52,17 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 			continue
 		}
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
+
+		// Sending sample values to `Principal` and `Name` fields as config-manager doesn't store/get playbook name
+		// and moreover, ApplyProfile is also used in internal/dispatch/dispatch.go, it is not possible to pass identity from there
+		// and populate `Principal` field i.e username.
+		// These two fields are important for apps like Remediations.
 		run := dispatcher.RunInputV2{
 			Recipient: uuid.MustParse(host.SystemProfile.RHCID),
 			OrgId:     host.OrgID,
-			Principal: username,
+			Principal: "test",
 			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
-			Name:      profile.Name.String,
+			Name:      "Apply RHC Manager profile",
 			Labels: &dispatcher.Labels{
 				"state_id": profile.ID.String(),
 				"id":       host.ID,
