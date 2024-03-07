@@ -8,6 +8,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sgreben/flagvar"
 
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
@@ -42,6 +43,8 @@ type Config struct {
 	KafkaPassword           string
 	KafkaSystemProfileTopic string
 	KafkaUsername           string
+	KafkaCAPath             string
+	KafkaSaslMechanism      string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -94,6 +97,8 @@ var DefaultConfig Config = Config{
 	KafkaPassword:           "",
 	KafkaSystemProfileTopic: "platform.inventory.system-profile",
 	KafkaUsername:           "",
+	KafkaCAPath:             "",
+	KafkaSaslMechanism:      "",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -133,8 +138,19 @@ func init() {
 			if len(clowder.LoadedConfig.Kafka.Brokers) >= 1 {
 				broker := clowder.LoadedConfig.Kafka.Brokers[0]
 				if broker.Authtype != nil {
+
 					DefaultConfig.KafkaUsername = *broker.Sasl.Username
 					DefaultConfig.KafkaPassword = *broker.Sasl.Password
+					DefaultConfig.KafkaSaslMechanism = *broker.Sasl.SaslMechanism
+
+					if broker.Cacert != nil {
+						caPath, err := clowder.LoadedConfig.KafkaCa(broker)
+						if err != nil {
+							log.Fatal().Err(err).Msg("Kafka CA cert failed to write")
+						}
+
+						DefaultConfig.KafkaCAPath = caPath
+					}
 				}
 			}
 			for requestedName, topicConfig := range clowder.KafkaTopics {
@@ -187,6 +203,8 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaPassword, "kafka-password", DefaultConfig.KafkaPassword, "managed kafka auth password")
 	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
 	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
+	fs.StringVar(&DefaultConfig.KafkaCAPath, "kafka-cacert-path", DefaultConfig.KafkaCAPath, "managed kafka cacert path")
+	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
