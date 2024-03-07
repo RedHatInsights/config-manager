@@ -59,7 +59,7 @@ func (k kafkautil) NewWriter(topic string) *kafka.Writer {
 	}
 
 	return &kafka.Writer{
-		Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values[0]),
+		Addr:      kafka.TCP(config.DefaultConfig.KafkaBrokers.Values...),
 		Topic:     topic,
 		Transport: transport,
 	}
