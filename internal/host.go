@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -44,22 +45,27 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 
 	logger.Debug().Int("num_hosts", len(hosts)).Msg("applying profile for hosts")
 
-	runs := make([]dispatcher.RunInput, 0, len(hosts))
+	runs := make([]dispatcher.RunInputV2, 0, len(hosts))
 	for _, host := range hosts {
 		if _, has := host.PerReporterStaleness["cloud-connector"]; !has {
 			logger.Warn().Str("client_id", host.SystemProfile.RHCID).Msg("detected host without cloud-connector as a reporter")
 			continue
 		}
 		logger.Debug().Str("client_id", host.SystemProfile.RHCID).Msg("creating run for host")
-		run := dispatcher.RunInput{
-			Recipient: host.SystemProfile.RHCID,
-			Account:   db.JSONNullStringSafeValue(profile.AccountID),
+
+		// Sending sample values to `Principal` and `Name` fields as config-manager doesn't store/get playbook name
+		// and moreover, ApplyProfile is also used in internal/dispatch/dispatch.go, it is not possible to pass identity from there
+		// and populate `Principal` field i.e username.
+		// These two fields are important for apps like Remediations.
+		run := dispatcher.RunInputV2{
+			Recipient: uuid.MustParse(host.SystemProfile.RHCID),
+			OrgId:     host.OrgID,
+			Principal: "test",
 			Url:       config.DefaultConfig.PlaybookHost.String() + fmt.Sprintf(config.DefaultConfig.PlaybookPath, profile.ID),
-			Labels: &dispatcher.RunInput_Labels{
-				AdditionalProperties: map[string]string{
-					"state_id": profile.ID.String(),
-					"id":       host.ID,
-				},
+			Name:      "Apply RHC Manager profile",
+			Labels: &dispatcher.Labels{
+				"state_id": profile.ID.String(),
+				"id":       host.ID,
 			},
 		}
 		runs = append(runs, run)
