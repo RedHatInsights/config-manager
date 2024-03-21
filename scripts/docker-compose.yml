@@ -98,7 +98,7 @@ services:
     restart: always
     entrypoint: /opt/kafka/kafka_connect_run.sh
     volumes:
-      - "./xjoin-config/log4j.properties/:/opt/kafka/custom-config/log4j.properties"
+      - "./xjoin-config/log4j.properties/:/opt/kafka/custom-config/log4j.properties:Z"
     environment:
       - KAFKA_CONNECT_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_CONNECT_METRICS_ENABLED=false
@@ -172,7 +172,7 @@ services:
       - -c
       - "/usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"
     volumes:
-      - "./mqtt/mosquitto:/mosquitto"
+      - "./mqtt/mosquitto:/mosquitto:Z"
     ports:
       - "8883:8883"
   mqtt-consumer:
@@ -206,7 +206,7 @@ services:
     ports:
       - "8083:8083"
     volumes:
-      - "./client_id_to_account_id_map.json:/data/client_id_to_account_id_map.json"
+      - "./client_id_to_account_id_map.json:/data/client_id_to_account_id_map.json:Z"
     environment:
       - LOG_LEVEL=TRACE
       - CLOUD_CONNECTOR_LOG_LEVEL=TRACE
@@ -336,13 +336,14 @@ services:
   
   dispatcher-api:
     image: quay.io/cloudservices/playbook-dispatcher
-    command: "run -m api"
+    command: -c "./app migrate up && ./app run -m api"
+    entrypoint: bash
     ports:
       - 8002:8000
     environment:
       - CLOUD_CONNECTOR_IMPL=impl
       - CLOUD_CONNECTOR_HOST=cloud-connector-api
-      - CLOUD_CONNECTOR_PORT=8084
+      - CLOUD_CONNECTOR_PORT=8081
       - CLOUD_CONNECTOR_CLIENT_ID=suraj
       - CLOUD_CONNECTOR_PSK=surajskey
       - PSK_AUTH_CONFIG_MANAGER=surajskey

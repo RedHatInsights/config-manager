@@ -58,4 +58,13 @@ make create_host
 ```
 Above command sends host-registration request to host-inventory and also send the connection status to cloud-connector service. 
 
-On the terminal where you ran `make start-inventory-consumer` you will see logs populating. At this point config-manager tries to setup the host by installing `rhc-worker-playbook` package and applies current org profile to the host. 
+On the terminal where you ran `make start-inventory-consumer` you will see logs populating. At this point config-manager tries to setup the host by installing `rhc-worker-playbook` package and applies current org profile to the host.
+
+### Running config-manager API.
+
+Use the below make command to start api server.
+
+```
+make configure-xjoin
+make start-httpapi
+```
