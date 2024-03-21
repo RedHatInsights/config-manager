@@ -1,5 +1,5 @@
 mqtt_msg='{ "type": "connection-status", "message_id": "3a57b1ad-5163-47ee-9e57-3bb6d90bdfff", "version": 1, "sent": "2023-12-04T17:22:24+00:00", "content": { "canonical_facts": { "insights_id": "a319580a-2321-47c7-b061-886548bea067", "machine_id": "044afe91-3b12-4439-9e8f-f531462d26b9", "bios_uuid": "ec2c79ab-02ff-d09b-31a9-583a902dd74b", "subscription_manager_id": "4b1efbbe-a447-48d0-98c3-3594aae1d2c5", "ip_addresses": ["172.31.28.69"], "mac_addresses": ["0a:94:1d:36:ff:21", "00:00:00:00:00:00"], "fqdn": "ip-172-31-28-69.ec2.internal" }, "dispatchers": { "playbook": { "ansible-runner-version": "1.2.3" }, "package-manager": null, "rhc-worker-playbook":null }, "state": "online" } }'
-create_host:
+send_mqtt_msg:
 	mqtt pub -V 3 -t redhat/insights/4b1efbbe-a447-48d0-98c3-3594aae1d2c5/control/out -h 127.0.0.1 -p 8883 -d -v -m ${mqtt_msg}
 
 

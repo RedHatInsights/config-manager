@@ -54,7 +54,7 @@ make start-inventory-consumer
 
 ### Sending data to local config-manager. 
 ```bash
-make create_host
+make send_mqtt_msg
 ```
 Above command sends host-registration request to host-inventory and also send the connection status to cloud-connector service. 
 
