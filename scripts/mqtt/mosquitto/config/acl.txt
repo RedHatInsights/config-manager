@@ -1,0 +1,24 @@
+user connector-service
+topic readwrite redhat/insights/#
+
+user api-service
+topic readwrite redhat/insights/#
+
+# This works
+#pattern readwrite redhat/insights/%c/#
+
+
+# This is a bit more strict
+pattern write redhat/insights/%u/control/out
+pattern write redhat/insights/%u/data/out
+pattern read redhat/insights/%u/control/in
+pattern read redhat/insights/%u/data/in
+
+
+user connector-service
+topic readwrite qa/insights/#
+pattern write qa/insights/%u/control/out
+pattern write qa/insights/%u/data/out
+pattern read qa/insights/%u/control/in
+pattern read qa/insights/%u/data/in
+
