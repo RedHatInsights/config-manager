@@ -2,6 +2,8 @@ mqtt_msg='{ "type": "connection-status", "message_id": "3a57b1ad-5163-47ee-9e57-
 send_mqtt_msg:
 	mqtt pub -V 3 -t redhat/insights/4b1efbbe-a447-48d0-98c3-3594aae1d2c5/control/out -h 127.0.0.1 -p 8883 -d -v -m ${mqtt_msg}
 
+send_run_event_msg:
+	kcat -b localhost:29092 -t platform.playbook-dispatcher.runs -H service=config_manager -P scripts/run-event.json
 
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
@@ -34,6 +36,9 @@ start-httpapi:
 		--log-level trace \
 		--metrics-port 9007 \
 		--inventory-host http://127.0.0.1:8001 \
+		--playbook-host https://random-host \
+		--dispatcher-psk=surajskey \
+		--dispatcher-host=http://127.0.0.1:8002 \
 		http-api
 
 start-inventory-consumer:
@@ -49,6 +54,11 @@ start-inventory-consumer:
 		--dispatcher-host=http://127.0.0.1:8002 \
 		inventory-consumer
 
+start-dispatcher-consumer:
+	go run main.go \
+		--kafka-brokers=localhost:29092 \
+		--metrics-port=9009 \
+		dispatcher-consumer
 
 configure-xjoin:
 	@./scripts/xjoin-config/configure-xjoin.sh
