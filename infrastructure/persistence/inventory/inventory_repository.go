@@ -89,13 +89,14 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (In
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
+	switch {
+	case res.StatusCode >= 400:
 		responseBody, err := io.ReadAll(res.Body)
 		if err != nil {
 			log.Error().Err(err).Msg("Error reading response body")
-			return results, err
+			return results, fmt.Errorf("error reading response body: %w", err)
 		}
-		return results, fmt.Errorf("received non-200 status code: %d, response body: %s", res.StatusCode, string(responseBody))
+		return results, fmt.Errorf("error response received: %v, response body: %v", res.StatusCode, string(responseBody))
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&results); err != nil {
