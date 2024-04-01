@@ -89,8 +89,17 @@ func (c *InventoryClient) GetInventoryClients(ctx context.Context, page int) (In
 	}
 	defer res.Body.Close()
 
-	err = json.NewDecoder(res.Body).Decode(&results)
-	if err != nil {
+	switch {
+	case res.StatusCode >= 400:
+		responseBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Error().Err(err).Msg("Error reading response body")
+			return results, fmt.Errorf("error reading response body: %w", err)
+		}
+		return results, fmt.Errorf("error response received: %v, response body: %v", res.StatusCode, string(responseBody))
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&results); err != nil {
 		body, _ := io.ReadAll(res.Body)
 		log.Error().Err(err).Msgf("error decoding inventory response: %v", string(body))
 	}

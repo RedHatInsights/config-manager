@@ -182,8 +182,7 @@ func createProfile(w http.ResponseWriter, r *http.Request) {
 		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot insert new profile: %v", err), logger)
 		return
 	}
-
-	dispatch.Dispatch(newProfile)
+	dispatch.Dispatch(newProfile, identity.Get(r.Context()))
 
 	render.RenderJSON(w, r, http.StatusCreated, newProfile, logger)
 }
