@@ -29,6 +29,8 @@ func GeneratePlaybook(state map[string]string) (string, error) {
 	sort.SliceStable(keys, func(i, j int) bool {
 		if keys[i] == "insights" {
 			return true
+		} else if keys[j] == "insights" {
+			return false
 		}
 		return keys[i] < keys[j]
 	})
