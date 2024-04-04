@@ -32,7 +32,7 @@ func TestDispatch(t *testing.T) {
 						Recipient: uuid.MustParse("276c4685-fdfb-4172-930f-4148b8340c2e"),
 						OrgId:     "0000001",
 						Principal: "test_user",
-						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Url:       "https://cloud.redhat.com/api/config-manager/v2/playbooks?profile_id=e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
 						Name:      "Apply fix",
 						Labels: &Labels{
 							"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
@@ -42,7 +42,7 @@ func TestDispatch(t *testing.T) {
 						Recipient: uuid.MustParse("9a76b28b-0e09-41c8-bf01-79d1bef72646"),
 						OrgId:     "0000001",
 						Principal: "test_user",
-						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Url:       "https://cloud.redhat.com/api/config-manager/v2/playbooks?profile_id=e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
 						Name:      "Apply fix",
 						Labels: &Labels{
 							"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
@@ -73,7 +73,7 @@ func TestDispatch(t *testing.T) {
 						Recipient: uuid.MustParse("276c4685-fdfb-4172-930f-4148b8340c2e"),
 						OrgId:     "0000001",
 						Principal: "test_user",
-						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Url:       "https://cloud.redhat.com/api/config-manager/v2/playbooks?profile_id=e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
 						Name:      "Apply Fix",
 						Labels: &Labels{
 							"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
@@ -83,7 +83,7 @@ func TestDispatch(t *testing.T) {
 						Recipient: uuid.MustParse("9a76b28b-0e09-41c8-bf01-79d1bef72646"),
 						OrgId:     "0000001",
 						Principal: "test_user",
-						Url:       "https://cloud.redhat.com/api/config-manager/v1/states/e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
+						Url:       "https://cloud.redhat.com/api/config-manager/v2/playbooks?profile_id=e417581a-d649-4cdc-9506-6eb7fdbfd66d/playbook",
 						Name:      "Apply Fix",
 						Labels: &Labels{
 							"test": "e417581a-d649-4cdc-9506-6eb7fdbfd66d",
