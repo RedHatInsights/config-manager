@@ -12,6 +12,7 @@ Before starting the development make sure below packages/binaries are installed 
 | mqtt cli                       | >=4.24.0 | https://hivemq.github.io/mqtt-cli/docs/installation/                           |
 | docker & docker-compose        | latest   | https://docs.docker.com/desktop/install/fedora/                                |
 | librdkafka &  librdkafka-devel | latest   | Use package-manager to install it.  dnf install -y librdkafka librdkafka-devel |
+| kcat (formaly kafkacat) | latest   | https://docs.confluent.io/platform/current/tools/kafkacat-usage.html |
 
 
 ## Clone the repository
@@ -44,9 +45,9 @@ docker ps | wc -l
 
 Now we are ready to start config-manager locally. 
 
-### Running config-manager locally. 
+### Running inventory-consumer locally. 
 
-Use the below make command to start inventory-consumer-service. 
+Use the below make command to start inventory-consumer service. 
 
 ```bash
 make start-inventory-consumer
@@ -59,6 +60,20 @@ make send_mqtt_msg
 Above command sends host-registration request to host-inventory and also send the connection status to cloud-connector service. 
 
 On the terminal where you ran `make start-inventory-consumer` you will see logs populating. At this point config-manager tries to setup the host by installing `rhc-worker-playbook` package and applies current org profile to the host.
+
+### Running dispatcher-consumer locally.
+Use the below make command to dispatcher-consumer service.
+
+```bash
+make start-dispatcher-consumer
+```
+
+### Sending data to local dispatcher-consumer. 
+```bash
+make send_run_event_msg
+```
+
+The above command sends a run event message to the `platform.playbook-dispatcher.runs` topic which is then consumed by our dispatcher-consumer service.
 
 ### Running config-manager API.
 
