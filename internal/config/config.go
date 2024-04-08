@@ -115,7 +115,7 @@ var DefaultConfig Config = Config{
 	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles:        "./playbooks/",
 	PlaybookHost:         flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
-	PlaybookPath:         "/api/config-manager/v2/playbooks?%v",
+	PlaybookPath:         "/api/config-manager/v2/playbooks?profile_id=%v",
 	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	StaleEventDuration:   24 * time.Hour,
 	TenantTranslatorHost: "",
