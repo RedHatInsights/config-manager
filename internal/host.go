@@ -93,14 +93,14 @@ func ApplyProfile(ctx context.Context, profile *db.Profile, hosts []Host, fn fun
 // rhc-worker-playbook RPM, enabling the host to receive and execute playbooks
 // sent through playbook-dispatcher.
 func SetupHost(ctx context.Context, host Host) (string, error) {
-	logger := log.With().Str("org_id", host.OrgID).Str("subscription_manager_id", host.SubscriptionManagerID).Logger()
+	logger := log.With().Str("org_id", host.OrgID).Str("subscription_manager_id", host.SubscriptionManagerID).Str("rhc_client_id", host.SystemProfile.RHCID).Logger()
 
 	if host.OrgID == "" {
 		return "", fmt.Errorf("cannot setup host: missing value for 'orgID' field")
 	}
 
-	if host.SubscriptionManagerID == "" {
-		return "", fmt.Errorf("cannot setup host: missing value for 'subscription_manager_id' field")
+	if host.SystemProfile.RHCID == "" {
+		return "", fmt.Errorf("cannot setup host: missing value for 'rhc_client_id' field")
 	}
 
 	client, err := cloudconnector.NewCloudConnectorClient()
@@ -117,7 +117,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 			return "", fmt.Errorf("cannot get connected status after %v, aborting", time.Since(started))
 		}
 
-		status, dispatchers, err = client.GetConnectionStatus(ctx, host.OrgID, host.SubscriptionManagerID)
+		status, dispatchers, err = client.GetConnectionStatus(ctx, host.OrgID, host.SystemProfile.RHCID)
 		if err != nil {
 			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 			return "", err
@@ -136,7 +136,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 	}
 
 	if _, has := dispatchers["package-manager"]; !has {
-		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SubscriptionManagerID)
+		return "", fmt.Errorf("host %v missing required directive 'package-manager'", host.SystemProfile.RHCID)
 	}
 
 	if _, has := dispatchers["rhc-worker-playbook"]; has {
@@ -156,7 +156,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		return "", fmt.Errorf("cannot marshal payload: %v", err)
 	}
 
-	messageID, err := client.SendMessage(ctx, host.OrgID, "package-manager", data, nil, host.SubscriptionManagerID)
+	messageID, err := client.SendMessage(ctx, host.OrgID, "package-manager", data, nil, host.SystemProfile.RHCID)
 	if err != nil {
 		logger.Error().Err(err).Msg("cannot send message to host")
 		return "", err
@@ -168,7 +168,7 @@ func SetupHost(ctx context.Context, host Host) (string, error) {
 		if time.Now().After(started.Add(180 * time.Second)) {
 			return "", fmt.Errorf("unable to detect rhc-worker-playbook after %v, aborting", time.Since(started))
 		}
-		status, dispatchers, err := client.GetConnectionStatus(ctx, host.OrgID, host.SubscriptionManagerID)
+		status, dispatchers, err := client.GetConnectionStatus(ctx, host.OrgID, host.SystemProfile.RHCID)
 		if err != nil {
 			logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 			return "", err
