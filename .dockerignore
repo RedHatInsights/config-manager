@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# Allow files and directories
+!/infrastructure
+!/internal
+!/playbooks
+!/go.mod
+!/go.sum
+!main.go
