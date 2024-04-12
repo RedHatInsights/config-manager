@@ -23,7 +23,7 @@ var Command ffcli.Command = ffcli.Command{
 	ShortHelp: "Run the inventory kafka consumer",
 	LongHelp:  "Consumes messages from the 'kafka-inventory-topic' topic and attempts to configure the identified hosts for remote configuration management.",
 	Exec: func(ctx context.Context, args []string) error {
-		log.Info().Str("command", "inventory-consumer").Msg("starting command")
+		log.Info().Str("command", "inventory-consumer").Msg("started consumer. Awaiting messages.")
 
 		reader := util.Kafka.NewReader(config.DefaultConfig.KafkaInventoryTopic)
 
@@ -50,8 +50,6 @@ type InventoryEvent struct {
 
 func handler(ctx context.Context, msg kafka.Message) {
 	logger := log.With().Str("module", "inventory-consumer").Int64("offset", msg.Offset).Logger()
-
-	logger.Trace().Msg("handling kafka message")
 
 	eventType, err := util.Kafka.GetHeader(msg, "event_type")
 	if err != nil {

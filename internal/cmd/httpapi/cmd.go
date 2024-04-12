@@ -19,7 +19,7 @@ var Command ffcli.Command = ffcli.Command{
 	Name:      "http-api",
 	ShortHelp: "Run the HTTP API server",
 	Exec: func(ctx context.Context, args []string) error {
-		log.Info().Str("command", "http-api").Msg("starting command")
+		log.Info().Str("command", "http-api").Msg("started HTTP API server. Awaiting requests.")
 
 		v1r, err := v1.NewMux()
 		if err != nil {

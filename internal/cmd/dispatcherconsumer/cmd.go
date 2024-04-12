@@ -17,7 +17,7 @@ var Command ffcli.Command = ffcli.Command{
 	ShortHelp: "Run the dispatcher kafka consumer",
 	LongHelp:  "Consumes message from the 'kafka-dispatcher-topic' and produces messages on the 'kafka-system-profile' topic.",
 	Exec: func(ctx context.Context, args []string) error {
-		log.Info().Str("command", "dispatcher-consumer").Msg("starting command")
+		log.Info().Str("command", "dispatcher-consumer").Msg("started consumer. Awaiting messages.")
 
 		reader := util.Kafka.NewReader(config.DefaultConfig.KafkaDispatcherTopic)
 		writer := util.Kafka.NewWriter(config.DefaultConfig.KafkaSystemProfileTopic)
