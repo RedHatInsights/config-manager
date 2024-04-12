@@ -72,80 +72,85 @@ func handler(ctx context.Context, msg kafka.Message) {
 		return
 	}
 
-	switch eventType {
-	case "created":
-		logger.Info().Msg("setting up new host for remote host configuration")
-		messageID, err := internal.SetupHost(ctx, event.Host)
-		if err != nil {
-			logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
-			return
-		}
-		logger.Info().Str("message_id", messageID).Msg("setup message sent to host")
-		fallthrough
-	case "updated":
-		var defaultState map[string]string
-		if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
-			logger.Error().Err(err).Msg("cannot unmarshal service config")
-			return
-		}
+	// Process a message only if a host is connected via Cloud Connector
+	isConnected := event.Host.SystemProfile.RHCID != ""
 
-		profile, err := db.GetOrInsertCurrentProfile(event.Host.OrgID, db.NewProfile(event.Host.OrgID, event.Host.Account, defaultState))
-		if err != nil {
-			logger.Error().Err(err).Str("org_id", event.Host.OrgID).Msg("cannot get profile from database")
-			return
-		}
+	if isConnected {
+		switch eventType {
+		case "created":
+			logger.Info().Msg("setting up new host for remote host configuration")
+			messageID, err := internal.SetupHost(ctx, event.Host)
+			if err != nil {
+				logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
+				return
+			}
+			logger.Info().Str("message_id", messageID).Msg("setup message sent to host")
+			fallthrough
+		case "updated":
+			var defaultState map[string]string
+			if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
+				logger.Error().Err(err).Msg("cannot unmarshal service config")
+				return
+			}
 
-		if !profile.OrgID.Valid {
-			logger.Debug().Msg("profile missing org ID")
-			if config.DefaultConfig.TenantTranslatorHost != "" {
-				translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
-				orgID, err := translator.EANToOrgID(ctx, db.JSONNullStringSafeValue(profile.AccountID))
+			profile, err := db.GetOrInsertCurrentProfile(event.Host.OrgID, db.NewProfile(event.Host.OrgID, event.Host.Account, defaultState))
+			if err != nil {
+				logger.Error().Err(err).Str("org_id", event.Host.OrgID).Msg("cannot get profile from database")
+				return
+			}
+
+			if !profile.OrgID.Valid {
+				logger.Debug().Msg("profile missing org ID")
+				if config.DefaultConfig.TenantTranslatorHost != "" {
+					translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
+					orgID, err := translator.EANToOrgID(ctx, db.JSONNullStringSafeValue(profile.AccountID))
+					if err != nil {
+						logger.Error().Err(err).Msg("cannot translate EAN to orgID")
+						return
+					}
+					logger.Debug().Str("org_id", orgID).Str("account_number", db.JSONNullStringSafeValue(profile.AccountID)).Msg("translated EAN to orgID")
+					profile.OrgID.Valid = orgID != ""
+					profile.OrgID.String = orgID
+
+					if err := db.InsertProfile(*profile); err != nil {
+						logger.Error().Err(err).Msg("cannot insert profile")
+						return
+					}
+					logger.Debug().Msg("inserted new profile")
+				}
+			}
+
+			reqID, err := util.Kafka.GetHeader(msg, "request_id")
+			if err != nil {
+				logger.Error().Err(err).Msg("cannot get request_id header")
+				reqID = uuid.New().String()
+				logger.Debug().Str("request_id", reqID).Msg("created request ID")
+				ctx = context.WithValue(ctx, requestIDkey("request_id"), reqID)
+			}
+			logger = logger.With().Str("request_id", reqID).Logger()
+
+			if event.Host.SystemProfile.RHCState != profile.ID.String() {
+				client, err := cloudconnector.NewCloudConnectorClient()
 				if err != nil {
-					logger.Error().Err(err).Msg("cannot translate EAN to orgID")
+					logger.Error().Err(err).Msg("cannot get cloud-connector client")
 					return
 				}
-				logger.Debug().Str("org_id", orgID).Str("account_number", db.JSONNullStringSafeValue(profile.AccountID)).Msg("translated EAN to orgID")
-				profile.OrgID.Valid = orgID != ""
-				profile.OrgID.String = orgID
 
-				if err := db.InsertProfile(*profile); err != nil {
-					logger.Error().Err(err).Msg("cannot insert profile")
+				status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.OrgID, event.Host.SystemProfile.RHCID)
+				if err != nil {
+					logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
 					return
 				}
-				logger.Debug().Msg("inserted new profile")
+				if _, has := dispatchers["rhc-worker-playbook"]; has && status == "connected" {
+					logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
+					host := []internal.Host{event.Host}
+					internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
+						logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
+					})
+				}
+			} else {
+				logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 			}
-		}
-
-		reqID, err := util.Kafka.GetHeader(msg, "request_id")
-		if err != nil {
-			logger.Error().Err(err).Msg("cannot get request_id header")
-			reqID = uuid.New().String()
-			logger.Debug().Str("request_id", reqID).Msg("created request ID")
-			ctx = context.WithValue(ctx, requestIDkey("request_id"), reqID)
-		}
-		logger = logger.With().Str("request_id", reqID).Logger()
-
-		if event.Host.SystemProfile.RHCState != profile.ID.String() {
-			client, err := cloudconnector.NewCloudConnectorClient()
-			if err != nil {
-				logger.Error().Err(err).Msg("cannot get cloud-connector client")
-				return
-			}
-
-			status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.OrgID, event.Host.SystemProfile.RHCID)
-			if err != nil {
-				logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
-				return
-			}
-			if _, has := dispatchers["rhc-worker-playbook"]; has && status == "connected" {
-				logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
-				host := []internal.Host{event.Host}
-				internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
-					logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
-				})
-			}
-		} else {
-			logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 		}
 	}
 }
