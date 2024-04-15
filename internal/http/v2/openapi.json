@@ -17,6 +17,20 @@
                 "description": "Retrieve a paginated array of profiles for the identified account. The URL query parameters 'limit' and 'offset' can be used to paginate the results. The default value of 'limit' is 50. The default value of 'offset' is 0.",
                 "parameters": [
                     {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "default": "created_at:desc",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "created_at:asc",
+                                "created_at:desc"
+                            ]
+                        }
+                    },
+                    {
                         "name": "limit",
                         "in": "query",
                         "required": false,

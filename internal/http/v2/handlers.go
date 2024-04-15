@@ -33,9 +33,14 @@ func getProfiles(w http.ResponseWriter, r *http.Request) {
 	logger = logger.With().Interface("identity", id).Logger()
 
 	var (
+		sortBy string = "created_at:desc"
 		limit  int
 		offset int
 	)
+
+	if r.URL.Query().Has("sort_by") {
+		sortBy = r.URL.Query().Get("sort_by")
+	}
 
 	for key, val := range map[string]*int{"limit": &limit, "offset": &offset} {
 		if r.URL.Query().Has(key) {
@@ -57,7 +62,7 @@ func getProfiles(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Debug().Int("total", total).Msg("found profiles")
 
-	profiles, err := db.GetProfiles(id.Identity.OrgID, "", limit, offset)
+	profiles, err := db.GetProfiles(id.Identity.OrgID, sortBy, limit, offset)
 	if err != nil {
 		instrumentation.GetProfilesError()
 		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot get profiles: %v", err), logger)
