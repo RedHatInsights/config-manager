@@ -174,8 +174,8 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 		offset int
 	)
 
-	if r.URL.Query().Has("sortBy") {
-		sortBy = r.URL.Query().Get("sortBy")
+	if r.URL.Query().Has("sort_by") {
+		sortBy = r.URL.Query().Get("sort_by")
 	}
 
 	for key, val := range map[string]*int{"limit": &limit, "offset": &offset} {
