@@ -110,6 +110,15 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, orgI
 
 	resp, err := c.V2ConnectionStatusMultiorg(ctx, recipient, func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
+
+		sensitiveField := "X-Rh-Cloud-Connector-Psk"
+		filteredHeaders := make(http.Header)
+		for key, values := range req.Header {
+			if key != sensitiveField {
+				filteredHeaders[key] = values
+			}
+		}
+
 		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Logger()
 		logger.Trace().Msg("sending HTTP request")
 		return nil
