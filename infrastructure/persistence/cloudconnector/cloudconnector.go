@@ -75,7 +75,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, orgID string
 	resp, err := c.PostV2ConnectionsClientIdMessageWithBody(ctx, recipient, "application/json", bytes.NewReader(data), func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
 
-		sensitiveField := "x-rh-cloud-connector-psk"
+		sensitiveField := "X-Rh-Cloud-Connector-Psk"
 		filteredHeaders := make(http.Header)
 		for key, values := range req.Header {
 			if key != sensitiveField {
