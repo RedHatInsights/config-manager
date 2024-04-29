@@ -75,15 +75,7 @@ func (c *cloudConnectorClientImpl) SendMessage(ctx context.Context, orgID string
 	resp, err := c.PostV2ConnectionsClientIdMessageWithBody(ctx, recipient, "application/json", bytes.NewReader(data), func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
 
-		sensitiveField := "X-Rh-Cloud-Connector-Psk"
-		filteredHeaders := make(http.Header)
-		for key, values := range req.Header {
-			if key != sensitiveField {
-				filteredHeaders[key] = values
-			}
-		}
-
-		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", filteredHeaders).Msg("sending HTTP request")
+		logger.Trace().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", filteredHeaders(*req, "X-Rh-Cloud-Connector-Psk")).Msg("sending HTTP request")
 		return nil
 	})
 	if err != nil {
@@ -111,15 +103,7 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, orgI
 	resp, err := c.V2ConnectionStatusMultiorg(ctx, recipient, func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("x-rh-cloud-connector-org-id", orgID)
 
-		sensitiveField := "X-Rh-Cloud-Connector-Psk"
-		filteredHeaders := make(http.Header)
-		for key, values := range req.Header {
-			if key != sensitiveField {
-				filteredHeaders[key] = values
-			}
-		}
-
-		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", req.Header).Logger()
+		logger = logger.With().Str("method", req.Method).Str("url", req.URL.String()).Interface("headers", filteredHeaders(*req, "X-Rh-Cloud-Connector-Psk")).Logger()
 		logger.Trace().Msg("sending HTTP request")
 		return nil
 	})
@@ -152,4 +136,16 @@ func (c *cloudConnectorClientImpl) GetConnectionStatus(ctx context.Context, orgI
 	}
 
 	return "", map[string]interface{}{}, fmt.Errorf("unknown connection status: %v", fmt.Errorf("%v: %v", response.Status(), string(response.Body)))
+}
+
+// filteredHeaders removes a specified sensitive field from the request headers.
+func filteredHeaders(req http.Request, sensitiveField string) http.Header {
+	filteredHeaders := make(http.Header)
+	for key, values := range req.Header {
+		if key != sensitiveField {
+			filteredHeaders[key] = values
+		}
+	}
+
+	return filteredHeaders
 }
