@@ -21,18 +21,15 @@ func TestProfileMarshalJSON(t *testing.T) {
 		{
 			input: Profile{
 				ID:           uuid.MustParse("a863569d-6e57-4082-ba80-20e0089738ff"),
-				Name:         &JSONNullString{NullString: sql.NullString{Valid: true, String: "default"}},
-				Label:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "91fb2f8b"}},
 				AccountID:    &JSONNullString{NullString: sql.NullString{Valid: true, String: "123456"}},
 				OrgID:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "654321"}},
 				CreatedAt:    time.Unix(0, 0).UTC(),
 				Active:       true,
-				Creator:      &JSONNullString{NullString: sql.NullString{Valid: true, String: "root"}},
 				Insights:     true,
 				Remediations: true,
 				Compliance:   true,
 			},
-			want: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
+			want: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"insights":true,"remediations":true,"compliance":true}`),
 		},
 	}
 
@@ -64,16 +61,13 @@ func TestProfileUnmarshalJSON(t *testing.T) {
 		wantError   error
 	}{
 		{
-			input: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","name":"default","label":"91fb2f8b","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"creator":"root","insights":true,"remediations":true,"compliance":true}`),
+			input: []byte(`{"id":"a863569d-6e57-4082-ba80-20e0089738ff","account_id":"123456","org_id":"654321","created_at":"1970-01-01T00:00:00Z","active":true,"insights":true,"remediations":true,"compliance":true}`),
 			want: Profile{
 				ID:           uuid.MustParse("a863569d-6e57-4082-ba80-20e0089738ff"),
-				Name:         &JSONNullString{NullString: sql.NullString{Valid: true, String: "default"}},
-				Label:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "91fb2f8b"}},
 				AccountID:    &JSONNullString{NullString: sql.NullString{Valid: true, String: "123456"}},
 				OrgID:        &JSONNullString{NullString: sql.NullString{Valid: true, String: "654321"}},
 				CreatedAt:    time.Unix(0, 0).UTC(),
 				Active:       true,
-				Creator:      &JSONNullString{NullString: sql.NullString{Valid: true, String: "root"}},
 				Insights:     true,
 				Remediations: true,
 				Compliance:   true,

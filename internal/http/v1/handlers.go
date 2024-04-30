@@ -25,7 +25,6 @@ type accountState struct {
 	Account    string            `json:"account"`
 	State      map[string]string `json:"state"`
 	ID         string            `json:"id"`
-	Label      string            `json:"label"`
 	ApplyState bool              `json:"apply_state"`
 	OrgID      string            `json:"org_id"`
 }
@@ -34,8 +33,6 @@ type accountState struct {
 type stateArchive struct {
 	Account   string            `json:"account"`
 	ID        string            `json:"id"`
-	Label     string            `json:"label"`
-	Initiator string            `json:"initiator"`
 	CreatedAt time.Time         `json:"created_at"`
 	State     map[string]string `json:"state"`
 	OrgID     string            `json:"org_id"`
@@ -90,7 +87,6 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 			Account:    db.JSONNullStringSafeValue(currentProfile.AccountID),
 			ApplyState: currentProfile.Active,
 			ID:         currentProfile.ID.String(),
-			Label:      currentProfile.Label.String,
 			OrgID:      currentProfile.OrgID.String,
 			State:      currentProfile.StateConfig(),
 		}
@@ -145,7 +141,6 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		Account:    db.JSONNullStringSafeValue(newProfile.AccountID),
 		ApplyState: newProfile.Active,
 		ID:         newProfile.ID.String(),
-		Label:      newProfile.Label.String,
 		OrgID:      newProfile.OrgID.String,
 		State:      newProfile.StateConfig(),
 	}
@@ -211,8 +206,6 @@ func getStates(w http.ResponseWriter, r *http.Request) {
 		s := stateArchive{
 			Account:   db.JSONNullStringSafeValue(profile.AccountID),
 			ID:        profile.ID.String(),
-			Label:     db.JSONNullStringSafeValue(profile.Label),
-			Initiator: db.JSONNullStringSafeValue(profile.Creator),
 			CreatedAt: profile.CreatedAt.UTC(),
 			State:     make(map[string]string),
 			OrgID:     db.JSONNullStringSafeValue(profile.OrgID),
@@ -272,7 +265,6 @@ func getCurrentState(w http.ResponseWriter, r *http.Request) {
 		Account:    db.JSONNullStringSafeValue(profile.AccountID),
 		State:      profile.StateConfig(),
 		ID:         profile.ID.String(),
-		Label:      db.JSONNullStringSafeValue(profile.Label),
 		ApplyState: profile.Active,
 		OrgID:      db.JSONNullStringSafeValue(profile.OrgID),
 	}
@@ -308,8 +300,6 @@ func getStateByID(w http.ResponseWriter, r *http.Request) {
 	resp := stateArchive{
 		Account:   db.JSONNullStringSafeValue(profile.AccountID),
 		ID:        profile.ID.String(),
-		Label:     db.JSONNullStringSafeValue(profile.Label),
-		Initiator: db.JSONNullStringSafeValue(profile.Creator),
 		CreatedAt: profile.CreatedAt.UTC(),
 		State:     profile.StateConfig(),
 		OrgID:     db.JSONNullStringSafeValue(profile.OrgID),
