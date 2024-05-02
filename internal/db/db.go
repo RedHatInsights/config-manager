@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	fields = `profile_id, name, label, account_id, org_id, timezone('UTC', created_at) AS created_at, active, creator, insights, remediations, compliance`
+	fields = `profile_id, account_id, org_id, timezone('UTC', created_at) AS created_at, active, insights, remediations, compliance`
 )
 
 var (
@@ -79,12 +79,12 @@ func Handle() *sql.DB {
 
 // InsertProfile creates a new record in the profiles table from profile.
 func InsertProfile(profile Profile) error {
-	stmt, err := preparedStatement(`INSERT INTO profiles (profile_id, name, label, account_id, org_id, insights, remediations, compliance, active, creator) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`)
+	stmt, err := preparedStatement(`INSERT INTO profiles (profile_id, account_id, org_id, insights, remediations, compliance, active) VALUES ($1, $2, $3, $4, $5, $6, $7);`)
 	if err != nil {
 		return fmt.Errorf("cannot prepare INSERT: %w", err)
 	}
 
-	_, err = stmt.Exec(profile.ID, profile.Name, profile.Label, profile.AccountID, profile.OrgID, profile.Insights, profile.Remediations, profile.Compliance, profile.Active, profile.Creator)
+	_, err = stmt.Exec(profile.ID, profile.AccountID, profile.OrgID, profile.Insights, profile.Remediations, profile.Compliance, profile.Active)
 	if err != nil {
 		return fmt.Errorf("cannot execute INSERT: %w", err)
 	}

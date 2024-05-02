@@ -92,7 +92,7 @@ func TestGetStates(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"},{"account":"10064","id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"},"org_id":"78606"}]}`),
+				body: []byte(`{"count":2,"limit":0,"offset":0,"total":2,"results":[{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"},{"account":"10064","id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"},"org_id":"78606"}]}`),
 			},
 		},
 	}
@@ -256,7 +256,7 @@ func TestGetCurrentState(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"account":"1","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"},"id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","label":"","apply_state":false,"org_id":"78606"}`),
+				body: []byte(`{"account":"1","state":{"compliance_openscap":"enabled","insights":"enabled","remediations":"enabled"},"id":"3c8859ae-ef4e-4136-ab17-ccd4ea9f36bf","apply_state":false,"org_id":"78606"}`),
 			},
 		},
 	}
@@ -319,7 +319,7 @@ func TestGetStateByID(t *testing.T) {
 			},
 			want: response{
 				code: http.StatusOK,
-				body: []byte(`{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","label":"","initiator":"","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"}`),
+				body: []byte(`{"account":"10064","id":"b5db9cbc-4ecd-464b-b416-3a6cd67af87a","created_at":"1970-01-01T00:00:00Z","state":{"compliance_openscap":"disabled","insights":"disabled","remediations":"disabled"},"org_id":"78606"}`),
 			},
 		},
 	}

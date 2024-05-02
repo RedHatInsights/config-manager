@@ -10,13 +10,10 @@ import (
 
 type Profile struct {
 	ID           uuid.UUID       `json:"id" db:"profile_id"`
-	Name         *JSONNullString `json:"name,omitempty" db:"name"`
-	Label        *JSONNullString `json:"label,omitempty" db:"label"`
 	AccountID    *JSONNullString `json:"account_id,omitempty" db:"account_id"`
 	OrgID        *JSONNullString `json:"org_id,omitempty" db:"org_id"`
 	CreatedAt    time.Time       `json:"created_at" db:"created_at"`
 	Active       bool            `json:"active" db:"active"`
-	Creator      *JSONNullString `json:"creator,omitempty" db:"creator"`
 	Insights     bool            `json:"insights" db:"insights"`
 	Remediations bool            `json:"remediations" db:"remediations"`
 	Compliance   bool            `json:"compliance" db:"compliance"`
@@ -26,10 +23,8 @@ type Profile struct {
 func NewProfile(orgID string, accountID string, state map[string]string) *Profile {
 	profile := Profile{
 		ID:        uuid.New(),
-		Label:     &JSONNullString{NullString: sql.NullString{Valid: true, String: accountID + "-" + uuid.New().String()}},
 		AccountID: &JSONNullString{NullString: sql.NullString{Valid: accountID != "", String: accountID}},
 		OrgID:     &JSONNullString{NullString: sql.NullString{Valid: orgID != "", String: orgID}},
-		Creator:   &JSONNullString{NullString: sql.NullString{Valid: true, String: "redhat"}},
 		CreatedAt: time.Now(),
 		Active:    true,
 	}
@@ -42,22 +37,11 @@ func NewProfile(orgID string, accountID string, state map[string]string) *Profil
 // where appropriate.
 func CopyProfile(from Profile) Profile {
 	return Profile{
-		ID:   uuid.New(),
-		Name: from.Name,
-		Label: func() *JSONNullString {
-			val := JSONNullStringSafeValue(from.AccountID) + "-" + uuid.New().String()
-			return &JSONNullString{
-				NullString: sql.NullString{
-					Valid:  true,
-					String: val,
-				},
-			}
-		}(),
+		ID:           uuid.New(),
 		AccountID:    from.AccountID,
 		OrgID:        from.OrgID,
 		CreatedAt:    time.Now(),
 		Active:       from.Active,
-		Creator:      from.Creator,
 		Insights:     from.Insights,
 		Remediations: from.Remediations,
 		Compliance:   from.Compliance,

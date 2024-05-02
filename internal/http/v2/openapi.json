@@ -245,33 +245,25 @@
             "Profile": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Profile unique identity value"
+                    },
                     "account_id": {
                         "type": "string",
                         "description": "Red Hat account number"
-                    },
-                    "active": {
-                        "type": "boolean",
-                        "description": "Remote host configuration enabled state"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "description": "Time of profile creation"
-                    },
-                    "creator": {
-                        "type": "string",
-                        "description": "Username of the profile creator"
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Descriptive name for the profile"
                     },
                     "org_id": {
                         "type": "string",
                         "description": "Red Hat organization identity value"
                     },
-                    "id": {
+                    "created_at": {
                         "type": "string",
-                        "description": "Profile unique identity value"
+                        "description": "Time of profile creation"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "description": "Remote host configuration enabled state"
                     },
                     "compliance": {
                         "type": "boolean",
