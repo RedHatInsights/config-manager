@@ -20,9 +20,9 @@
                         "name": "sort_by",
                         "in": "query",
                         "required": false,
-                        "default": "created_at:desc",
                         "schema": {
                             "type": "string",
+                            "default": "created_at:desc",
                             "enum": [
                                 "created_at",
                                 "created_at:asc",
