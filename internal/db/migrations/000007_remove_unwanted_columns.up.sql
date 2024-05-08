@@ -1,0 +1,1 @@
+ALTER TABLE profiles DROP COLUMN label, DROP COLUMN name, DROP COLUMN creator;

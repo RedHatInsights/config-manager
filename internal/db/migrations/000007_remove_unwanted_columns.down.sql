@@ -1,0 +1,1 @@
+ALTER TABLE profiles ADD COLUMN label TEXT, ADD COLUMN name TEXT, ADD COLUMN creator TEXT;
