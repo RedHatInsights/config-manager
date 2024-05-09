@@ -45,6 +45,7 @@ type Config struct {
 	KafkaUsername           string
 	KafkaCAPath             string
 	KafkaSaslMechanism      string
+	KafkaSecurityProtocol   string
 	LogBatchFrequency       time.Duration
 	LogFormat               flagvar.Enum
 	LogGroup                string
@@ -99,6 +100,7 @@ var DefaultConfig Config = Config{
 	KafkaUsername:           "",
 	KafkaCAPath:             "",
 	KafkaSaslMechanism:      "",
+	KafkaSecurityProtocol:   "",
 	LogBatchFrequency:       10 * time.Second,
 	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:                "platform-dev",
@@ -142,6 +144,7 @@ func init() {
 					DefaultConfig.KafkaUsername = *broker.Sasl.Username
 					DefaultConfig.KafkaPassword = *broker.Sasl.Password
 					DefaultConfig.KafkaSaslMechanism = *broker.Sasl.SaslMechanism
+					DefaultConfig.KafkaSecurityProtocol = *broker.Sasl.SecurityProtocol
 
 					if broker.Cacert != nil {
 						caPath, err := clowder.LoadedConfig.KafkaCa(broker)
@@ -205,6 +208,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
 	fs.StringVar(&DefaultConfig.KafkaCAPath, "kafka-cacert-path", DefaultConfig.KafkaCAPath, "managed kafka cacert path")
 	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
+	fs.StringVar(&DefaultConfig.KafkaSecurityProtocol, "kafka-security-protocol", DefaultConfig.KafkaSecurityProtocol, "managed kafka security protocol")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")

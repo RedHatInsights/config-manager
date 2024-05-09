@@ -24,7 +24,7 @@ type kafkautil struct{}
 func (k kafkautil) NewReader(topic string) *kafka.Reader {
 	var dialer *kafka.Dialer = kafka.DefaultDialer
 
-	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
+	if config.DefaultConfig.KafkaSecurityProtocol == "SASL_SSL" {
 
 		saslMechanism, tlsConfig := getSaslAndTLSConfig()
 		dialer = &kafka.Dialer{
@@ -48,7 +48,7 @@ func (k kafkautil) NewReader(topic string) *kafka.Reader {
 func (k kafkautil) NewWriter(topic string) *kafka.Writer {
 	var transport *kafka.Transport = kafka.DefaultTransport.(*kafka.Transport)
 
-	if config.DefaultConfig.KafkaUsername != "" && config.DefaultConfig.KafkaPassword != "" {
+	if config.DefaultConfig.KafkaSecurityProtocol == "SASL_SSL" {
 		saslMechanism, tlsConfig := getSaslAndTLSConfig()
 		transport = &kafka.Transport{
 			TLS:  tlsConfig,
