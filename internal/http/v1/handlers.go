@@ -1,11 +1,10 @@
 package v1
 
 import (
-	"config-manager/infrastructure/persistence/dispatcher"
-	"config-manager/infrastructure/persistence/inventory"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
+	"config-manager/internal/dispatch"
 	"config-manager/internal/http/render"
 	"config-manager/internal/instrumentation"
 	"encoding/json"
@@ -90,7 +89,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 			OrgID:      currentProfile.OrgID.String,
 			State:      currentProfile.StateConfig(),
 		}
-		render.RenderJSON(w, r, http.StatusOK, resp, logger)
+		render.RenderJSON(w, r, http.StatusNotModified, resp, logger)
 		return
 	}
 
@@ -106,36 +105,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var clients []internal.Host
-	inventoryClient := inventory.NewInventoryClient()
-	inventoryResp, err := inventoryClient.GetInventoryClients(r.Context(), 1)
-	if err != nil {
-		instrumentation.UpdateAccountStateError()
-		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
-		return
-	}
-	clients = append(clients, inventoryResp.Results...)
-
-	for len(clients) < inventoryResp.Total {
-		page := inventoryResp.Page + 1
-		res, err := inventoryClient.GetInventoryClients(r.Context(), page)
-		if err != nil {
-			instrumentation.UpdateAccountStateError()
-			render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("unable to get inventory clients: %v", err), logger)
-			return
-		}
-		clients = append(clients, res.Results...)
-	}
-
-	go func() {
-		internal.ApplyProfile(r.Context(), &newProfile, clients, func(results []dispatcher.RunCreated) {
-			logger.Info().Interface("results", results).Msg("response from dispatcher")
-		})
-		if err != nil {
-			instrumentation.UpdateAccountStateError()
-			logger.Error().Err(err).Msg("error applying state")
-		}
-	}()
+	dispatch.Dispatch(newProfile, identity.Get(r.Context()))
 
 	resp := accountState{
 		Account:    db.JSONNullStringSafeValue(newProfile.AccountID),
@@ -144,7 +114,7 @@ func postStates(w http.ResponseWriter, r *http.Request) {
 		OrgID:      newProfile.OrgID.String,
 		State:      newProfile.StateConfig(),
 	}
-	render.RenderJSON(w, r, http.StatusOK, resp, logger)
+	render.RenderJSON(w, r, http.StatusCreated, resp, logger)
 }
 
 // getStates returns a list of state archive records as filtered by the sortBy,

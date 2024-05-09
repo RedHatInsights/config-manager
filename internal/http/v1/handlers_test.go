@@ -160,7 +160,7 @@ func TestPostStates(t *testing.T) {
 				},
 			},
 			want: response{
-				code: http.StatusOK,
+				code: http.StatusCreated,
 				body: map[string]interface{}{
 					"account":     "10064",
 					"apply_state": false,
