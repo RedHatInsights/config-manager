@@ -22,14 +22,17 @@ type kafkautil struct{}
 
 // NewReader creates a configured kafka.Reader.
 func (k kafkautil) NewReader(topic string) *kafka.Reader {
-	var dialer *kafka.Dialer
+	var dialer *kafka.Dialer = kafka.DefaultDialer
 
-	saslMechanism, tlsConfig := getSaslAndTLSConfig()
-	dialer = &kafka.Dialer{
-		Timeout:       10 * time.Second,
-		DualStack:     true,
-		TLS:           tlsConfig,
-		SASLMechanism: saslMechanism,
+	if config.DefaultConfig.KafkaSecurityProtocol == "SASL_SSL" {
+
+		saslMechanism, tlsConfig := getSaslAndTLSConfig()
+		dialer = &kafka.Dialer{
+			Timeout:       10 * time.Second,
+			DualStack:     true,
+			TLS:           tlsConfig,
+			SASLMechanism: saslMechanism,
+		}
 	}
 
 	return kafka.NewReader(kafka.ReaderConfig{
@@ -43,11 +46,14 @@ func (k kafkautil) NewReader(topic string) *kafka.Reader {
 
 // NewWriter creates a configured kafka.Writer.
 func (k kafkautil) NewWriter(topic string) *kafka.Writer {
+	var transport *kafka.Transport = kafka.DefaultTransport.(*kafka.Transport)
 
-	saslMechanism, tlsConfig := getSaslAndTLSConfig()
-	transport := &kafka.Transport{
-		TLS:  tlsConfig,
-		SASL: saslMechanism,
+	if config.DefaultConfig.KafkaSecurityProtocol == "SASL_SSL" {
+		saslMechanism, tlsConfig := getSaslAndTLSConfig()
+		transport = &kafka.Transport{
+			TLS:  tlsConfig,
+			SASL: saslMechanism,
+		}
 	}
 
 	return &kafka.Writer{
