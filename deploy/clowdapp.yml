@@ -326,7 +326,7 @@ parameters:
     value: 512Mi
 
   - name: REPLICAS
-    value: "2"
+    value: "3"
 
   - name: CM_DISPATCHER_HOST
     required: true
