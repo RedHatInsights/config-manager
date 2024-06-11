@@ -6,7 +6,7 @@
       "recipient": "4b1efbbe-a447-48d0-98c3-3594aae1d2c5",
       "correlation_id": "fbf49ad9-ea79-41fb-9f6c-cb13307e993d",
       "service": "config_manager",
-      "url": "http://random-host/api/config-manager/v1/states/1a1c1d-2a2b2c/playbook",
+      "url": "http://random-host/api/config-manager/v2/playbooks?profile_id=1a1c1d-2a2b2c",
       "labels": {
         "id": "1234",
         "state_id": "1a1c1d-2a2b2c"
