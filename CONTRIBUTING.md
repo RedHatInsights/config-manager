@@ -197,7 +197,7 @@ It should now be possible to interact with config-manager's HTTP API using
 `curl` or `ht`.
 
 ```sh
-ht GET http://localhost:8080/api/config-manager/v1/states/current x-rh-identity:$(xrhidgen user | base64 -w0)
+ht GET http://localhost:8080/api/config-manager/v2/profiles/current x-rh-identity:$(xrhidgen user | base64 -w0)
 ```
 
 # Debugging
