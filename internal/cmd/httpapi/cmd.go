@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"config-manager/internal/config"
-	v1 "config-manager/internal/http/v1"
 	v2 "config-manager/internal/http/v2"
 	"context"
 	"fmt"
@@ -21,11 +20,6 @@ var Command ffcli.Command = ffcli.Command{
 	Exec: func(ctx context.Context, args []string) error {
 		log.Info().Str("command", "http-api").Msg("started HTTP API server. Awaiting requests.")
 
-		v1r, err := v1.NewMux()
-		if err != nil {
-			return fmt.Errorf("cannot create HTTP router: %w", err)
-		}
-
 		v2r, err := v2.NewMux()
 		if err != nil {
 			return fmt.Errorf("cannot create HTTP router: %w", err)
@@ -33,7 +27,6 @@ var Command ffcli.Command = ffcli.Command{
 
 		router := chi.NewMux()
 		router.Use(chiprometheus.NewMiddleware(config.DefaultConfig.AppName))
-		router.Mount(path.Join("/", config.DefaultConfig.URLPathPrefix, config.DefaultConfig.AppName, "v1"), v1r)
 		router.Mount(path.Join("/", config.DefaultConfig.URLPathPrefix, config.DefaultConfig.AppName, "v2"), v2r)
 
 		addr := fmt.Sprintf("0.0.0.0:%v", config.DefaultConfig.WebPort)
