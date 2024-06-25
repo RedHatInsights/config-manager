@@ -60,6 +60,23 @@ func getProfiles(w http.ResponseWriter, r *http.Request) {
 		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot count profiles: %v", err), logger)
 		return
 	}
+
+	if total == 0 {
+		var defaultState map[string]string
+		if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
+			logger.Error().Err(err).Msg("cannot unmarshal service config")
+			return
+		}
+
+		newProfile := db.NewProfile(id.Identity.OrgID, id.Identity.AccountNumber, defaultState)
+		if err := db.InsertProfile(*newProfile); err != nil {
+			render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot insert new profile: %v", err), logger)
+			return
+		}
+
+		total += 1
+	}
+
 	logger.Debug().Int("total", total).Msg("found profiles")
 
 	profiles, err := db.GetProfiles(id.Identity.OrgID, sortBy, limit, offset)
