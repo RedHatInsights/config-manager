@@ -231,7 +231,7 @@ services:
       - db-cloud-connector
       - kafka-create-topics
       - mqtt-consumer
-  cloud-connector-api:
+  cloud-connector:
     image: quay.io/cloudservices/cloud-connector
     ports:
       - "8084:8081"
@@ -342,7 +342,7 @@ services:
       - 8002:8000
     environment:
       - CLOUD_CONNECTOR_IMPL=impl
-      - CLOUD_CONNECTOR_HOST=cloud-connector-api
+      - CLOUD_CONNECTOR_HOST=cloud-connector
       - CLOUD_CONNECTOR_PORT=8081
       - CLOUD_CONNECTOR_CLIENT_ID=suraj
       - CLOUD_CONNECTOR_PSK=surajskey
@@ -355,5 +355,5 @@ services:
       - DB_PASSWORD=insights
     depends_on:
       - playbook-dispatcher-db
-      - cloud-connector-api
+      - cloud-connector
       - dispatcher-connector

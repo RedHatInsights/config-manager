@@ -29,7 +29,7 @@ objects:
       envName: ${ENV_NAME}
 
       optionalDependencies:
-        - cloud-connector-api
+        - cloud-connector
         - playbook-dispatcher
         - host-inventory
 

@@ -15,7 +15,7 @@ apps:
           TENANT_TRANSLATOR_IMPL: mock
   - name: cloud-connector
     components:
-      - name: cloud-connector-api
+      - name: cloud-connector
         host: github
         repo: RedHatInsights/cloud-connector
         path: deploy/clowdapp.yml
