@@ -28,8 +28,7 @@ source "${CICD_ROOT}/build.sh"
 
 EXTRA_DEPLOY_ARGS=""
 
-# Include cloud-connector (not just cloud-connector-api) as a deployment
-# argument. This pulls in the 'cloud-connector' resource, which in turn pulls in
+# This pulls in the 'cloud-connector' resource, which in turn pulls in
 # the mosquitto service we need to stand up a live environment.
 EXTRA_DEPLOY_ARGS="${EXTRA_DEPLOY_ARGS} cloud-connector"
 
