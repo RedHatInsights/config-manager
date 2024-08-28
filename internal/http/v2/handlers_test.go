@@ -44,8 +44,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().UnixNano())
-	port = uint32(rand.Int31n(10000-9876) + 9876)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	port = uint32(r.Int31n(10000-9876) + 9876)
 	DSN = fmt.Sprintf("host=localhost port=%v user=postgres password=postgres dbname=postgres sslmode=disable", port)
 
 	runtimedir, err := os.MkdirTemp("", "config-manager-internal-http-v2.")
