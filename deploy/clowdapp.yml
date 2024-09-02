@@ -125,11 +125,11 @@ objects:
                 value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
             resources:
               limits:
-                cpu: ${CPU_LIMIT}
-                memory: ${MEMORY_LIMIT}
+                cpu: ${CPU_LIMIT_RHC_MANAGER}
+                memory: ${MEMORY_LIMIT_RHC_MANAGER}
               requests:
-                cpu: 250m
-                memory: 256Mi
+                cpu: ${CPU_REQUEST_RHC_MANAGER}
+                memory: ${MEMORY_REQUEST_RHC_MANAGER}
 
         - name: dispatcher-consumer
           minReplicas: ${{REPLICAS}}
@@ -192,11 +192,11 @@ objects:
                 value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
             resources:
               limits:
-                cpu: ${CPU_LIMIT}
-                memory: ${MEMORY_LIMIT}
+                cpu: ${CPU_LIMIT_RHC_MANAGER}
+                memory: ${MEMORY_LIMIT_RHC_MANAGER}
               requests:
-                cpu: 250m
-                memory: 256Mi
+                cpu: ${CPU_REQUEST_RHC_MANAGER}
+                memory: ${MEMORY_REQUEST_RHC_MANAGER}
 
         - name: inventory-consumer
           minReplicas: ${{REPLICAS}}
@@ -257,11 +257,11 @@ objects:
                 value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
             resources:
               limits:
-                cpu: ${CPU_LIMIT}
-                memory: ${MEMORY_LIMIT}
+                cpu: ${CPU_LIMIT_RHC_MANAGER}
+                memory: ${MEMORY_LIMIT_RHC_MANAGER}
               requests:
-                cpu: 250m
-                memory: 256Mi
+                cpu: ${CPU_REQUEST_RHC_MANAGER}
+                memory: ${MEMORY_REQUEST_RHC_MANAGER}
 
       jobs:
         - name: org-id-populator
@@ -320,10 +320,14 @@ parameters:
     value: trace
   - name: CM_LOG_FORMAT
     value: json
-  - name: CPU_LIMIT
-    value: 500m
-  - name: MEMORY_LIMIT
-    value: 512Mi
+  - name: CPU_LIMIT_RHC_MANAGER
+    value: 250m
+  - name: CPU_REQUEST_RHC_MANAGER
+    value: 150m
+  - name: MEMORY_LIMIT_RHC_MANAGER
+    value: 256Mi
+  - name: MEMORY_REQUEST_RHC_MANAGER
+    value: 128Mi
 
   - name: REPLICAS
     value: "3"
