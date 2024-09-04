@@ -311,7 +311,7 @@ parameters:
   - name: IMAGE_TAG
     required: true
   - name: IMAGE
-    value: quay.io/cloudservices/config-manager
+    value: quay.io/rhc-manager-ros-tenant/config-manager-master/config-manager-master
   - description: ClowdEnvironment name
     name: ENV_NAME
     required: true
