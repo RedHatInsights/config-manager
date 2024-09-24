@@ -195,6 +195,7 @@ services:
       - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
       - CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS=kafka:29092
       - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+      - CLOUD_CONNECTOR_MQTT_BROKER_AUTH_TYPE="none"
     entrypoint: /cloud-connector mqtt_message_consumer -l 0.0.0.0:8082
     restart: always
     depends_on:
@@ -225,6 +226,7 @@ services:
       - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
       - CLOUD_CONNECTOR_RHC_MESSAGE_KAFKA_BROKERS=kafka:29092
       - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+      - CLOUD_CONNECTOR_MQTT_BROKER_AUTH_TYPE="none"
     entrypoint: /cloud-connector kafka_message_consumer -l 0.0.0.0:8083
     restart: always
     depends_on:
@@ -246,6 +248,7 @@ services:
       - CLOUD_CONNECTOR_CONNECTION_DATABASE_HOST=db-cloud-connector
       - CLOUD_CONNECTOR_MQTT_BROKER_ADDRESS=mqtt://mqtt-broker:8883
       - CLOUD_CONNECTOR_CLIENT_ID_TO_ACCOUNT_ID_DEFAULT_ORG_ID=0002
+      - CLOUD_CONNECTOR_MQTT_BROKER_AUTH_TYPE="none"
     entrypoint: /cloud-connector api_server -l 0.0.0.0:8081
     restart: always
     depends_on:
