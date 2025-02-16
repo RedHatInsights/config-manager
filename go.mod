@@ -11,7 +11,7 @@ require (
 	github.com/getkin/kin-openapi v0.97.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/httplog v0.2.5
-	github.com/go-chi/render v1.0.1
+	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/go-chi/chi v4.0.2+incompatible // indirect
