@@ -9,7 +9,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.17.0
 	github.com/getkin/kin-openapi v0.97.0
-	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.1
 	github.com/golang-migrate/migrate/v4 v4.15.1
