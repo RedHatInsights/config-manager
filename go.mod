@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.44.36
+	github.com/aws/aws-sdk-go v1.49.13
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.17.0
 	github.com/getkin/kin-openapi v0.97.0
@@ -20,7 +20,7 @@ require (
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/prometheus/client_golang v1.12.1
 	github.com/redhatinsights/app-common-go v1.6.2
-	github.com/redhatinsights/platform-go-middlewares v0.18.0
+	github.com/redhatinsights/platform-go-middlewares v1.0.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
@@ -29,7 +29,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/go-chi/chi v4.0.2+incompatible // indirect
+	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
