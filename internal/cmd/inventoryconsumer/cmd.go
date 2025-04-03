@@ -9,6 +9,7 @@ import (
 	"config-manager/internal/util"
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
@@ -26,6 +27,8 @@ var Command ffcli.Command = ffcli.Command{
 		log.Info().Str("command", "inventory-consumer").Msg("started consumer. Awaiting messages.")
 
 		reader := util.Kafka.NewReader(config.DefaultConfig.KafkaInventoryTopic)
+		wg := sync.WaitGroup{}
+		sem := make(chan struct{}, config.DefaultConfig.WorkerLimit)
 
 		for {
 			m, err := reader.ReadMessage(ctx)
@@ -33,7 +36,15 @@ var Command ffcli.Command = ffcli.Command{
 				log.Error().Err(err).Msg("unable to read message")
 				continue
 			}
-			go handler(ctx, m)
+
+			sem <- struct{}{}
+			wg.Add(1)
+
+			go func(m kafka.Message) {
+				defer wg.Done()
+				defer func() { <-sem }()
+				handler(ctx, m)
+			}(m)
 		}
 	},
 }
