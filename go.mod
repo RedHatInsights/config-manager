@@ -15,7 +15,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
-	github.com/jackc/pgx/v4 v4.18.2
+	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/prometheus/client_golang v1.12.1
