@@ -1,6 +1,8 @@
 module config-manager
 
-go 1.17
+go 1.23
+
+toolchain go1.23.8
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
@@ -23,7 +25,7 @@ require (
 	github.com/redhatinsights/platform-go-middlewares v0.18.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
-	github.com/sgreben/flagvar v1.10.1
+	github.com/sgreben/flagvar v1.10.2
 )
 
 require (
