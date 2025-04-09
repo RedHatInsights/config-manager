@@ -11,7 +11,7 @@ require (
 	github.com/getkin/kin-openapi v0.97.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/httplog v0.2.5
-	github.com/go-chi/render v1.0.1
+	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
