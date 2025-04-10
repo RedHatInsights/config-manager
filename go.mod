@@ -6,7 +6,7 @@ require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.55.6
-	github.com/deepmap/oapi-codegen v1.11.0
+	github.com/deepmap/oapi-codegen v1.16.3
 	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/getkin/kin-openapi v0.97.0
 	github.com/go-chi/chi/v5 v5.2.1
