@@ -23,7 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares v0.18.0
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.34.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
 )
