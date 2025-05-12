@@ -43,6 +43,7 @@ type Config struct {
 	KafkaCAPath            string
 	KafkaSaslMechanism     string
 	KafkaSecurityProtocol  string
+	KesselEnabled          bool
 	LogBatchFrequency      time.Duration
 	LogFormat              flagvar.Enum
 	LogGroup               string
@@ -97,6 +98,7 @@ var DefaultConfig Config = Config{
 	LogFormat:              flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:               "platform-dev",
 	LogLevel:               flagvar.Enum{Choices: []string{"panic", "fatal", "error", "warn", "info", "debug", "trace"}, Value: "info"},
+	KesselEnabled:          false,
 	LogStream: func() string {
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -192,6 +194,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaCAPath, "kafka-cacert-path", DefaultConfig.KafkaCAPath, "managed kafka cacert path")
 	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
 	fs.StringVar(&DefaultConfig.KafkaSecurityProtocol, "kafka-security-protocol", DefaultConfig.KafkaSecurityProtocol, "managed kafka security protocol")
+	fs.BoolVar(&DefaultConfig.KesselEnabled, "kessel-enabled", DefaultConfig.KesselEnabled, "enable authorization using Kessel")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
