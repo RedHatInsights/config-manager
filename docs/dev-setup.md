@@ -8,7 +8,7 @@ Before starting the development make sure below packages/binaries are installed 
 
 | Package/binary                 | Version  | Documentation                                                                  |
 |--------------------------------|----------|--------------------------------------------------------------------------------|
-| golang                         | >=1.22   | https://go.dev/doc/install                                                     |
+| golang                         | >=1.23   | https://go.dev/doc/install                                                     |
 | mqtt cli                       | >=4.24.0 | https://hivemq.github.io/mqtt-cli/docs/installation/                           |
 | docker & docker-compose        | latest   | https://docs.docker.com/desktop/install/fedora/                                |
 | librdkafka &  librdkafka-devel | latest   | Use package-manager to install it.  dnf install -y librdkafka librdkafka-devel |
