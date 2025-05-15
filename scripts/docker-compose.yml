@@ -43,7 +43,7 @@ services:
       POSTGRES_USER: insights
       POSTGRES_DB: insights
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
 
   db-host-inventory:
     image: debezium/postgres:15-alpine
