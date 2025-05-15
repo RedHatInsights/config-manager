@@ -9,7 +9,7 @@ import (
 
 	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
 	v1beta1 "github.com/project-kessel/inventory-client-go/v1beta2"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"google.golang.org/grpc"
 )
 
@@ -72,7 +72,7 @@ func TestKesselMiddleware(t *testing.T) {
 			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
 			identity: identity.Identity{
 				OrgID: "540155",
-				User: identity.User{
+				User: &identity.User{
 					Username: "user",
 				},
 				Type: "User",
@@ -86,7 +86,7 @@ func TestKesselMiddleware(t *testing.T) {
 			client:      mockClient(kesselv2.Allowed_ALLOWED_TRUE),
 			identity: identity.Identity{
 				OrgID: "540155",
-				User: identity.User{
+				User: &identity.User{
 					Username: "user",
 				},
 				Type: "User",
@@ -100,7 +100,7 @@ func TestKesselMiddleware(t *testing.T) {
 			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
 			identity: identity.Identity{
 				OrgID: "540155",
-				User: identity.User{
+				User: &identity.User{
 					Username: "user",
 				},
 				Type: "User",
@@ -119,7 +119,7 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			identity: identity.Identity{
 				OrgID: "540155",
-				User: identity.User{
+				User: &identity.User{
 					Username: "user",
 				},
 				Type: "User",
@@ -146,7 +146,7 @@ func TestKesselMiddleware(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/profiles", nil)
-			req = req.WithContext(context.WithValue(req.Context(), identity.Key, identity.XRHID{Identity: test.identity}))
+			req = req.WithContext(identity.WithIdentity(req.Context(), identity.XRHID{Identity: test.identity}))
 
 			middlewareBuilder.EnforceOrgPermission(test.permission)(sampleHandler).ServeHTTP(rr, req)
 
