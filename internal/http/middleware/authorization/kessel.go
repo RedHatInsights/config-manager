@@ -9,7 +9,7 @@ import (
 	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
 	"github.com/project-kessel/inventory-client-go/common"
 	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 )
 
 func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
@@ -44,10 +44,7 @@ func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermission(permission string) fu
 				return
 			}
 
-			id, ok := r.Context().Value(identity.Key).(identity.XRHID)
-			if !ok {
-				http.Error(w, "no identity in context", http.StatusInternalServerError)
-			}
+			id := identity.GetIdentity(r.Context())
 
 			principalId, err := extractPrincipalId(id)
 			if err != nil {
