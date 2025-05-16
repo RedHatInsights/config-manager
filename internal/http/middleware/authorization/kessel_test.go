@@ -59,12 +59,14 @@ func mockClient(allowed kesselv2.Allowed) *mockKesselInventoryServiceClient {
 func TestKesselMiddleware(t *testing.T) {
 
 	tests := []struct {
-		description string
-		config      config.Config
-		client      *mockKesselInventoryServiceClient
-		identity    identity.Identity
-		permission  string
-		want        int
+		description     string
+		config          config.Config
+		client          *mockKesselInventoryServiceClient
+		identity        identity.Identity
+		permission      string
+		want            int
+		wantTenantID    string
+		wantPrincipalID string
 	}{
 		{
 			description: "return 403 if kessel is enabled and kessel returns false for a user",
@@ -77,8 +79,26 @@ func TestKesselMiddleware(t *testing.T) {
 				},
 				Type: "User",
 			},
-			permission: "config_manager_profile_view",
-			want:       403,
+			permission:      "config_manager_profile_view",
+			want:            403,
+			wantTenantID:    "540155",
+			wantPrincipalID: "user",
+		},
+		{
+			description: "return 403 if kessel is enabled and kessel returns false for a service account",
+			config:      configWithKesselEnabled(true),
+			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
+			identity: identity.Identity{
+				OrgID: "540155",
+				ServiceAccount: &identity.ServiceAccount{
+					Username: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+				},
+				Type: "ServiceAccount",
+			},
+			permission:      "config_manager_profile_view",
+			want:            403,
+			wantTenantID:    "540155",
+			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
 		},
 		{
 			description: "return 200 if kessel is enabled and kessel returns true a user",
@@ -91,8 +111,26 @@ func TestKesselMiddleware(t *testing.T) {
 				},
 				Type: "User",
 			},
-			permission: "config_manager_profile_view",
-			want:       200,
+			permission:      "config_manager_profile_view",
+			want:            200,
+			wantTenantID:    "540155",
+			wantPrincipalID: "user",
+		},
+		{
+			description: "return 200 if kessel is enabled and kessel returns true a service account",
+			config:      configWithKesselEnabled(true),
+			client:      mockClient(kesselv2.Allowed_ALLOWED_TRUE),
+			identity: identity.Identity{
+				OrgID: "540155",
+				ServiceAccount: &identity.ServiceAccount{
+					Username: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+				},
+				Type: "ServiceAccount",
+			},
+			permission:      "config_manager_profile_view",
+			want:            200,
+			wantTenantID:    "540155",
+			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
 		},
 		{
 			description: "return 200 if kessel is disabled",
@@ -105,8 +143,10 @@ func TestKesselMiddleware(t *testing.T) {
 				},
 				Type: "User",
 			},
-			permission: "config_manager_profile_view",
-			want:       200,
+			permission:      "config_manager_profile_view",
+			want:            200,
+			wantTenantID:    "540155",
+			wantPrincipalID: "user",
 		},
 		{
 			description: "return 500 on kessel error",
@@ -124,11 +164,11 @@ func TestKesselMiddleware(t *testing.T) {
 				},
 				Type: "User",
 			},
-			permission: "config_manager_profile_view",
-			want:       500,
+			permission:      "config_manager_profile_view",
+			want:            500,
+			wantTenantID:    "540155",
+			wantPrincipalID: "user",
 		},
-
-		// TODO: service account
 	}
 
 	for _, test := range tests {
@@ -152,11 +192,11 @@ func TestKesselMiddleware(t *testing.T) {
 
 			if test.config.KesselEnabled {
 				assertEquals(t, "response status code", test.want, rr.Code)
-				assertEquals(t, "tenant id", test.identity.OrgID, test.client.request.Object.ResourceId)
+				assertEquals(t, "tenant id", test.wantTenantID, test.client.request.Object.ResourceId)
 				assertEquals(t, "tenant resource type", "tenant", test.client.request.Object.ResourceType)
 				assertEquals(t, "tenant reporter type", "rbac", test.client.request.Object.Reporter.Type)
 				assertEquals(t, "relation", test.permission, test.client.request.Relation)
-				assertEquals(t, "principal id", test.identity.User.Username, test.client.request.Subject.Resource.ResourceId)
+				assertEquals(t, "principal id", test.wantPrincipalID, test.client.request.Subject.Resource.ResourceId)
 				assertEquals(t, "principal resource type", "principal", test.client.request.Subject.Resource.ResourceType)
 				assertEquals(t, "principal reporter type", "rbac", test.client.request.Subject.Resource.Reporter.Type)
 			}
