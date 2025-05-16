@@ -14,9 +14,12 @@ import (
 )
 
 type mockKesselInventoryServiceClient struct {
-	request       *kesselv2.CheckRequest
-	response      *kesselv2.CheckResponse
-	responseError error
+	request                *kesselv2.CheckRequest
+	response               *kesselv2.CheckResponse
+	responseError          error
+	forUpdateRequest       *kesselv2.CheckForUpdateRequest
+	forUpdateResponse      *kesselv2.CheckForUpdateResponse
+	forUpdateResponseError error
 }
 
 func (m *mockKesselInventoryServiceClient) Check(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
@@ -25,7 +28,8 @@ func (m *mockKesselInventoryServiceClient) Check(ctx context.Context, in *kessel
 }
 
 func (m *mockKesselInventoryServiceClient) CheckForUpdate(ctx context.Context, in *kesselv2.CheckForUpdateRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateResponse, error) {
-	panic("unimplemented")
+	m.forUpdateRequest = in
+	return m.forUpdateResponse, m.forUpdateResponseError
 }
 
 func (m *mockKesselInventoryServiceClient) DeleteResource(ctx context.Context, in *kesselv2.DeleteResourceRequest, opts ...grpc.CallOption) (*kesselv2.DeleteResourceResponse, error) {
@@ -48,20 +52,13 @@ func configWithKesselEnabled(value bool) config.Config {
 	}
 }
 
-func mockClient(allowed kesselv2.Allowed) *mockKesselInventoryServiceClient {
-	return &mockKesselInventoryServiceClient{
-		response: &kesselv2.CheckResponse{
-			Allowed: allowed,
-		},
-	}
-}
-
 func TestKesselMiddleware(t *testing.T) {
 
 	tests := []struct {
 		description     string
 		config          config.Config
-		client          *mockKesselInventoryServiceClient
+		allowed         kesselv2.Allowed
+		err             error
 		identity        identity.Identity
 		permission      string
 		want            int
@@ -71,7 +68,7 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 403 if kessel is enabled and kessel returns false for a user",
 			config:      configWithKesselEnabled(true),
-			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -87,7 +84,7 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 403 if kessel is enabled and kessel returns false for a service account",
 			config:      configWithKesselEnabled(true),
-			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -103,7 +100,7 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 200 if kessel is enabled and kessel returns true a user",
 			config:      configWithKesselEnabled(true),
-			client:      mockClient(kesselv2.Allowed_ALLOWED_TRUE),
+			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -119,7 +116,7 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 200 if kessel is enabled and kessel returns true a service account",
 			config:      configWithKesselEnabled(true),
-			client:      mockClient(kesselv2.Allowed_ALLOWED_TRUE),
+			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -135,7 +132,7 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 200 if kessel is disabled",
 			config:      configWithKesselEnabled(false),
-			client:      mockClient(kesselv2.Allowed_ALLOWED_FALSE),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -151,12 +148,8 @@ func TestKesselMiddleware(t *testing.T) {
 		{
 			description: "return 500 on kessel error",
 			config:      configWithKesselEnabled(true),
-			client: &mockKesselInventoryServiceClient{
-				response: &kesselv2.CheckResponse{
-					Allowed: kesselv2.Allowed_ALLOWED_FALSE,
-				},
-				responseError: context.Canceled,
-			},
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			err:         context.Canceled,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -173,10 +166,17 @@ func TestKesselMiddleware(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
+			client := &mockKesselInventoryServiceClient{
+				response: &kesselv2.CheckResponse{
+					Allowed: test.allowed,
+				},
+				responseError: test.err,
+			}
+
 			middlewareBuilder := &kesselMiddlewareBuilderImpl{
 				config: test.config,
 				client: &v1beta1.InventoryClient{
-					KesselInventoryService: test.client,
+					KesselInventoryService: client,
 				},
 			}
 
@@ -192,13 +192,50 @@ func TestKesselMiddleware(t *testing.T) {
 
 			if test.config.KesselEnabled {
 				assertEquals(t, "response status code", test.want, rr.Code)
-				assertEquals(t, "tenant id", test.wantTenantID, test.client.request.Object.ResourceId)
-				assertEquals(t, "tenant resource type", "tenant", test.client.request.Object.ResourceType)
-				assertEquals(t, "tenant reporter type", "rbac", test.client.request.Object.Reporter.Type)
-				assertEquals(t, "relation", test.permission, test.client.request.Relation)
-				assertEquals(t, "principal id", test.wantPrincipalID, test.client.request.Subject.Resource.ResourceId)
-				assertEquals(t, "principal resource type", "principal", test.client.request.Subject.Resource.ResourceType)
-				assertEquals(t, "principal reporter type", "rbac", test.client.request.Subject.Resource.Reporter.Type)
+				assertEquals(t, "tenant id", test.wantTenantID, client.request.Object.ResourceId)
+				assertEquals(t, "tenant resource type", "tenant", client.request.Object.ResourceType)
+				assertEquals(t, "tenant reporter type", "rbac", client.request.Object.Reporter.Type)
+				assertEquals(t, "relation", test.permission, client.request.Relation)
+				assertEquals(t, "principal id", test.wantPrincipalID, client.request.Subject.Resource.ResourceId)
+				assertEquals(t, "principal resource type", "principal", client.request.Subject.Resource.ResourceType)
+				assertEquals(t, "principal reporter type", "rbac", client.request.Subject.Resource.Reporter.Type)
+			}
+		})
+
+		t.Run(test.description+" (for update)", func(t *testing.T) {
+			client := &mockKesselInventoryServiceClient{
+				forUpdateResponse: &kesselv2.CheckForUpdateResponse{
+					Allowed: test.allowed,
+				},
+				forUpdateResponseError: test.err,
+			}
+
+			middlewareBuilder := &kesselMiddlewareBuilderImpl{
+				config: test.config,
+				client: &v1beta1.InventoryClient{
+					KesselInventoryService: client,
+				},
+			}
+
+			sampleHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte("OK"))
+			})
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/profiles", nil)
+			req = req.WithContext(identity.WithIdentity(req.Context(), identity.XRHID{Identity: test.identity}))
+
+			middlewareBuilder.EnforceOrgPermissionForUpdate(test.permission)(sampleHandler).ServeHTTP(rr, req)
+
+			if test.config.KesselEnabled {
+				assertEquals(t, "response status code", test.want, rr.Code)
+				assertEquals(t, "tenant id", test.wantTenantID, client.forUpdateRequest.Object.ResourceId)
+				assertEquals(t, "tenant resource type", "tenant", client.forUpdateRequest.Object.ResourceType)
+				assertEquals(t, "tenant reporter type", "rbac", client.forUpdateRequest.Object.Reporter.Type)
+				assertEquals(t, "relation", test.permission, client.forUpdateRequest.Relation)
+				assertEquals(t, "principal id", test.wantPrincipalID, client.forUpdateRequest.Subject.Resource.ResourceId)
+				assertEquals(t, "principal resource type", "principal", client.forUpdateRequest.Subject.Resource.ResourceType)
+				assertEquals(t, "principal reporter type", "rbac", client.forUpdateRequest.Subject.Resource.Reporter.Type)
 			}
 		})
 	}
