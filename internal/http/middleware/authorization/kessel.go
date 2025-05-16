@@ -15,11 +15,16 @@ import (
 )
 
 func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
+	options := []func(*common.Config){
+		common.WithgRPCUrl(config.KesselURL),
+		common.WithTLSInsecure(config.KesselInsecure),
+	}
 
-	client, _ := v1beta2.New(common.NewConfig(
-		common.WithgRPCUrl("localhost:9091"), // TODO: more configuration options
-		common.WithTLSInsecure(true),
-	))
+	if config.KesselAuthEnabled {
+		options = append(options, common.WithAuthEnabled(config.KesselAuthClientID, config.KesselAuthClientSecret, config.KesselAuthOIDCIssuer))
+	}
+
+	client, _ := v1beta2.New(common.NewConfig(options...))
 
 	return &kesselMiddlewareBuilderImpl{
 		client: client,
@@ -106,10 +111,17 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 				},
 			}
 
-			// TODO: authentication support
-			//opts, _ := a.client.GetTokenCallOption()
+			var opts []grpc.CallOption
+			if a.config.KesselAuthEnabled {
+				opts, err = a.client.GetTokenCallOption()
+				if err != nil {
+					instrumentation.AuthorizationCheckError(err)
+					http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
+					return
+				}
+			}
 
-			res, err := checkFn(r.Context(), object, permission, subject)
+			res, err := checkFn(r.Context(), object, permission, subject, opts...)
 			if err != nil {
 				instrumentation.AuthorizationCheckError(err)
 				http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
