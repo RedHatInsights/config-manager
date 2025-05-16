@@ -49,7 +49,7 @@ func NewMux() (*chi.Mux, error) {
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(kessel.EnforceOrgPermission("config_manager_profile_edit"))
+			r.Use(kessel.EnforceOrgPermissionForUpdate("config_manager_profile_edit"))
 			r.Post("/profiles", createProfile)
 		})
 	})
