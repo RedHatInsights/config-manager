@@ -96,6 +96,8 @@ func extractPrincipalId(identity identity.XRHID) (string, error) {
 	switch identity.Identity.Type {
 	case "User":
 		return identity.Identity.User.Username, nil
+	case "ServiceAccount":
+		return identity.Identity.ServiceAccount.Username, nil
 	default:
 		return "", errors.New("unsupported identity type")
 	}
