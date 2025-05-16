@@ -3,6 +3,7 @@ package authorization
 import (
 	"config-manager/internal/config"
 	"config-manager/internal/instrumentation"
+	"context"
 	"errors"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/project-kessel/inventory-client-go/common"
 	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
+	"google.golang.org/grpc"
 )
 
 func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
@@ -27,6 +29,7 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 
 type KesselMiddlewareBuilder interface {
 	EnforceOrgPermission(permission string) func(http.Handler) http.Handler
+	EnforceOrgPermissionForUpdate(permission string) func(http.Handler) http.Handler
 }
 
 type kesselMiddlewareBuilderImpl struct {
@@ -36,7 +39,41 @@ type kesselMiddlewareBuilderImpl struct {
 
 var _ KesselMiddlewareBuilder = &kesselMiddlewareBuilderImpl{}
 
+type AllowedResponse interface {
+	GetAllowed() kesselv2.Allowed
+}
+
+type kesselCheckFn func(context.Context, *kesselv2.ResourceReference, string, *kesselv2.SubjectReference, ...grpc.CallOption) (AllowedResponse, error)
+
+func (a *kesselMiddlewareBuilderImpl) callCheck(ctx context.Context, object *kesselv2.ResourceReference, relation string, subject *kesselv2.SubjectReference, opts ...grpc.CallOption) (AllowedResponse, error) {
+	request := &kesselv2.CheckRequest{
+		Object:   object,
+		Relation: relation,
+		Subject:  subject,
+	}
+
+	return a.client.KesselInventoryService.Check(ctx, request, opts...)
+}
+
+func (a *kesselMiddlewareBuilderImpl) callCheckForUpdate(ctx context.Context, object *kesselv2.ResourceReference, relation string, subject *kesselv2.SubjectReference, opts ...grpc.CallOption) (AllowedResponse, error) {
+	request := &kesselv2.CheckForUpdateRequest{
+		Object:   object,
+		Relation: relation,
+		Subject:  subject,
+	}
+
+	return a.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
+}
+
 func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermission(permission string) func(http.Handler) http.Handler {
+	return a.enforceOrgPermission(permission, a.callCheck)
+}
+
+func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermissionForUpdate(permission string) func(http.Handler) http.Handler {
+	return a.enforceOrgPermission(permission, a.callCheckForUpdate)
+}
+
+func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, checkFn kesselCheckFn) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !a.config.KesselEnabled {
@@ -51,29 +88,28 @@ func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermission(permission string) fu
 				http.Error(w, err.Error(), http.StatusForbidden)
 			}
 
-			kesselRequest := &kesselv2.CheckRequest{
-				Object: &kesselv2.ResourceReference{
-					ResourceType: "tenant",
-					ResourceId:   id.Identity.OrgID,
+			object := &kesselv2.ResourceReference{
+				ResourceType: "tenant",
+				ResourceId:   id.Identity.OrgID,
+				Reporter: &kesselv2.ReporterReference{
+					Type: "rbac",
+				},
+			}
+
+			subject := &kesselv2.SubjectReference{
+				Resource: &kesselv2.ResourceReference{
+					ResourceType: "principal",
+					ResourceId:   principalId,
 					Reporter: &kesselv2.ReporterReference{
 						Type: "rbac",
 					},
 				},
-				Relation: permission,
-				Subject: &kesselv2.SubjectReference{
-					Resource: &kesselv2.ResourceReference{
-						ResourceType: "principal",
-						ResourceId:   principalId,
-						Reporter: &kesselv2.ReporterReference{
-							Type: "rbac",
-						},
-					},
-				},
 			}
 
+			// TODO: authentication support
 			//opts, _ := a.client.GetTokenCallOption()
 
-			res, err := a.client.KesselInventoryService.Check(r.Context(), kesselRequest)
+			res, err := checkFn(r.Context(), object, permission, subject)
 			if err != nil {
 				instrumentation.AuthorizationCheckError(err)
 				http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
@@ -81,12 +117,12 @@ func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermission(permission string) fu
 			}
 
 			if res.GetAllowed() != kesselv2.Allowed_ALLOWED_TRUE {
-				instrumentation.AuthorizationCheckFailed(kesselRequest.Subject.Resource.ResourceId, kesselRequest.Object.ResourceId, kesselRequest.Relation)
+				instrumentation.AuthorizationCheckFailed(subject.Resource.ResourceId, object.ResourceId, permission)
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
 
-			instrumentation.AuthorizationCheckPassed(kesselRequest.Subject.Resource.ResourceId, kesselRequest.Object.ResourceId, kesselRequest.Relation)
+			instrumentation.AuthorizationCheckPassed(subject.Resource.ResourceId, object.ResourceId, permission)
 			next.ServeHTTP(w, r)
 		})
 	}
