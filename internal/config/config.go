@@ -44,6 +44,12 @@ type Config struct {
 	KafkaSaslMechanism     string
 	KafkaSecurityProtocol  string
 	KesselEnabled          bool
+	KesselURL              string
+	KesselAuthEnabled      bool
+	KesselAuthClientID     string
+	KesselAuthClientSecret string
+	KesselAuthOIDCIssuer   string
+	KesselInsecure         bool
 	LogBatchFrequency      time.Duration
 	LogFormat              flagvar.Enum
 	LogGroup               string
@@ -94,11 +100,17 @@ var DefaultConfig Config = Config{
 	KafkaCAPath:            "",
 	KafkaSaslMechanism:     "",
 	KafkaSecurityProtocol:  "",
+	KesselEnabled:          false,
+	KesselURL:              "localhost:9091",
+	KesselAuthEnabled:      false,
+	KesselAuthClientID:     "",
+	KesselAuthClientSecret: "",
+	KesselAuthOIDCIssuer:   "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+	KesselInsecure:         true,
 	LogBatchFrequency:      10 * time.Second,
 	LogFormat:              flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:               "platform-dev",
 	LogLevel:               flagvar.Enum{Choices: []string{"panic", "fatal", "error", "warn", "info", "debug", "trace"}, Value: "info"},
-	KesselEnabled:          false,
 	LogStream: func() string {
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -159,6 +171,14 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
+
+		if DefaultConfig.KesselEnabled {
+			for _, e := range clowder.LoadedConfig.Endpoints {
+				if e.App == "kessel-inventory-api" {
+					DefaultConfig.KesselURL = fmt.Sprintf("%s:%d", e.Hostname, e.Port)
+				}
+			}
+		}
 	}
 }
 
@@ -195,6 +215,12 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
 	fs.StringVar(&DefaultConfig.KafkaSecurityProtocol, "kafka-security-protocol", DefaultConfig.KafkaSecurityProtocol, "managed kafka security protocol")
 	fs.BoolVar(&DefaultConfig.KesselEnabled, "kessel-enabled", DefaultConfig.KesselEnabled, "enable authorization using Kessel")
+	fs.StringVar(&DefaultConfig.KesselURL, "kessel-url", DefaultConfig.KesselURL, "Kessel API URL")
+	fs.BoolVar(&DefaultConfig.KesselAuthEnabled, "kessel-auth-enabled", DefaultConfig.KesselAuthEnabled, "enable Kessel client authentication")
+	fs.StringVar(&DefaultConfig.KesselAuthClientID, "kessel-auth-client-id", DefaultConfig.KesselAuthClientID, "Kessel authentication client id")
+	fs.StringVar(&DefaultConfig.KesselAuthClientSecret, "kessel-auth-client-secret", DefaultConfig.KesselAuthClientSecret, "Kessel authentication client secret")
+	fs.StringVar(&DefaultConfig.KesselAuthOIDCIssuer, "kessel-auth-oidc-issuer", DefaultConfig.KesselAuthOIDCIssuer, "Kessel authentication OIDC issuer")
+	fs.BoolVar(&DefaultConfig.KesselInsecure, "kessel-insecure", DefaultConfig.KesselInsecure, "disable TLS for the Kessel client")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
