@@ -52,23 +52,31 @@ func configWithKesselEnabled(value bool) config.Config {
 	}
 }
 
+func mockDefaultWorkspaceResolver(id string, err error) defaultWorkspaceResolver {
+	return func(ctx context.Context, tenant string) (string, error) {
+		return id, err
+	}
+}
+
 func TestKesselMiddleware(t *testing.T) {
 
 	tests := []struct {
-		description     string
-		config          config.Config
-		allowed         kesselv2.Allowed
-		err             error
-		identity        identity.Identity
-		permission      string
-		want            int
-		wantTenantID    string
-		wantPrincipalID string
+		description       string
+		config            config.Config
+		allowed           kesselv2.Allowed
+		err               error
+		workspaceResolver defaultWorkspaceResolver
+		identity          identity.Identity
+		permission        string
+		want              int
+		wantWorkspaceID   string
+		wantPrincipalID   string
 	}{
 		{
-			description: "return 403 if kessel is enabled and kessel returns false for a user",
-			config:      configWithKesselEnabled(true),
-			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			description:       "return 403 if kessel is enabled and kessel returns false for a user",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -78,13 +86,14 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            403,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "user",
 		},
 		{
-			description: "return 403 if kessel is enabled and kessel returns false for a service account",
-			config:      configWithKesselEnabled(true),
-			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			description:       "return 403 if kessel is enabled and kessel returns false for a service account",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -94,13 +103,14 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            403,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
 		},
 		{
-			description: "return 200 if kessel is enabled and kessel returns true a user",
-			config:      configWithKesselEnabled(true),
-			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
+			description:       "return 200 if kessel is enabled and kessel returns true a user",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -110,13 +120,14 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "user",
 		},
 		{
-			description: "return 200 if kessel is enabled and kessel returns true a service account",
-			config:      configWithKesselEnabled(true),
-			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
+			description:       "return 200 if kessel is enabled and kessel returns true a service account",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -126,13 +137,14 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
 		},
 		{
-			description: "return 200 if kessel is disabled",
-			config:      configWithKesselEnabled(false),
-			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			description:       "return 200 if kessel is disabled",
+			config:            configWithKesselEnabled(false),
+			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -142,14 +154,15 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "user",
 		},
 		{
-			description: "return 500 on kessel error",
-			config:      configWithKesselEnabled(true),
-			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
-			err:         context.Canceled,
+			description:       "return 500 on kessel error",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
+			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			err:               context.Canceled,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -159,8 +172,23 @@ func TestKesselMiddleware(t *testing.T) {
 			},
 			permission:      "config_manager_profile_view",
 			want:            500,
-			wantTenantID:    "540155",
+			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
 			wantPrincipalID: "user",
+		},
+		{
+			description:       "returns 500 on rbac error",
+			config:            configWithKesselEnabled(true),
+			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
+			workspaceResolver: mockDefaultWorkspaceResolver("", context.Canceled),
+			identity: identity.Identity{
+				OrgID: "540155",
+				User: &identity.User{
+					Username: "user",
+				},
+				Type: "User",
+			},
+			permission: "config_manager_profile_view",
+			want:       500,
 		},
 	}
 
@@ -178,6 +206,7 @@ func TestKesselMiddleware(t *testing.T) {
 				client: &v1beta1.InventoryClient{
 					KesselInventoryService: client,
 				},
+				defaultWorkspaceResolver: test.workspaceResolver,
 			}
 
 			sampleHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -188,13 +217,13 @@ func TestKesselMiddleware(t *testing.T) {
 			req := httptest.NewRequest("GET", "/profiles", nil)
 			req = req.WithContext(identity.WithIdentity(req.Context(), identity.XRHID{Identity: test.identity}))
 
-			middlewareBuilder.EnforceOrgPermission(test.permission)(sampleHandler).ServeHTTP(rr, req)
+			middlewareBuilder.EnforceDefaultWorkspacePermission(test.permission)(sampleHandler).ServeHTTP(rr, req)
 
-			if test.config.KesselEnabled {
+			if test.config.KesselEnabled && test.wantWorkspaceID != "" {
 				assertEquals(t, "response status code", test.want, rr.Code)
-				assertEquals(t, "tenant id", test.wantTenantID, client.request.Object.ResourceId)
-				assertEquals(t, "tenant resource type", "tenant", client.request.Object.ResourceType)
-				assertEquals(t, "tenant reporter type", "rbac", client.request.Object.Reporter.Type)
+				assertEquals(t, "workspace id", test.wantWorkspaceID, client.request.Object.ResourceId)
+				assertEquals(t, "workspace resource type", "workspace", client.request.Object.ResourceType)
+				assertEquals(t, "workspace reporter type", "rbac", client.request.Object.Reporter.Type)
 				assertEquals(t, "relation", test.permission, client.request.Relation)
 				assertEquals(t, "principal id", test.wantPrincipalID, client.request.Subject.Resource.ResourceId)
 				assertEquals(t, "principal resource type", "principal", client.request.Subject.Resource.ResourceType)
@@ -215,6 +244,7 @@ func TestKesselMiddleware(t *testing.T) {
 				client: &v1beta1.InventoryClient{
 					KesselInventoryService: client,
 				},
+				defaultWorkspaceResolver: test.workspaceResolver,
 			}
 
 			sampleHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -225,13 +255,13 @@ func TestKesselMiddleware(t *testing.T) {
 			req := httptest.NewRequest("GET", "/profiles", nil)
 			req = req.WithContext(identity.WithIdentity(req.Context(), identity.XRHID{Identity: test.identity}))
 
-			middlewareBuilder.EnforceOrgPermissionForUpdate(test.permission)(sampleHandler).ServeHTTP(rr, req)
+			middlewareBuilder.EnforceDefaultWorkspacePermissionForUpdate(test.permission)(sampleHandler).ServeHTTP(rr, req)
 
-			if test.config.KesselEnabled {
+			if test.config.KesselEnabled && test.wantWorkspaceID != "" {
 				assertEquals(t, "response status code", test.want, rr.Code)
-				assertEquals(t, "tenant id", test.wantTenantID, client.forUpdateRequest.Object.ResourceId)
-				assertEquals(t, "tenant resource type", "tenant", client.forUpdateRequest.Object.ResourceType)
-				assertEquals(t, "tenant reporter type", "rbac", client.forUpdateRequest.Object.Reporter.Type)
+				assertEquals(t, "workspace id", test.wantWorkspaceID, client.forUpdateRequest.Object.ResourceId)
+				assertEquals(t, "workspace resource type", "workspace", client.forUpdateRequest.Object.ResourceType)
+				assertEquals(t, "workspace reporter type", "rbac", client.forUpdateRequest.Object.Reporter.Type)
 				assertEquals(t, "relation", test.permission, client.forUpdateRequest.Relation)
 				assertEquals(t, "principal id", test.wantPrincipalID, client.forUpdateRequest.Subject.Resource.ResourceId)
 				assertEquals(t, "principal resource type", "principal", client.forUpdateRequest.Subject.Resource.ResourceType)
