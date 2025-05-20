@@ -27,19 +27,23 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 	client, _ := v1beta2.New(common.NewConfig(options...))
 
 	return &kesselMiddlewareBuilderImpl{
-		client: client,
-		config: config,
+		client:                   client,
+		config:                   config,
+		defaultWorkspaceResolver: getDefaultWorkspaceID,
 	}
 }
 
 type KesselMiddlewareBuilder interface {
-	EnforceOrgPermission(permission string) func(http.Handler) http.Handler
-	EnforceOrgPermissionForUpdate(permission string) func(http.Handler) http.Handler
+	EnforceDefaultWorkspacePermission(permission string) func(http.Handler) http.Handler
+	EnforceDefaultWorkspacePermissionForUpdate(permission string) func(http.Handler) http.Handler
 }
 
+type defaultWorkspaceResolver func(context.Context, string) (string, error)
+
 type kesselMiddlewareBuilderImpl struct {
-	client *v1beta2.InventoryClient
-	config config.Config
+	client                   *v1beta2.InventoryClient
+	config                   config.Config
+	defaultWorkspaceResolver defaultWorkspaceResolver
 }
 
 var _ KesselMiddlewareBuilder = &kesselMiddlewareBuilderImpl{}
@@ -70,11 +74,11 @@ func (a *kesselMiddlewareBuilderImpl) callCheckForUpdate(ctx context.Context, ob
 	return a.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
 }
 
-func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermission(permission string) func(http.Handler) http.Handler {
+func (a *kesselMiddlewareBuilderImpl) EnforceDefaultWorkspacePermission(permission string) func(http.Handler) http.Handler {
 	return a.enforceOrgPermission(permission, a.callCheck)
 }
 
-func (a *kesselMiddlewareBuilderImpl) EnforceOrgPermissionForUpdate(permission string) func(http.Handler) http.Handler {
+func (a *kesselMiddlewareBuilderImpl) EnforceDefaultWorkspacePermissionForUpdate(permission string) func(http.Handler) http.Handler {
 	return a.enforceOrgPermission(permission, a.callCheckForUpdate)
 }
 
@@ -88,14 +92,20 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 
 			id := identity.GetIdentity(r.Context())
 
+			defaultWorkspaceID, err := a.defaultWorkspaceResolver(r.Context(), id.Identity.OrgID)
+			if err != nil {
+				http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
+				return
+			}
+
 			principalId, err := extractPrincipalId(id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusForbidden)
 			}
 
 			object := &kesselv2.ResourceReference{
-				ResourceType: "tenant",
-				ResourceId:   id.Identity.OrgID,
+				ResourceType: "workspace",
+				ResourceId:   defaultWorkspaceID,
 				Reporter: &kesselv2.ReporterReference{
 					Type: "rbac",
 				},

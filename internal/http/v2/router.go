@@ -42,14 +42,14 @@ func NewMux() (*chi.Mux, error) {
 		r.Use(oapimiddleware.OapiRequestValidator(spec))
 
 		r.Group(func(r chi.Router) {
-			r.Use(kessel.EnforceOrgPermission("config_manager_profile_view"))
+			r.Use(kessel.EnforceDefaultWorkspacePermission("config_manager_profile_view"))
 			r.Get("/profiles", getProfiles)
 			r.Get("/profiles/{id}", getProfile)
 			r.Get("/playbooks", getPlaybook)
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(kessel.EnforceOrgPermissionForUpdate("config_manager_profile_edit"))
+			r.Use(kessel.EnforceDefaultWorkspacePermissionForUpdate("config_manager_profile_edit"))
 			r.Post("/profiles", createProfile)
 		})
 	})
