@@ -7,7 +7,7 @@ import (
 	"config-manager/internal/db"
 	"context"
 
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/rs/zerolog/log"
 )
 
@@ -22,7 +22,7 @@ func init() {
 	profileIdentityChan = make(chan ProfileWithIdentity)
 	go func() {
 		for profileIdentity := range profileIdentityChan {
-			ctx := context.WithValue(context.Background(), identity.Key, profileIdentity.Identity)
+			ctx := identity.WithIdentity(context.Background(), profileIdentity.Identity)
 			hosts, err := inventory.NewInventoryClient().GetAllInventoryClients(ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("cannot get hosts from inventory")
