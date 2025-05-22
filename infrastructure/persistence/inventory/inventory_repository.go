@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"time"
 
-	identity "github.com/redhatinsights/platform-go-middlewares/v2/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/rs/zerolog/log"
 )
 
