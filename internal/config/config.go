@@ -172,13 +172,14 @@ func init() {
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
 
-		if DefaultConfig.KesselEnabled {
-			for _, e := range clowder.LoadedConfig.Endpoints {
-				if e.App == "kessel-inventory-api" {
-					DefaultConfig.KesselURL = fmt.Sprintf("%s:%d", e.Hostname, e.Port)
-				}
-			}
-		}
+		// https://issues.redhat.com/browse/RHCLOUD-40314
+		// if DefaultConfig.KesselEnabled {
+		// 	for _, e := range clowder.LoadedConfig.Endpoints {
+		// 		if e.App == "kessel-inventory-api" {
+		// 			DefaultConfig.KesselURL = fmt.Sprintf("%s:%d", e.Hostname, e.Port)
+		// 		}
+		// 	}
+		// }
 	}
 }
 
