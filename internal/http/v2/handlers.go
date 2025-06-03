@@ -4,7 +4,6 @@ import (
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
-	"config-manager/internal/dispatch"
 	"config-manager/internal/http/render"
 	"config-manager/internal/instrumentation"
 	"encoding/json"
@@ -204,7 +203,6 @@ func createProfile(w http.ResponseWriter, r *http.Request) {
 		render.RenderPlain(w, r, http.StatusInternalServerError, fmt.Sprintf("cannot insert new profile: %v", err), logger)
 		return
 	}
-	dispatch.Dispatch(newProfile, identity.Get(r.Context()))
 
 	render.RenderJSON(w, r, http.StatusCreated, newProfile, logger)
 }
