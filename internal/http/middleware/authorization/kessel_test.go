@@ -81,13 +81,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				User: &identity.User{
 					Username: "user",
+					UserID:   "1212",
 				},
 				Type: "User",
 			},
 			permission:      "config_manager_profile_view",
 			want:            403,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "user",
+			wantPrincipalID: "redhat/1212",
 		},
 		{
 			description:       "return 403 if kessel is enabled and kessel returns false for a service account",
@@ -98,13 +99,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
 					Username: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+					UserId:   "60ce65dc-4b5a-4812-8b65-b48178d92b12",
 				},
 				Type: "ServiceAccount",
 			},
 			permission:      "config_manager_profile_view",
 			want:            403,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+			wantPrincipalID: "redhat/60ce65dc-4b5a-4812-8b65-b48178d92b12",
 		},
 		{
 			description:       "return 200 if kessel is enabled and kessel returns true a user",
@@ -115,13 +117,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				User: &identity.User{
 					Username: "user",
+					UserID:   "1212",
 				},
 				Type: "User",
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "user",
+			wantPrincipalID: "redhat/1212",
 		},
 		{
 			description:       "return 200 if kessel is enabled and kessel returns true a service account",
@@ -132,13 +135,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
 					Username: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+					UserId:   "60ce65dc-4b5a-4812-8b65-b48178d92b12",
 				},
 				Type: "ServiceAccount",
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "service-account-b69eaf9e-e6a6-4f9e-805e-02987daddfbd",
+			wantPrincipalID: "redhat/60ce65dc-4b5a-4812-8b65-b48178d92b12",
 		},
 		{
 			description:       "return 200 if kessel is disabled",
@@ -149,13 +153,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				User: &identity.User{
 					Username: "user",
+					UserID:   "1212",
 				},
 				Type: "User",
 			},
 			permission:      "config_manager_profile_view",
 			want:            200,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "user",
+			wantPrincipalID: "redhat/1212",
 		},
 		{
 			description:       "return 500 on kessel error",
@@ -167,13 +172,14 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				User: &identity.User{
 					Username: "user",
+					UserID:   "1212",
 				},
 				Type: "User",
 			},
 			permission:      "config_manager_profile_view",
 			want:            500,
 			wantWorkspaceID: "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
-			wantPrincipalID: "user",
+			wantPrincipalID: "redhat/1212",
 		},
 		{
 			description:       "returns 500 on rbac error",
@@ -184,6 +190,7 @@ func TestKesselMiddleware(t *testing.T) {
 				OrgID: "540155",
 				User: &identity.User{
 					Username: "user",
+					UserID:   "1212",
 				},
 				Type: "User",
 			},
