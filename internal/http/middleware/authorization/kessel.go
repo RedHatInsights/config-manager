@@ -102,10 +102,12 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 				return
 			}
 
-			principalId, err := extractPrincipalId(id)
+			userID, err := extractUserID(id)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusForbidden)
 			}
+
+			principalID := fmt.Sprintf("redhat/%s", userID)
 
 			object := &kesselv2.ResourceReference{
 				ResourceType: "workspace",
@@ -118,7 +120,7 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 			subject := &kesselv2.SubjectReference{
 				Resource: &kesselv2.ResourceReference{
 					ResourceType: "principal",
-					ResourceId:   principalId,
+					ResourceId:   principalID,
 					Reporter: &kesselv2.ReporterReference{
 						Type: "rbac",
 					},
@@ -154,12 +156,12 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 	}
 }
 
-func extractPrincipalId(identity identity.XRHID) (string, error) {
+func extractUserID(identity identity.XRHID) (string, error) {
 	switch identity.Identity.Type {
 	case "User":
-		return identity.Identity.User.Username, nil
+		return identity.Identity.User.UserID, nil
 	case "ServiceAccount":
-		return identity.Identity.ServiceAccount.Username, nil
+		return identity.Identity.ServiceAccount.UserId, nil
 	default:
 		return "", errors.New("unsupported identity type")
 	}
