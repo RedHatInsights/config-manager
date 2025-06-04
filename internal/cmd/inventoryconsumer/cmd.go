@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
-	"github.com/google/uuid"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
@@ -73,6 +72,8 @@ func handler(ctx context.Context, msg kafka.Message) {
 		switch eventType {
 		case "created":
 			logger.Info().Msg("setting up new host for remote host configuration")
+			reqID, _ := util.Kafka.GetHeader(msg, "request_id")
+			logger = logger.With().Str("request_id", reqID).Logger()
 			messageID, err := internal.SetupHost(ctx, event.Host)
 			if err != nil {
 				logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
@@ -113,15 +114,6 @@ func handler(ctx context.Context, msg kafka.Message) {
 					logger.Debug().Msg("inserted new profile")
 				}
 			}
-
-			reqID, err := util.Kafka.GetHeader(msg, "request_id")
-			if err != nil {
-				logger.Error().Err(err).Msg("cannot get request_id header")
-				reqID = uuid.New().String()
-				logger.Debug().Str("request_id", reqID).Msg("created request ID")
-			}
-			logger = logger.With().Str("request_id", reqID).Logger()
-
 		}
 	}
 }
