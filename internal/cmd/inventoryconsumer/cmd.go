@@ -73,7 +73,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 		case "created":
 			logger.Info().Msg("setting up new host for remote host configuration")
 			reqID, _ := util.Kafka.GetHeader(msg, "request_id")
-			logger = logger.With().Str("request_id", reqID).Logger()
+			logger = logger.With().Str("request_id", reqID).Str("host_id", event.Host.ID).Str("org_id", event.Host.OrgID).Logger()
 			messageID, err := internal.SetupHost(ctx, event.Host)
 			if err != nil {
 				logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
