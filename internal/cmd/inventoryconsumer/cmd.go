@@ -1,8 +1,6 @@
 package inventoryconsumer
 
 import (
-	"config-manager/infrastructure/persistence/cloudconnector"
-	"config-manager/infrastructure/persistence/dispatcher"
 	"config-manager/internal"
 	"config-manager/internal/config"
 	"config-manager/internal/db"
@@ -12,7 +10,6 @@ import (
 	"time"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
-	"github.com/google/uuid"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
@@ -37,8 +34,6 @@ var Command ffcli.Command = ffcli.Command{
 		}
 	},
 }
-
-type requestIDkey string
 
 // InventoryEvent represents a message read off the inventory.events
 // topic.
@@ -77,6 +72,8 @@ func handler(ctx context.Context, msg kafka.Message) {
 		switch eventType {
 		case "created":
 			logger.Info().Msg("setting up new host for remote host configuration")
+			reqID, _ := util.Kafka.GetHeader(msg, "request_id")
+			logger = logger.With().Str("request_id", reqID).Str("host_id", event.Host.ID).Str("org_id", event.Host.OrgID).Logger()
 			messageID, err := internal.SetupHost(ctx, event.Host)
 			if err != nil {
 				logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
@@ -116,38 +113,6 @@ func handler(ctx context.Context, msg kafka.Message) {
 					}
 					logger.Debug().Msg("inserted new profile")
 				}
-			}
-
-			reqID, err := util.Kafka.GetHeader(msg, "request_id")
-			if err != nil {
-				logger.Error().Err(err).Msg("cannot get request_id header")
-				reqID = uuid.New().String()
-				logger.Debug().Str("request_id", reqID).Msg("created request ID")
-				ctx = context.WithValue(ctx, requestIDkey("request_id"), reqID)
-			}
-			logger = logger.With().Str("request_id", reqID).Logger()
-
-			if event.Host.SystemProfile.RHCState != profile.ID.String() {
-				client, err := cloudconnector.NewCloudConnectorClient()
-				if err != nil {
-					logger.Error().Err(err).Msg("cannot get cloud-connector client")
-					return
-				}
-
-				status, dispatchers, err := client.GetConnectionStatus(ctx, event.Host.OrgID, event.Host.SystemProfile.RHCID)
-				if err != nil {
-					logger.Error().Err(err).Msg("cannot get connection status from cloud-connector")
-					return
-				}
-				if _, has := dispatchers["rhc-worker-playbook"]; has && status == "connected" {
-					logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("updating state configuration for host")
-					host := []internal.Host{event.Host}
-					internal.ApplyProfile(ctx, profile, host, func(responses []dispatcher.RunCreated) {
-						logger.Info().Interface("responses", responses).Msg("received response from playbook-dispatcher")
-					})
-				}
-			} else {
-				logger.Info().Str("host.system_profile.rhc_config_state", event.Host.SystemProfile.RHCState).Str("profile.id", profile.ID.String()).Interface("host", event.Host).Msg("host state matches profile ID")
 			}
 		}
 	}

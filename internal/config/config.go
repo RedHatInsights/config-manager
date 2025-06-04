@@ -29,7 +29,6 @@ type Config struct {
 	DBPass                  string
 	DBPort                  int
 	DBUser                  string
-	DispatcherBatchSize     int
 	DispatcherHost          flagvar.URL
 	DispatcherPSK           string
 	DispatcherTimeout       int
@@ -55,8 +54,6 @@ type Config struct {
 	MetricsPort             int
 	Modules                 flagvar.EnumSetCSV
 	PlaybookFiles           string
-	PlaybookHost            flagvar.URL
-	PlaybookPath            string
 	ServiceConfig           string
 	StaleEventDuration      time.Duration
 	TenantTranslatorHost    string
@@ -84,7 +81,6 @@ var DefaultConfig Config = Config{
 	DBPass:                  "insights",
 	DBPort:                  5432,
 	DBUser:                  "insights",
-	DispatcherBatchSize:     50,
 	DispatcherHost:          flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
 	DispatcherPSK:           "",
 	DispatcherTimeout:       10,
@@ -116,8 +112,6 @@ var DefaultConfig Config = Config{
 	MetricsPort:          9000,
 	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles:        "./playbooks/",
-	PlaybookHost:         flagvar.URL{Value: url.MustParse("https://cert.cloud.stage.redhat.com")},
-	PlaybookPath:         "/api/config-manager/v2/playbooks?profile_id=%v",
 	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	StaleEventDuration:   24 * time.Hour,
 	TenantTranslatorHost: "",
@@ -192,7 +186,6 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.DBPass, "db-pass", DefaultConfig.DBPass, "database password")
 	fs.IntVar(&DefaultConfig.DBPort, "db-port", DefaultConfig.DBPort, "database port")
 	fs.StringVar(&DefaultConfig.DBUser, "db-user", DefaultConfig.DBUser, "database user")
-	fs.IntVar(&DefaultConfig.DispatcherBatchSize, "dispatcher-batch-size", DefaultConfig.DispatcherBatchSize, "size of batches to transmit to playbook-dispatcher")
 	fs.Var(&DefaultConfig.DispatcherHost, "dispatcher-host", fmt.Sprintf("hostname for the playbook-dispatcher service (%v)", DefaultConfig.DispatcherHost.Help()))
 	fs.StringVar(&DefaultConfig.DispatcherPSK, "dispatcher-psk", DefaultConfig.DispatcherPSK, "preshared key from playbook-dispatcher")
 	fs.IntVar(&DefaultConfig.DispatcherTimeout, "dispatcher-timeout", DefaultConfig.DispatcherTimeout, "number of seconds before timing out HTTP requests to playbook-dispatcher")
@@ -218,8 +211,6 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.IntVar(&DefaultConfig.MetricsPort, "metrics-port", DefaultConfig.MetricsPort, "port on which metrics HTTP server listens")
 	fs.Var(&DefaultConfig.Modules, "module", fmt.Sprintf("config-manager modules to execute (%v)", DefaultConfig.Modules.Help()))
 	fs.StringVar(&DefaultConfig.PlaybookFiles, "playbook-files", DefaultConfig.PlaybookFiles, "path to playbook directory")
-	fs.Var(&DefaultConfig.PlaybookHost, "playbook-host", fmt.Sprintf("default host from which to download playbooks (%v)", DefaultConfig.PlaybookHost.Help()))
-	fs.StringVar(&DefaultConfig.PlaybookPath, "playbook-path", DefaultConfig.PlaybookPath, "path component for playbook downloads")
 	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
 	fs.DurationVar(&DefaultConfig.StaleEventDuration, "stale-event-duration", DefaultConfig.StaleEventDuration, "duration of time after which inventory events are discarded")
 	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")
