@@ -5,6 +5,7 @@ import (
 	"config-manager/internal/instrumentation"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
@@ -24,7 +25,10 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 		options = append(options, common.WithAuthEnabled(config.KesselAuthClientID, config.KesselAuthClientSecret, config.KesselAuthOIDCIssuer))
 	}
 
-	client, _ := v1beta2.New(common.NewConfig(options...))
+	client, err := v1beta2.New(common.NewConfig(options...))
+	if err != nil {
+		panic(fmt.Errorf("failed to configure Kessel client: %w", err))
+	}
 
 	return &kesselMiddlewareBuilderImpl{
 		client:                   client,
