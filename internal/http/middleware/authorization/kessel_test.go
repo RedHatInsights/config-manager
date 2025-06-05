@@ -52,31 +52,39 @@ func configWithKesselEnabled(value bool) config.Config {
 	}
 }
 
-func mockDefaultWorkspaceResolver(id string, err error) defaultWorkspaceResolver {
-	return func(ctx context.Context, tenant string) (string, error) {
-		return id, err
-	}
+type mockRbacClient struct {
+	orgID string
+	id    string
+	err   error
+}
+
+func (m *mockRbacClient) GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error) {
+	m.orgID = orgID
+	return m.id, m.err
 }
 
 func TestKesselMiddleware(t *testing.T) {
 
 	tests := []struct {
-		description       string
-		config            config.Config
-		allowed           kesselv2.Allowed
-		err               error
-		workspaceResolver defaultWorkspaceResolver
-		identity          identity.Identity
-		permission        string
-		want              int
-		wantWorkspaceID   string
-		wantPrincipalID   string
+		description     string
+		config          config.Config
+		allowed         kesselv2.Allowed
+		err             error
+		rbacClient      RbacClient
+		identity        identity.Identity
+		permission      string
+		want            int
+		wantWorkspaceID string
+		wantPrincipalID string
 	}{
 		{
-			description:       "return 403 if kessel is enabled and kessel returns false for a user",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			description: "return 403 if kessel is enabled and kessel returns false for a user",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -91,10 +99,13 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/1212",
 		},
 		{
-			description:       "return 403 if kessel is enabled and kessel returns false for a service account",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			description: "return 403 if kessel is enabled and kessel returns false for a service account",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -109,10 +120,13 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/60ce65dc-4b5a-4812-8b65-b48178d92b12",
 		},
 		{
-			description:       "return 200 if kessel is enabled and kessel returns true a user",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			description: "return 200 if kessel is enabled and kessel returns true a user",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -127,10 +141,13 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/1212",
 		},
 		{
-			description:       "return 200 if kessel is enabled and kessel returns true a service account",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			description: "return 200 if kessel is enabled and kessel returns true a service account",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				ServiceAccount: &identity.ServiceAccount{
@@ -145,10 +162,13 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/60ce65dc-4b5a-4812-8b65-b48178d92b12",
 		},
 		{
-			description:       "return 200 if kessel is disabled",
-			config:            configWithKesselEnabled(false),
-			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
+			description: "return 200 if kessel is disabled",
+			config:      configWithKesselEnabled(false),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -163,11 +183,14 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/1212",
 		},
 		{
-			description:       "return 500 on kessel error",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_FALSE,
-			workspaceResolver: mockDefaultWorkspaceResolver("019496b6-ff35-71a0-8bb4-ff7f0579a4c2", nil),
-			err:               context.Canceled,
+			description: "return 500 on kessel error",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_FALSE,
+			rbacClient: &mockRbacClient{
+				id:  "019496b6-ff35-71a0-8bb4-ff7f0579a4c2",
+				err: nil,
+			},
+			err: context.Canceled,
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -182,10 +205,13 @@ func TestKesselMiddleware(t *testing.T) {
 			wantPrincipalID: "redhat/1212",
 		},
 		{
-			description:       "returns 500 on rbac error",
-			config:            configWithKesselEnabled(true),
-			allowed:           kesselv2.Allowed_ALLOWED_TRUE,
-			workspaceResolver: mockDefaultWorkspaceResolver("", context.Canceled),
+			description: "returns 500 on rbac error",
+			config:      configWithKesselEnabled(true),
+			allowed:     kesselv2.Allowed_ALLOWED_TRUE,
+			rbacClient: &mockRbacClient{
+				id:  "",
+				err: context.Canceled,
+			},
 			identity: identity.Identity{
 				OrgID: "540155",
 				User: &identity.User{
@@ -213,7 +239,7 @@ func TestKesselMiddleware(t *testing.T) {
 				client: &v1beta1.InventoryClient{
 					KesselInventoryService: client,
 				},
-				defaultWorkspaceResolver: test.workspaceResolver,
+				rbacClient: test.rbacClient,
 			}
 
 			sampleHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -251,7 +277,7 @@ func TestKesselMiddleware(t *testing.T) {
 				client: &v1beta1.InventoryClient{
 					KesselInventoryService: client,
 				},
-				defaultWorkspaceResolver: test.workspaceResolver,
+				rbacClient: test.rbacClient,
 			}
 
 			sampleHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

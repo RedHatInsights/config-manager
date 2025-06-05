@@ -31,9 +31,9 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 	}
 
 	return &kesselMiddlewareBuilderImpl{
-		client:                   client,
-		config:                   config,
-		defaultWorkspaceResolver: getDefaultWorkspaceID,
+		client:     client,
+		config:     config,
+		rbacClient: newRbacClient(config.RbacURL),
 	}
 }
 
@@ -42,12 +42,10 @@ type KesselMiddlewareBuilder interface {
 	EnforceDefaultWorkspacePermissionForUpdate(permission string) func(http.Handler) http.Handler
 }
 
-type defaultWorkspaceResolver func(context.Context, string) (string, error)
-
 type kesselMiddlewareBuilderImpl struct {
-	client                   *v1beta2.InventoryClient
-	config                   config.Config
-	defaultWorkspaceResolver defaultWorkspaceResolver
+	client     *v1beta2.InventoryClient
+	config     config.Config
+	rbacClient RbacClient
 }
 
 var _ KesselMiddlewareBuilder = &kesselMiddlewareBuilderImpl{}
@@ -96,11 +94,14 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 
 			id := identity.GetIdentity(r.Context())
 
-			defaultWorkspaceID, err := a.defaultWorkspaceResolver(r.Context(), id.Identity.OrgID)
+			defaultWorkspaceID, err := a.rbacClient.GetDefaultWorkspaceID(r.Context(), id.Identity.OrgID)
 			if err != nil {
+				instrumentation.WorkspaceLookupError(err, id.Identity.OrgID)
 				http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
 				return
 			}
+
+			instrumentation.WorkspaceLookupOK(id.Identity.OrgID, defaultWorkspaceID)
 
 			userID, err := extractUserID(id)
 			if err != nil {
