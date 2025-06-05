@@ -59,6 +59,7 @@ type Config struct {
 	MetricsPort            int
 	Modules                flagvar.EnumSetCSV
 	PlaybookFiles          string
+	RbacURL                string
 	ServiceConfig          string
 	StaleEventDuration     time.Duration
 	TenantTranslatorHost   string
@@ -122,6 +123,7 @@ var DefaultConfig Config = Config{
 	MetricsPort:          9000,
 	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles:        "./playbooks/",
+	RbacURL:              "http://localhost:8000",
 	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	StaleEventDuration:   24 * time.Hour,
 	TenantTranslatorHost: "",
@@ -180,6 +182,14 @@ func init() {
 		// 		}
 		// 	}
 		// }
+
+		if DefaultConfig.KesselEnabled {
+			for _, e := range clowder.LoadedConfig.Endpoints {
+				if e.App == "rbac-service" {
+					DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
+				}
+			}
+		}
 	}
 }
 
@@ -231,6 +241,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.IntVar(&DefaultConfig.MetricsPort, "metrics-port", DefaultConfig.MetricsPort, "port on which metrics HTTP server listens")
 	fs.Var(&DefaultConfig.Modules, "module", fmt.Sprintf("config-manager modules to execute (%v)", DefaultConfig.Modules.Help()))
 	fs.StringVar(&DefaultConfig.PlaybookFiles, "playbook-files", DefaultConfig.PlaybookFiles, "path to playbook directory")
+	fs.StringVar(&DefaultConfig.RbacURL, "rbac-url", DefaultConfig.RbacURL, "RBAC API base URL")
 	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
 	fs.DurationVar(&DefaultConfig.StaleEventDuration, "stale-event-duration", DefaultConfig.StaleEventDuration, "duration of time after which inventory events are discarded")
 	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")

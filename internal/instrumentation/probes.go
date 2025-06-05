@@ -59,6 +59,11 @@ var (
 		Name: "config_manager_kessel_requests_total",
 		Help: "The total number of Kessel requests",
 	}, []string{"status"})
+
+	rbacRequestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "config_manager_rbac_requests_total",
+		Help: "The total number of RBAC requests",
+	}, []string{"status"})
 )
 
 func GetAccountStateError() {
@@ -126,6 +131,16 @@ func AuthorizationCheckFailed(principal, org, permission string) {
 func AuthorizationCheckError(err error) {
 	kesselRequestTotal.WithLabelValues(labelError).Inc()
 	log.Error().Err(err).Msg("Error performing authorization check")
+}
+
+func WorkspaceLookupOK(org, workspaceID string) {
+	rbacRequestTotal.WithLabelValues(labelPassed).Inc()
+	log.Debug().Str("org_id", org).Str("workspace_id", workspaceID).Msg("Workspace lookup successful")
+}
+
+func WorkspaceLookupError(err error, org string) {
+	rbacRequestTotal.WithLabelValues(labelError).Inc()
+	log.Error().Err(err).Str("org_id", org).Msg("Error doing workspace id lookup")
 }
 
 func Start() {
