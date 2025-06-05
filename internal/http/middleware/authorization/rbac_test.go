@@ -60,7 +60,7 @@ func TestGetInventoryClients(t *testing.T) {
 
 			config.DefaultConfig.InventoryHost.Value = url.MustParse(server.URL)
 
-			workspaceID, err := newRbacClient(server.URL).GetDefaultWorkspaceID(context.TODO(), "540155")
+			workspaceID, err := newRbacClient(server.URL, nil).GetDefaultWorkspaceID(context.TODO(), "540155")
 
 			if test.wantErr != nil {
 				if err.Error() != test.wantErr.Error() {
