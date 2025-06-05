@@ -25,15 +25,21 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 		options = append(options, common.WithAuthEnabled(config.KesselAuthClientID, config.KesselAuthClientSecret, config.KesselAuthOIDCIssuer))
 	}
 
-	client, err := v1beta2.New(common.NewConfig(options...))
+	kesselConfig := common.NewConfig(options...)
+	client, err := v1beta2.New(kesselConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to configure Kessel client: %w", err))
+	}
+
+	var tokenClient *common.TokenClient
+	if config.KesselAuthEnabled {
+		tokenClient = common.NewTokenClient(kesselConfig)
 	}
 
 	return &kesselMiddlewareBuilderImpl{
 		client:     client,
 		config:     config,
-		rbacClient: newRbacClient(config.RbacURL),
+		rbacClient: newRbacClient(config.RbacURL, tokenClient),
 	}
 }
 

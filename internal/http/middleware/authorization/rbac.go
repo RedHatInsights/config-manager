@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/project-kessel/inventory-client-go/common"
 )
 
 type RbacClient interface {
@@ -13,14 +15,16 @@ type RbacClient interface {
 }
 
 type rbacClient struct {
-	baseURL string
-	client  http.Client
+	baseURL     string
+	client      http.Client
+	tokenClient *common.TokenClient
 }
 
-func newRbacClient(baseURL string) RbacClient {
+func newRbacClient(baseURL string, tokenClient *common.TokenClient) RbacClient {
 	return &rbacClient{
-		baseURL: baseURL,
-		client:  http.Client{},
+		baseURL:     baseURL,
+		client:      http.Client{},
+		tokenClient: tokenClient,
 	}
 }
 
@@ -35,7 +39,7 @@ type response struct {
 }
 
 // TODO
-// - authentication support based on https://issues.redhat.com/browse/RHCLOUD-40287
+// - configurable timeout
 func (a *rbacClient) GetDefaultWorkspaceID(context context.Context, orgID string) (string, error) {
 
 	url := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default", a.baseURL)
@@ -43,6 +47,17 @@ func (a *rbacClient) GetDefaultWorkspaceID(context context.Context, orgID string
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("error creating request: %v", err)
+	}
+
+	req.Header.Add("x-rh-rbac-org-id", orgID)
+
+	if a.tokenClient != nil {
+		token, err := a.tokenClient.GetToken()
+		if err != nil {
+			return "", fmt.Errorf("error obtaining authentication token: %v", err)
+		}
+
+		req.Header.Add("authorization", fmt.Sprintf("bearer %s", token.AccessToken))
 	}
 
 	resp, err := a.client.Do(req)
