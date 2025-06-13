@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/rs/zerolog/log"
 )
 
@@ -23,12 +23,7 @@ func getProfiles(w http.ResponseWriter, r *http.Request) {
 	logger := log.With().Logger()
 	logger = logger.With().Str("path", r.URL.Path).Str("method", r.Method).Logger()
 
-	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
-	if !ok {
-		instrumentation.GetProfilesError()
-		render.RenderPlain(w, r, http.StatusBadRequest, "cannot assert X-Rh-Identity header", logger)
-		return
-	}
+	id := identity.GetIdentity(r.Context())
 	logger = logger.With().Interface("identity", id).Logger()
 
 	var (
@@ -109,12 +104,7 @@ func getProfile(w http.ResponseWriter, r *http.Request) {
 	logger := log.With().Logger()
 	logger = logger.With().Str("path", r.URL.Path).Str("method", r.Method).Logger()
 
-	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
-	if !ok {
-		instrumentation.GetProfileError()
-		render.RenderPlain(w, r, http.StatusBadRequest, "cannot assert X-Rh-Identity header", logger)
-		return
-	}
+	id := identity.GetIdentity(r.Context())
 	logger = logger.With().Interface("identity", id).Logger()
 
 	profileID := chi.URLParam(r, "id")
@@ -157,12 +147,7 @@ func createProfile(w http.ResponseWriter, r *http.Request) {
 	logger := log.With().Logger()
 	logger = logger.With().Str("path", r.URL.Path).Str("method", r.Method).Logger()
 
-	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
-	if !ok {
-		instrumentation.GetProfileError()
-		render.RenderPlain(w, r, http.StatusBadRequest, "cannot assert X-Rh-Identity header", logger)
-		return
-	}
+	id := identity.GetIdentity(r.Context())
 	logger = logger.With().Interface("identity", id).Logger()
 
 	data, err := io.ReadAll(r.Body)
@@ -213,12 +198,7 @@ func getPlaybook(w http.ResponseWriter, r *http.Request) {
 	logger := log.With().Logger()
 	logger = logger.With().Str("path", r.URL.Path).Str("method", r.Method).Logger()
 
-	id, ok := r.Context().Value(identity.Key).(identity.XRHID)
-	if !ok {
-		instrumentation.GetPlaybookError()
-		render.RenderPlain(w, r, http.StatusBadRequest, "cannot assert X-Rh-Identity header", logger)
-		return
-	}
+	id := identity.GetIdentity(r.Context())
 	logger = logger.With().Interface("identity", id).Logger()
 
 	if !r.URL.Query().Has("profile_id") {
