@@ -40,9 +40,6 @@ objects:
       kafkaTopics:
         - replicas: 3
           partitions: 16
-          topicName: platform.playbook-dispatcher.runs
-        - replicas: 3
-          partitions: 16
           topicName: platform.inventory.events
         - replicas: 3
           partitions: 16
@@ -103,73 +100,6 @@ objects:
                     key: password
                     name: clowder-oauth
                     optional: true
-              - name: CM_DISPATCHER_HOST
-                value: ${CM_DISPATCHER_HOST}
-              - name: CM_CLOUD_CONNECTOR_PSK
-                valueFrom:
-                  secretKeyRef:
-                    key: client-psk
-                    name: psk-cloud-connector
-              - name: CM_CLOUD_CONNECTOR_CLIENT_ID
-                valueFrom:
-                  secretKeyRef:
-                    key: client-id
-                    name: psk-cloud-connector
-              - name: CM_CLOUD_CONNECTOR_HOST
-                value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/
-              - name: CM_INVENTORY_HOST
-                value: ${CM_INVENTORY_HOST}
-              - name: CM_PLAYBOOK_HOST
-                value: ${CM_PLAYBOOK_HOST}
-              - name: CM_TENANT_TRANSLATOR_HOST
-                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-            resources:
-              limits:
-                cpu: ${CPU_LIMIT_RHC_MANAGER}
-                memory: ${MEMORY_LIMIT_RHC_MANAGER}
-              requests:
-                cpu: ${CPU_REQUEST_RHC_MANAGER}
-                memory: ${MEMORY_REQUEST_RHC_MANAGER}
-
-        - name: dispatcher-consumer
-          minReplicas: ${{REPLICAS}}
-          web: false
-          podSpec:
-            image: ${IMAGE}:${IMAGE_TAG}
-            args:
-              - dispatcher-consumer
-            livenessProbe:
-              failureThreshold: 3
-              httpGet:
-                path: /metrics
-                port: 9000
-                scheme: HTTP
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              successThreshold: 1
-              timeoutSeconds: 5
-            readinessProbe:
-              failureThreshold: 3
-              httpGet:
-                path: /metrics
-                port: 9000
-                scheme: HTTP
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              successThreshold: 1
-              timeoutSeconds: 5
-            env:
-              - name: CM_LOG_LEVEL
-                value: ${CM_LOG_LEVEL}
-              - name: CM_LOG_FORMAT
-                value: ${CM_LOG_FORMAT}
-              - name: CLOWDER_ENABLED
-                value: "true"
-              - name: CM_DISPATCHER_PSK
-                valueFrom:
-                  secretKeyRef:
-                    key: key
-                    name: psk-playbook-dispatcher
               - name: CM_DISPATCHER_HOST
                 value: ${CM_DISPATCHER_HOST}
               - name: CM_CLOUD_CONNECTOR_PSK
