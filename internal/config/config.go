@@ -59,6 +59,7 @@ type Config struct {
 	TenantTranslatorHost    string
 	URLPathPrefix           string
 	WebPort                 int
+	WorkerLimit             int
 }
 
 func (c *Config) URLBasePath(apiVersion string) string {
@@ -117,6 +118,7 @@ var DefaultConfig Config = Config{
 	TenantTranslatorHost: "",
 	URLPathPrefix:        "api",
 	WebPort:              8081,
+	WorkerLimit:          20,
 }
 
 func init() {
@@ -216,6 +218,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")
 	fs.IntVar(&DefaultConfig.WebPort, "web-port", DefaultConfig.WebPort, "port on which HTTP API server listens")
 	fs.StringVar(&DefaultConfig.URLPathPrefix, "url-path-prefix", DefaultConfig.URLPathPrefix, "generic prefix used in the URL path")
+	fs.IntVar(&DefaultConfig.WorkerLimit, "worker-limit", DefaultConfig.WorkerLimit, "maximum number of goroutines that can run in parallel")
 
 	return fs
 }
