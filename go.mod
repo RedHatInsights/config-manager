@@ -13,7 +13,7 @@ require (
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.3.5
@@ -64,7 +64,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/ugorji/go/codec v1.2.11 // indirect
+	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
