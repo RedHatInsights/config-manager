@@ -13,14 +13,14 @@ require (
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/prometheus/client_golang v1.12.1
 	github.com/redhatinsights/app-common-go v1.6.8
-	github.com/redhatinsights/platform-go-middlewares v0.18.0
+	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
@@ -30,8 +30,7 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-chi/chi v4.0.2+incompatible // indirect
+	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
