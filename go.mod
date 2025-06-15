@@ -13,7 +13,7 @@ require (
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.3.5
