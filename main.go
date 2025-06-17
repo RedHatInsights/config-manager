@@ -1,7 +1,6 @@
 package main
 
 import (
-	"config-manager/internal/cmd/dispatcherconsumer"
 	"config-manager/internal/cmd/httpapi"
 	"config-manager/internal/cmd/inventoryconsumer"
 	"config-manager/internal/config"
@@ -38,13 +37,11 @@ func main() {
 		Subcommands: []*ffcli.Command{
 			&httpapi.Command,
 			&inventoryconsumer.Command,
-			&dispatcherconsumer.Command,
 		},
 		Exec: func(ctx context.Context, args []string) error {
 			modules := map[string]*ffcli.Command{
-				"dispatcher-consumer": &dispatcherconsumer.Command,
-				"http-api":            &httpapi.Command,
-				"inventory-consumer":  &inventoryconsumer.Command,
+				"http-api":           &httpapi.Command,
+				"inventory-consumer": &inventoryconsumer.Command,
 			}
 
 			quit := make(chan os.Signal, 1)
