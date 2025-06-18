@@ -1,6 +1,6 @@
 # Development environment
 
-This is docker-compose based dev-setup which helps to deploy dependent services like cloud-connector, playbook-dispatcher and host-inventory locally. 
+This is docker-compose based dev-setup which helps to deploy dependent services like cloud-connector and host-inventory locally. 
 
 ## Installation
 
@@ -30,7 +30,7 @@ Update /etc/hosts with below.
 ## Usage
 
 ### Run dependent services
-Use below command to start kafka, cloud-connector, playbook-dispatcher and other dependent services. 
+Use below command to start kafka, cloud-connector and other dependent services. 
 
 ```bash
 cd scripts
@@ -60,20 +60,6 @@ make send_mqtt_msg
 Above command sends host-registration request to host-inventory and also send the connection status to cloud-connector service. 
 
 On the terminal where you ran `make start-inventory-consumer` you will see logs populating. At this point config-manager tries to setup the host by installing `rhc-worker-playbook` package and applies current org profile to the host.
-
-### Running dispatcher-consumer locally.
-Use the below make command to dispatcher-consumer service.
-
-```bash
-make start-dispatcher-consumer
-```
-
-### Sending data to local dispatcher-consumer. 
-```bash
-make send_run_event_msg
-```
-
-The above command sends a run event message to the `platform.playbook-dispatcher.runs` topic which is then consumed by our dispatcher-consumer service.
 
 ### Running config-manager API.
 
