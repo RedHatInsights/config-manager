@@ -16,49 +16,47 @@ import (
 
 // Config stores values that are used to configure the application.
 type Config struct {
-	AppName                 string
-	AWSAccessKeyId          string
-	AWSRegion               string
-	AWSSecretAccessKey      string
-	CloudConnectorClientID  string
-	CloudConnectorHost      flagvar.URL
-	CloudConnectorPSK       string
-	CloudConnectorTimeout   int
-	DBHost                  string
-	DBName                  string
-	DBPass                  string
-	DBPort                  int
-	DBUser                  string
-	DispatcherHost          flagvar.URL
-	DispatcherPSK           string
-	DispatcherTimeout       int
-	InventoryHost           flagvar.URL
-	InventoryTimeout        int
-	KafkaBrokers            flagvar.Strings
-	KafkaConsumerOffset     int64
-	KafkaDispatcherTopic    string
-	KafkaGroupID            string
-	KafkaInventoryTopic     string
-	KafkaPassword           string
-	KafkaSystemProfileTopic string
-	KafkaUsername           string
-	KafkaCAPath             string
-	KafkaSaslMechanism      string
-	KafkaSecurityProtocol   string
-	LogBatchFrequency       time.Duration
-	LogFormat               flagvar.Enum
-	LogGroup                string
-	LogLevel                flagvar.Enum
-	LogStream               string
-	MetricsPath             string
-	MetricsPort             int
-	Modules                 flagvar.EnumSetCSV
-	PlaybookFiles           string
-	ServiceConfig           string
-	StaleEventDuration      time.Duration
-	TenantTranslatorHost    string
-	URLPathPrefix           string
-	WebPort                 int
+	AppName                string
+	AWSAccessKeyId         string
+	AWSRegion              string
+	AWSSecretAccessKey     string
+	CloudConnectorClientID string
+	CloudConnectorHost     flagvar.URL
+	CloudConnectorPSK      string
+	CloudConnectorTimeout  int
+	DBHost                 string
+	DBName                 string
+	DBPass                 string
+	DBPort                 int
+	DBUser                 string
+	DispatcherHost         flagvar.URL
+	DispatcherPSK          string
+	DispatcherTimeout      int
+	InventoryHost          flagvar.URL
+	InventoryTimeout       int
+	KafkaBrokers           flagvar.Strings
+	KafkaConsumerOffset    int64
+	KafkaGroupID           string
+	KafkaInventoryTopic    string
+	KafkaPassword          string
+	KafkaUsername          string
+	KafkaCAPath            string
+	KafkaSaslMechanism     string
+	KafkaSecurityProtocol  string
+	LogBatchFrequency      time.Duration
+	LogFormat              flagvar.Enum
+	LogGroup               string
+	LogLevel               flagvar.Enum
+	LogStream              string
+	MetricsPath            string
+	MetricsPort            int
+	Modules                flagvar.EnumSetCSV
+	PlaybookFiles          string
+	ServiceConfig          string
+	StaleEventDuration     time.Duration
+	TenantTranslatorHost   string
+	URLPathPrefix          string
+	WebPort                int
 }
 
 func (c *Config) URLBasePath(apiVersion string) string {
@@ -68,39 +66,37 @@ func (c *Config) URLBasePath(apiVersion string) string {
 // DefaultConfig is the default configuration variable, providing access to
 // configuration values globally.
 var DefaultConfig Config = Config{
-	AppName:                 "config-manager",
-	AWSAccessKeyId:          os.Getenv("CW_AWS_ACCESS_KEY_ID"),
-	AWSRegion:               "us-east-1",
-	AWSSecretAccessKey:      os.Getenv("CW_AWS_SECRET_ACCESS_KEY"),
-	CloudConnectorClientID:  "config-manager",
-	CloudConnectorHost:      flagvar.URL{Value: url.MustParse("http://cloud-connector:8080")},
-	CloudConnectorPSK:       "",
-	CloudConnectorTimeout:   10,
-	DBHost:                  "localhost",
-	DBName:                  "insights",
-	DBPass:                  "insights",
-	DBPort:                  5432,
-	DBUser:                  "insights",
-	DispatcherHost:          flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
-	DispatcherPSK:           "",
-	DispatcherTimeout:       10,
-	InventoryHost:           flagvar.URL{Value: url.MustParse("http://host-inventory-service:8000")},
-	InventoryTimeout:        10,
-	KafkaBrokers:            flagvar.Strings{Values: []string{"localhost:9094"}},
-	KafkaConsumerOffset:     0,
-	KafkaDispatcherTopic:    "platform.playbook-dispatcher.runs",
-	KafkaGroupID:            "config-manager",
-	KafkaInventoryTopic:     "platform.inventory.events",
-	KafkaPassword:           "",
-	KafkaSystemProfileTopic: "platform.inventory.system-profile",
-	KafkaUsername:           "",
-	KafkaCAPath:             "",
-	KafkaSaslMechanism:      "",
-	KafkaSecurityProtocol:   "",
-	LogBatchFrequency:       10 * time.Second,
-	LogFormat:               flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
-	LogGroup:                "platform-dev",
-	LogLevel:                flagvar.Enum{Choices: []string{"panic", "fatal", "error", "warn", "info", "debug", "trace"}, Value: "info"},
+	AppName:                "config-manager",
+	AWSAccessKeyId:         os.Getenv("CW_AWS_ACCESS_KEY_ID"),
+	AWSRegion:              "us-east-1",
+	AWSSecretAccessKey:     os.Getenv("CW_AWS_SECRET_ACCESS_KEY"),
+	CloudConnectorClientID: "config-manager",
+	CloudConnectorHost:     flagvar.URL{Value: url.MustParse("http://cloud-connector:8080")},
+	CloudConnectorPSK:      "",
+	CloudConnectorTimeout:  10,
+	DBHost:                 "localhost",
+	DBName:                 "insights",
+	DBPass:                 "insights",
+	DBPort:                 5432,
+	DBUser:                 "insights",
+	DispatcherHost:         flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
+	DispatcherPSK:          "",
+	DispatcherTimeout:      10,
+	InventoryHost:          flagvar.URL{Value: url.MustParse("http://host-inventory-service:8000")},
+	InventoryTimeout:       10,
+	KafkaBrokers:           flagvar.Strings{Values: []string{"localhost:9094"}},
+	KafkaConsumerOffset:    0,
+	KafkaGroupID:           "config-manager",
+	KafkaInventoryTopic:    "platform.inventory.events",
+	KafkaPassword:          "",
+	KafkaUsername:          "",
+	KafkaCAPath:            "",
+	KafkaSaslMechanism:     "",
+	KafkaSecurityProtocol:  "",
+	LogBatchFrequency:      10 * time.Second,
+	LogFormat:              flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
+	LogGroup:               "platform-dev",
+	LogLevel:               flagvar.Enum{Choices: []string{"panic", "fatal", "error", "warn", "info", "debug", "trace"}, Value: "info"},
 	LogStream: func() string {
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -154,10 +150,6 @@ func init() {
 				switch requestedName {
 				case "platform.inventory.events":
 					DefaultConfig.KafkaInventoryTopic = topicConfig.Name
-				case "platform.playbook-dispatcher.runs":
-					DefaultConfig.KafkaDispatcherTopic = topicConfig.Name
-				case "platform.inventory.system-profile":
-					DefaultConfig.KafkaSystemProfileTopic = topicConfig.Name
 				}
 			}
 		}
@@ -193,11 +185,9 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.IntVar(&DefaultConfig.InventoryTimeout, "inventory-timeout", DefaultConfig.InventoryTimeout, "number of seconds before timing out HTTP requests to host-inventory")
 	fs.Var(&DefaultConfig.KafkaBrokers, "kafka-brokers", "kafka bootstrap broker addresses")
 	fs.Int64Var(&DefaultConfig.KafkaConsumerOffset, "kafka-consumer-offset", DefaultConfig.KafkaConsumerOffset, "kafka consumer offset")
-	fs.StringVar(&DefaultConfig.KafkaDispatcherTopic, "kafka-dispatcher-topic", DefaultConfig.KafkaDispatcherTopic, "playbook-dispatcher runs topic name")
 	fs.StringVar(&DefaultConfig.KafkaGroupID, "kafka-group-id", DefaultConfig.KafkaGroupID, "kafka group ID")
 	fs.StringVar(&DefaultConfig.KafkaInventoryTopic, "kafka-inventory-topic", DefaultConfig.KafkaInventoryTopic, "host-inventory events topic name")
 	fs.StringVar(&DefaultConfig.KafkaPassword, "kafka-password", DefaultConfig.KafkaPassword, "managed kafka auth password")
-	fs.StringVar(&DefaultConfig.KafkaSystemProfileTopic, "kafka-system-profile-topic", DefaultConfig.KafkaSystemProfileTopic, "host-inventory system-profile topic name")
 	fs.StringVar(&DefaultConfig.KafkaUsername, "kafka-username", DefaultConfig.KafkaUsername, "managed kafka auth username")
 	fs.StringVar(&DefaultConfig.KafkaCAPath, "kafka-cacert-path", DefaultConfig.KafkaCAPath, "managed kafka cacert path")
 	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
