@@ -11,7 +11,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/getkin/kin-openapi v0.131.0
-	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
