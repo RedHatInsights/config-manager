@@ -2,6 +2,7 @@ package v2
 
 import (
 	"config-manager/internal/config"
+	"config-manager/internal/http/middleware/authorization"
 	"config-manager/internal/http/render"
 	"fmt"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/rs/zerolog/log"
 )
 
@@ -35,12 +36,22 @@ func NewMux() (*chi.Mux, error) {
 		render.RenderJSON(w, r, http.StatusOK, spec, log.Logger)
 	})
 
+	kessel := authorization.NewKesselClient(config.DefaultConfig)
+
 	router.Route("/", func(r chi.Router) {
 		r.Use(oapimiddleware.OapiRequestValidator(spec))
-		r.Get("/profiles", getProfiles)
-		r.Get("/profiles/{id}", getProfile)
-		r.Post("/profiles", createProfile)
-		r.Get("/playbooks", getPlaybook)
+
+		r.Group(func(r chi.Router) {
+			r.Use(kessel.EnforceDefaultWorkspacePermission("config_manager_profile_view"))
+			r.Get("/profiles", getProfiles)
+			r.Get("/profiles/{id}", getProfile)
+			r.Get("/playbooks", getPlaybook)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(kessel.EnforceDefaultWorkspacePermissionForUpdate("config_manager_profile_edit"))
+			r.Post("/profiles", createProfile)
+		})
 	})
 
 	return router, nil

@@ -43,6 +43,13 @@ type Config struct {
 	KafkaCAPath            string
 	KafkaSaslMechanism     string
 	KafkaSecurityProtocol  string
+	KesselEnabled          bool
+	KesselURL              string
+	KesselAuthEnabled      bool
+	KesselAuthClientID     string
+	KesselAuthClientSecret string
+	KesselAuthOIDCIssuer   string
+	KesselInsecure         bool
 	LogBatchFrequency      time.Duration
 	LogFormat              flagvar.Enum
 	LogGroup               string
@@ -52,6 +59,7 @@ type Config struct {
 	MetricsPort            int
 	Modules                flagvar.EnumSetCSV
 	PlaybookFiles          string
+	RbacURL                string
 	ServiceConfig          string
 	StaleEventDuration     time.Duration
 	TenantTranslatorHost   string
@@ -93,6 +101,13 @@ var DefaultConfig Config = Config{
 	KafkaCAPath:            "",
 	KafkaSaslMechanism:     "",
 	KafkaSecurityProtocol:  "",
+	KesselEnabled:          false,
+	KesselURL:              "localhost:9091",
+	KesselAuthEnabled:      false,
+	KesselAuthClientID:     "",
+	KesselAuthClientSecret: "",
+	KesselAuthOIDCIssuer:   "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+	KesselInsecure:         true,
 	LogBatchFrequency:      10 * time.Second,
 	LogFormat:              flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
 	LogGroup:               "platform-dev",
@@ -108,6 +123,7 @@ var DefaultConfig Config = Config{
 	MetricsPort:          9000,
 	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
 	PlaybookFiles:        "./playbooks/",
+	RbacURL:              "http://localhost:8000",
 	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
 	StaleEventDuration:   24 * time.Hour,
 	TenantTranslatorHost: "",
@@ -157,6 +173,23 @@ func init() {
 		DefaultConfig.MetricsPath = clowder.LoadedConfig.MetricsPath
 		DefaultConfig.MetricsPort = clowder.LoadedConfig.MetricsPort
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
+
+		// https://issues.redhat.com/browse/RHCLOUD-40314
+		// if DefaultConfig.KesselEnabled {
+		// 	for _, e := range clowder.LoadedConfig.Endpoints {
+		// 		if e.App == "kessel-inventory-api" {
+		// 			DefaultConfig.KesselURL = fmt.Sprintf("%s:%d", e.Hostname, e.Port)
+		// 		}
+		// 	}
+		// }
+
+		if DefaultConfig.KesselEnabled {
+			for _, e := range clowder.LoadedConfig.Endpoints {
+				if e.App == "rbac-service" {
+					DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
+				}
+			}
+		}
 	}
 }
 
@@ -192,6 +225,13 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.KafkaCAPath, "kafka-cacert-path", DefaultConfig.KafkaCAPath, "managed kafka cacert path")
 	fs.StringVar(&DefaultConfig.KafkaSaslMechanism, "kafka-sasl-mechanism", DefaultConfig.KafkaSaslMechanism, "managed kafka sasl mechanism")
 	fs.StringVar(&DefaultConfig.KafkaSecurityProtocol, "kafka-security-protocol", DefaultConfig.KafkaSecurityProtocol, "managed kafka security protocol")
+	fs.BoolVar(&DefaultConfig.KesselEnabled, "kessel-enabled", DefaultConfig.KesselEnabled, "enable authorization using Kessel")
+	fs.StringVar(&DefaultConfig.KesselURL, "kessel-url", DefaultConfig.KesselURL, "Kessel API URL")
+	fs.BoolVar(&DefaultConfig.KesselAuthEnabled, "kessel-auth-enabled", DefaultConfig.KesselAuthEnabled, "enable Kessel client authentication")
+	fs.StringVar(&DefaultConfig.KesselAuthClientID, "kessel-auth-client-id", DefaultConfig.KesselAuthClientID, "Kessel authentication client id")
+	fs.StringVar(&DefaultConfig.KesselAuthClientSecret, "kessel-auth-client-secret", DefaultConfig.KesselAuthClientSecret, "Kessel authentication client secret")
+	fs.StringVar(&DefaultConfig.KesselAuthOIDCIssuer, "kessel-auth-oidc-issuer", DefaultConfig.KesselAuthOIDCIssuer, "Kessel authentication OIDC issuer")
+	fs.BoolVar(&DefaultConfig.KesselInsecure, "kessel-insecure", DefaultConfig.KesselInsecure, "disable TLS for the Kessel client")
 	fs.DurationVar(&DefaultConfig.LogBatchFrequency, "log-batch-frequency", DefaultConfig.LogBatchFrequency, "CloudWatch batch log frequency")
 	fs.Var(&DefaultConfig.LogFormat, "log-format", fmt.Sprintf("structured logging output format (%v)", DefaultConfig.LogFormat.Help()))
 	fs.StringVar(&DefaultConfig.LogGroup, "log-group", DefaultConfig.LogGroup, "CloudWatch log group")
@@ -201,6 +241,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.IntVar(&DefaultConfig.MetricsPort, "metrics-port", DefaultConfig.MetricsPort, "port on which metrics HTTP server listens")
 	fs.Var(&DefaultConfig.Modules, "module", fmt.Sprintf("config-manager modules to execute (%v)", DefaultConfig.Modules.Help()))
 	fs.StringVar(&DefaultConfig.PlaybookFiles, "playbook-files", DefaultConfig.PlaybookFiles, "path to playbook directory")
+	fs.StringVar(&DefaultConfig.RbacURL, "rbac-url", DefaultConfig.RbacURL, "RBAC API base URL")
 	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
 	fs.DurationVar(&DefaultConfig.StaleEventDuration, "stale-event-duration", DefaultConfig.StaleEventDuration, "duration of time after which inventory events are discarded")
 	fs.StringVar(&DefaultConfig.TenantTranslatorHost, "tenant-translator-host", DefaultConfig.TenantTranslatorHost, "tenant translator service host")

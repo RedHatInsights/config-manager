@@ -3,6 +3,7 @@ package instrumentation
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -13,6 +14,9 @@ const (
 	labelGetProfiles        = "get_profiles"
 	labelGetProfile         = "get_profile"
 	labelCreateProfile      = "create_profile"
+	labelPassed             = "ok"
+	labelFailed             = "failed"
+	labelError              = "error"
 )
 
 var (
@@ -50,6 +54,16 @@ var (
 		Name: "config_manager_api_playbooks_requested_error_total",
 		Help: "The total number of errors when generating playbooks",
 	})
+
+	kesselRequestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "config_manager_kessel_requests_total",
+		Help: "The total number of Kessel requests",
+	}, []string{"status"})
+
+	rbacRequestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "config_manager_rbac_requests_total",
+		Help: "The total number of RBAC requests",
+	}, []string{"status"})
 )
 
 func GetAccountStateError() {
@@ -102,6 +116,31 @@ func PlaybookRequestOK() {
 
 func PlaybookRequestError() {
 	playbookRequestErrorTotal.Inc()
+}
+
+func AuthorizationCheckPassed(principal, org, permission string) {
+	kesselRequestTotal.WithLabelValues(labelPassed).Inc()
+	log.Debug().Str("principal", principal).Str("org", org).Str("permission", permission).Msg("Authorization check passed")
+}
+
+func AuthorizationCheckFailed(principal, org, permission string) {
+	kesselRequestTotal.WithLabelValues(labelFailed).Inc()
+	log.Debug().Str("principal", principal).Str("org", org).Str("permission", permission).Msg("Authorization check failed")
+}
+
+func AuthorizationCheckError(err error) {
+	kesselRequestTotal.WithLabelValues(labelError).Inc()
+	log.Error().Err(err).Msg("Error performing authorization check")
+}
+
+func WorkspaceLookupOK(org, workspaceID string) {
+	rbacRequestTotal.WithLabelValues(labelPassed).Inc()
+	log.Debug().Str("org_id", org).Str("workspace_id", workspaceID).Msg("Workspace lookup successful")
+}
+
+func WorkspaceLookupError(err error, org string) {
+	rbacRequestTotal.WithLabelValues(labelError).Inc()
+	log.Error().Err(err).Str("org_id", org).Msg("Error doing workspace id lookup")
 }
 
 func Start() {
