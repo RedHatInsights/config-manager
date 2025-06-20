@@ -70,18 +70,9 @@ func handler(ctx context.Context, msg kafka.Message) {
 
 	if isConnected {
 		switch eventType {
-		case "created":
-			logger.Info().Msg("setting up new host for remote host configuration")
+		case "created", "updated":
 			reqID, _ := util.Kafka.GetHeader(msg, "request_id")
 			logger = logger.With().Str("request_id", reqID).Str("host_id", event.Host.ID).Str("org_id", event.Host.OrgID).Logger()
-			messageID, err := internal.SetupHost(ctx, event.Host)
-			if err != nil {
-				logger.Error().Err(err).Interface("host", event.Host).Msg("cannot set up host")
-				return
-			}
-			logger.Info().Str("message_id", messageID).Msg("setup message sent to host")
-			fallthrough
-		case "updated":
 			var defaultState map[string]string
 			if err := json.Unmarshal([]byte(config.DefaultConfig.ServiceConfig), &defaultState); err != nil {
 				logger.Error().Err(err).Msg("cannot unmarshal service config")
@@ -90,7 +81,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 
 			profile, err := db.GetOrInsertCurrentProfile(event.Host.OrgID, db.NewProfile(event.Host.OrgID, event.Host.Account, defaultState))
 			if err != nil {
-				logger.Error().Err(err).Str("org_id", event.Host.OrgID).Msg("cannot get profile from database")
+				logger.Error().Err(err).Msg("cannot get profile from database")
 				return
 			}
 
