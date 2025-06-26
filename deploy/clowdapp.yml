@@ -135,14 +135,14 @@ objects:
               - name: CM_KESSEL_AUTH_CLIENT_ID
                 valueFrom:
                   secretKeyRef:
-                    key: kessel-authentication
-                    name: client-id
+                    name: service-account-for-kessel
+                    key: client-id
                     optional: true
               - name: CM_KESSEL_AUTH_CLIENT_SECRET
                 valueFrom:
                   secretKeyRef:
-                    key: kessel-authentication
-                    name: client-secret
+                    name: service-account-for-kessel
+                    key: client-secret
                     optional: true
             resources:
               limits:
