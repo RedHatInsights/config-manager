@@ -118,8 +118,6 @@ objects:
                 value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/
               - name: CM_INVENTORY_HOST
                 value: ${CM_INVENTORY_HOST}
-              - name: CM_PLAYBOOK_HOST
-                value: ${CM_PLAYBOOK_HOST}
               - name: CM_TENANT_TRANSLATOR_HOST
                 value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
               - name: CM_KESSEL_ENABLED
@@ -205,8 +203,6 @@ objects:
                     name: psk-cloud-connector
               - name: CM_CLOUD_CONNECTOR_HOST
                 value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/
-              - name: CM_PLAYBOOK_HOST
-                value: ${CM_PLAYBOOK_HOST}
               - name: CM_TENANT_TRANSLATOR_HOST
                 value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
             resources:
@@ -293,9 +289,6 @@ parameters:
     required: true
 
   - name: CM_INVENTORY_HOST
-    required: true
-
-  - name: CM_PLAYBOOK_HOST
     required: true
 
   - name: KESSEL_ENABLED
