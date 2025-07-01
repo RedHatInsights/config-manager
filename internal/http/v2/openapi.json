@@ -11,89 +11,6 @@
     ],
     "paths": {
         "/profiles": {
-            "get": {
-                "operationId": "getProfiles",
-                "summary": "Get a list of all profiles",
-                "description": "Retrieve a paginated array of profiles for the identified account. The URL query parameters 'limit' and 'offset' can be used to paginate the results. The default value of 'limit' is 50. The default value of 'offset' is 0.",
-                "parameters": [
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "default": "created_at:desc",
-                            "enum": [
-                                "created_at",
-                                "created_at:asc",
-                                "created_at:desc"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 50
-                        }
-                    },
-                    {
-                        "name": "offset",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "total": {
-                                            "type": "integer"
-                                        },
-                                        "count": {
-                                            "type": "integer"
-                                        },
-                                        "limit": {
-                                            "type": "integer"
-                                        },
-                                        "offset": {
-                                            "type": "integer"
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Profile"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "total",
-                                        "count",
-                                        "limit",
-                                        "offset",
-                                        "results"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/400"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                }
-            },
             "post": {
                 "operationId": "createProfile",
                 "summary": "Create a new profile",
@@ -185,44 +102,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Profile"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/400"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/404"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                }
-            }
-        },
-        "/playbooks": {
-            "get": {
-                "operationId": "getPlaybook",
-                "summary": "Retrieve an Ansible playbook for the requested profile",
-                "description": "Constructs and returns a Ansible playbook suitable to configure a host for the requested profile.",
-                "parameters": [
-                    {
-                        "name": "profile_id",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/x-yaml": {
-                                "schema": {
-                                    "type": "object"
                                 }
                             }
                         }

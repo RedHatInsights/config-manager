@@ -26,11 +26,8 @@ The REST interface can be used to view and update the current configuration for 
 
 See the [OpenAPI Schema](./internal/http/v2/openapi.json) for details on interacting with the REST interface.
 
-- GET /profiles       - get a list of all historical profiles of an org ID
 - GET /profiles/{id} - get a single profile by `id` param where "{id}" is either a specific “profile_id” or the special string "current", in which case the most recent profile is retrieved.
 - POST /profiles     - creates a profile
-- GET /playbooks   - constructs and returns a playbook suitable for configuring a host to the state of the given profile using `profile_id` param
-
 
 ## Event interface
 
