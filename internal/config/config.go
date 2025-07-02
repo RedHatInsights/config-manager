@@ -175,19 +175,15 @@ func init() {
 		DefaultConfig.WebPort = *clowder.LoadedConfig.PublicPort
 
 		// https://issues.redhat.com/browse/RHCLOUD-40314
-		// if DefaultConfig.KesselEnabled {
 		// 	for _, e := range clowder.LoadedConfig.Endpoints {
 		// 		if e.App == "kessel-inventory-api" {
 		// 			DefaultConfig.KesselURL = fmt.Sprintf("%s:%d", e.Hostname, e.Port)
 		// 		}
-		// 	}
 		// }
 
-		if DefaultConfig.KesselEnabled {
-			for _, e := range clowder.LoadedConfig.Endpoints {
-				if e.App == "rbac" {
-					DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
-				}
+		for _, e := range clowder.LoadedConfig.Endpoints {
+			if e.App == "rbac" {
+				DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
 			}
 		}
 	}
