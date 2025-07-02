@@ -57,7 +57,7 @@ func (a *rbacClient) GetDefaultWorkspaceID(context context.Context, orgID string
 			return "", fmt.Errorf("error obtaining authentication token: %v", err)
 		}
 
-		req.Header.Add("authorization", fmt.Sprintf("bearer %s", token.AccessToken))
+		req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 	}
 
 	resp, err := a.client.Do(req)
