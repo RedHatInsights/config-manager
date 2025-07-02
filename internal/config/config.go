@@ -185,7 +185,7 @@ func init() {
 
 		if DefaultConfig.KesselEnabled {
 			for _, e := range clowder.LoadedConfig.Endpoints {
-				if e.App == "rbac-service" {
+				if e.App == "rbac" {
 					DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
 				}
 			}
