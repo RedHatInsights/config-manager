@@ -43,9 +43,7 @@ func NewMux() (*chi.Mux, error) {
 
 		r.Group(func(r chi.Router) {
 			r.Use(kessel.EnforceDefaultWorkspacePermission("config_manager_profile_view"))
-			r.Get("/profiles", getProfiles)
 			r.Get("/profiles/{id}", getProfile)
-			r.Get("/playbooks", getPlaybook)
 		})
 
 		r.Group(func(r chi.Router) {
