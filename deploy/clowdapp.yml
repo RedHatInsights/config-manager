@@ -118,8 +118,6 @@ objects:
                 value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/
               - name: CM_INVENTORY_HOST
                 value: ${CM_INVENTORY_HOST}
-              - name: CM_TENANT_TRANSLATOR_HOST
-                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
               - name: CM_KESSEL_ENABLED
                 value: ${KESSEL_ENABLED}
               - name: CM_KESSEL_URL
@@ -203,8 +201,6 @@ objects:
                     name: psk-cloud-connector
               - name: CM_CLOUD_CONNECTOR_HOST
                 value: ${CM_CLOUD_CONNECTOR_HOST}/api/cloud-connector/
-              - name: CM_TENANT_TRANSLATOR_HOST
-                value: ${TENANT_TRANSLATOR_PROTOCOL}://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
             resources:
               limits:
                 cpu: ${CPU_LIMIT_RHC_MANAGER}

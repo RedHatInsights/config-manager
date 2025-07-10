@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
