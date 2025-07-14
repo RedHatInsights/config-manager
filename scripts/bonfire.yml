@@ -11,8 +11,6 @@ apps:
           CM_DISPATCHER_HOST: http://playbook-dispatcher-api:8000/
           CM_INVENTORY_HOST: http://host-inventory-service:8000/
           CM_CLOUD_CONNECTOR_HOST: http://cloud-connector:8080/
-          TENANT_TRANSLATOR_HOST: mock
-          TENANT_TRANSLATOR_IMPL: mock
   - name: cloud-connector
     components:
       - name: cloud-connector

@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/rs/zerolog/log"
 	"github.com/segmentio/kafka-go"
@@ -86,24 +85,7 @@ func handler(ctx context.Context, msg kafka.Message) {
 			}
 
 			if !profile.OrgID.Valid {
-				logger.Debug().Msg("profile missing org ID")
-				if config.DefaultConfig.TenantTranslatorHost != "" {
-					translator := tenantid.NewTranslator(config.DefaultConfig.TenantTranslatorHost)
-					orgID, err := translator.EANToOrgID(ctx, db.JSONNullStringSafeValue(profile.AccountID))
-					if err != nil {
-						logger.Error().Err(err).Msg("cannot translate EAN to orgID")
-						return
-					}
-					logger.Debug().Str("org_id", orgID).Str("account_number", db.JSONNullStringSafeValue(profile.AccountID)).Msg("translated EAN to orgID")
-					profile.OrgID.Valid = orgID != ""
-					profile.OrgID.String = orgID
-
-					if err := db.InsertProfile(*profile); err != nil {
-						logger.Error().Err(err).Msg("cannot insert profile")
-						return
-					}
-					logger.Debug().Msg("inserted new profile")
-				}
+				logger.Error().Str("account_number", db.JSONNullStringSafeValue(profile.AccountID)).Msg("profile missing org ID")
 			}
 		}
 	}
