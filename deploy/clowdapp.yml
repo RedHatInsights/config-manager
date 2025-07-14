@@ -209,50 +209,6 @@ objects:
                 cpu: ${CPU_REQUEST_RHC_MANAGER}
                 memory: ${MEMORY_REQUEST_RHC_MANAGER}
 
-      jobs:
-        - name: org-id-populator
-          restartPolicy: OnFailure
-          podSpec:
-            image: ${POPULATOR_IMAGE}:${POPULATOR_IMAGE_TAG}
-            command:
-              - ./org-id-column-populator
-              - -C
-              - -a
-              - account_id
-              - -o
-              - org_id
-              - -t
-              - profiles
-              - --ean-translator-addr
-              - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-              - --prometheus-push-addr
-              - ${PROMETHEUS_PUSHGATEWAY}
-              - --db-operation-timeout
-              - ${POPULATOR_OPERATION_TIMEOUT}
-              - --batch-size
-              - ${POPULATOR_BATCH_SIZE}
-            env:
-              - name: LOG_FORMAT
-                value: ${POPULATOR_LOG_FORMAT}
-              - name: LOG_BATCH_FREQUENCY
-                value: "1s"
-            resources:
-              limits:
-                cpu: 300m
-                memory: 1Gi
-              requests:
-                cpu: 50m
-                memory: 512Mi
-
-  - apiVersion: cloud.redhat.com/v1alpha1
-    kind: ClowdJobInvocation
-    metadata:
-      name: cm-populate-org-id-column-${POPULATOR_RUN_NUMBER}
-    spec:
-      appName: config-manager
-      jobs:
-        - org-id-populator
-
 parameters:
   - name: IMAGE_TAG
     required: true
@@ -304,23 +260,3 @@ parameters:
     value: config-manager
   - name: PSK_CLOUD_CONNECTOR
     value: swordfish
-
-  # Used for org_id populator job
-  - name: TENANT_TRANSLATOR_HOST
-    required: true
-  - name: TENANT_TRANSLATOR_PORT
-    value: "8892"
-  - name: POPULATOR_LOG_FORMAT
-    value: cloudwatch
-  - name: POPULATOR_IMAGE
-    value: quay.io/cloudservices/tenant-utils
-  - name: POPULATOR_IMAGE_TAG
-    value: latest
-  - name: POPULATOR_RUN_NUMBER # in case we need to run populator again, just increment this
-    value: "2"
-  - name: POPULATOR_OPERATION_TIMEOUT
-    value: "10"
-  - name: PROMETHEUS_PUSHGATEWAY
-    value: "localhost"
-  - name: POPULATOR_BATCH_SIZE
-    value: "50"
