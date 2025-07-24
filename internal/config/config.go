@@ -104,7 +104,7 @@ var DefaultConfig Config = Config{
 	KesselAuthEnabled:      false,
 	KesselAuthClientID:     "",
 	KesselAuthClientSecret: "",
-	KesselAuthOIDCIssuer:   "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+	KesselAuthOIDCIssuer:   "https://sso.redhat.com/auth/realms/redhat-external",
 	KesselInsecure:         true,
 	LogBatchFrequency:      10 * time.Second,
 	LogFormat:              flagvar.Enum{Choices: []string{"json", "text"}, Value: "json"},
