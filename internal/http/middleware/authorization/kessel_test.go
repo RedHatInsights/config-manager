@@ -7,8 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
-	v1beta1 "github.com/project-kessel/inventory-client-go/v1beta2"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"google.golang.org/grpc"
 )
@@ -43,8 +42,6 @@ func (m *mockKesselInventoryServiceClient) ReportResource(ctx context.Context, i
 func (m *mockKesselInventoryServiceClient) StreamedListObjects(ctx context.Context, in *kesselv2.StreamedListObjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListObjectsResponse], error) {
 	panic("unimplemented")
 }
-
-var _ kesselv2.KesselInventoryServiceClient = &mockKesselInventoryServiceClient{}
 
 func configWithKesselEnabled(value bool) config.Config {
 	return config.Config{
@@ -236,8 +233,8 @@ func TestKesselMiddleware(t *testing.T) {
 
 			middlewareBuilder := &kesselMiddlewareBuilderImpl{
 				config: test.config,
-				client: &v1beta1.InventoryClient{
-					KesselInventoryService: client,
+				client: &kesselv2.InventoryClient{
+					KesselInventoryServiceClient: client,
 				},
 				rbacClient: test.rbacClient,
 			}
@@ -274,8 +271,8 @@ func TestKesselMiddleware(t *testing.T) {
 
 			middlewareBuilder := &kesselMiddlewareBuilderImpl{
 				config: test.config,
-				client: &v1beta1.InventoryClient{
-					KesselInventoryService: client,
+				client: &kesselv2.InventoryClient{
+					KesselInventoryServiceClient: client,
 				},
 				rbacClient: test.rbacClient,
 			}
