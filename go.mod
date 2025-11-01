@@ -20,14 +20,14 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/peterbourgon/ff/v3 v3.1.2
 	github.com/project-kessel/inventory-api v0.0.0-20250507142859-a4225659a5b2
-	github.com/project-kessel/inventory-client-go v0.0.0-20250507151904-9921f1bf1e8e
+	github.com/project-kessel/inventory-client-go v0.0.0-20250703155410-0ece2b1f2d03
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 )
 
 require (
