@@ -119,6 +119,23 @@ func main() {
 		config.DefaultConfig.DBPort,
 		config.DefaultConfig.DBSSLMode)
 
+	// Add RDS CA certificate for SSL verification when SSL is enabled
+	if config.DefaultConfig.DBSSLMode != "disable" && config.DefaultConfig.DBRdsCa != "" {
+		caFile, err := os.CreateTemp("", "rds-ca-*.pem")
+		if err != nil {
+			log.Fatal().Err(err).Msg("cannot create RDS CA certificate file")
+		}
+		if _, err := caFile.WriteString(config.DefaultConfig.DBRdsCa); err != nil {
+			log.Fatal().Err(err).Msg("cannot write RDS CA certificate")
+		}
+		if err := caFile.Close(); err != nil {
+			log.Fatal().Err(err).Msg("cannot close RDS CA certificate file")
+		}
+		connectionString = fmt.Sprintf("%s sslrootcert=%s", connectionString, caFile.Name())
+	}
+
+	log.Info().Str("sslmode", config.DefaultConfig.DBSSLMode).Msg("connecting to database")
+
 	if err := db.Open("pgx", connectionString); err != nil {
 		log.Fatal().Err(err).Msg("cannot open database")
 	}
