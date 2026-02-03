@@ -28,6 +28,7 @@ type Config struct {
 	DBName                 string
 	DBPass                 string
 	DBPort                 int
+	DBRdsCa                string
 	DBSSLMode              string
 	DBUser                 string
 	DispatcherHost         flagvar.URL
@@ -85,6 +86,7 @@ var DefaultConfig Config = Config{
 	DBName:                 "insights",
 	DBPass:                 "insights",
 	DBPort:                 5432,
+	DBRdsCa:                "",
 	DBSSLMode:              "disable",
 	DBUser:                 "insights",
 	DispatcherHost:         flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
@@ -139,6 +141,12 @@ func init() {
 		DefaultConfig.DBPass = clowder.LoadedConfig.Database.Password
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
 		DefaultConfig.DBSSLMode = clowder.LoadedConfig.Database.SslMode
+		if DefaultConfig.DBSSLMode == "" {
+			DefaultConfig.DBSSLMode = "require" // Fallback if Clowder doesn't provide SslMode
+		}
+		if clowder.LoadedConfig.Database.RdsCa != nil {
+			DefaultConfig.DBRdsCa = *clowder.LoadedConfig.Database.RdsCa
+		}
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
 		if clowder.LoadedConfig.Kafka != nil {
@@ -205,6 +213,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.DBName, "db-name", DefaultConfig.DBName, "database name")
 	fs.StringVar(&DefaultConfig.DBPass, "db-pass", DefaultConfig.DBPass, "database password")
 	fs.IntVar(&DefaultConfig.DBPort, "db-port", DefaultConfig.DBPort, "database port")
+	fs.StringVar(&DefaultConfig.DBRdsCa, "db-rds-ca", DefaultConfig.DBRdsCa, "RDS CA certificate for SSL verification")
 	fs.StringVar(&DefaultConfig.DBSSLMode, "db-sslmode", DefaultConfig.DBSSLMode, "database SSL mode (disable, require, verify-ca, verify-full)")
 	fs.StringVar(&DefaultConfig.DBUser, "db-user", DefaultConfig.DBUser, "database user")
 	fs.Var(&DefaultConfig.DispatcherHost, "dispatcher-host", fmt.Sprintf("hostname for the playbook-dispatcher service (%v)", DefaultConfig.DispatcherHost.Help()))
