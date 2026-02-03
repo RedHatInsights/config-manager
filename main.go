@@ -111,12 +111,13 @@ func main() {
 		}()
 	}
 
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
+	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s",
 		config.DefaultConfig.DBUser,
 		config.DefaultConfig.DBPass,
 		config.DefaultConfig.DBName,
 		config.DefaultConfig.DBHost,
-		config.DefaultConfig.DBPort)
+		config.DefaultConfig.DBPort,
+		config.DefaultConfig.DBSSLMode)
 
 	if err := db.Open("pgx", connectionString); err != nil {
 		log.Fatal().Err(err).Msg("cannot open database")

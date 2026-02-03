@@ -28,6 +28,7 @@ type Config struct {
 	DBName                 string
 	DBPass                 string
 	DBPort                 int
+	DBSSLMode              string
 	DBUser                 string
 	DispatcherHost         flagvar.URL
 	DispatcherPSK          string
@@ -84,6 +85,7 @@ var DefaultConfig Config = Config{
 	DBName:                 "insights",
 	DBPass:                 "insights",
 	DBPort:                 5432,
+	DBSSLMode:              "disable",
 	DBUser:                 "insights",
 	DispatcherHost:         flagvar.URL{Value: url.MustParse("http://playbook-dispatcher-api:8000")},
 	DispatcherPSK:          "",
@@ -117,14 +119,14 @@ var DefaultConfig Config = Config{
 		}
 		return hostname
 	}(),
-	MetricsPath:          "/metrics",
-	MetricsPort:          9000,
-	Modules:              flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
-	RbacURL:              "http://localhost:8000",
-	ServiceConfig:        `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
-	StaleEventDuration:   24 * time.Hour,
-	URLPathPrefix:        "api",
-	WebPort:              8081,
+	MetricsPath:        "/metrics",
+	MetricsPort:        9000,
+	Modules:            flagvar.EnumSetCSV{Choices: []string{"http-api", "dispatcher-consumer", "inventory-consumer"}, Value: map[string]bool{}},
+	RbacURL:            "http://localhost:8000",
+	ServiceConfig:      `{"insights":"enabled","compliance_openscap":"enabled","remediations":"enabled"}`,
+	StaleEventDuration: 24 * time.Hour,
+	URLPathPrefix:      "api",
+	WebPort:            8081,
 }
 
 func init() {
@@ -136,6 +138,7 @@ func init() {
 		DefaultConfig.DBName = clowder.LoadedConfig.Database.Name
 		DefaultConfig.DBPass = clowder.LoadedConfig.Database.Password
 		DefaultConfig.DBPort = clowder.LoadedConfig.Database.Port
+		DefaultConfig.DBSSLMode = clowder.LoadedConfig.Database.SslMode
 		DefaultConfig.DBUser = clowder.LoadedConfig.Database.Username
 		DefaultConfig.KafkaBrokers.Values = clowder.KafkaServers
 		if clowder.LoadedConfig.Kafka != nil {
@@ -202,6 +205,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.DBName, "db-name", DefaultConfig.DBName, "database name")
 	fs.StringVar(&DefaultConfig.DBPass, "db-pass", DefaultConfig.DBPass, "database password")
 	fs.IntVar(&DefaultConfig.DBPort, "db-port", DefaultConfig.DBPort, "database port")
+	fs.StringVar(&DefaultConfig.DBSSLMode, "db-sslmode", DefaultConfig.DBSSLMode, "database SSL mode (disable, require, verify-ca, verify-full)")
 	fs.StringVar(&DefaultConfig.DBUser, "db-user", DefaultConfig.DBUser, "database user")
 	fs.Var(&DefaultConfig.DispatcherHost, "dispatcher-host", fmt.Sprintf("hostname for the playbook-dispatcher service (%v)", DefaultConfig.DispatcherHost.Help()))
 	fs.StringVar(&DefaultConfig.DispatcherPSK, "dispatcher-psk", DefaultConfig.DispatcherPSK, "preshared key from playbook-dispatcher")
