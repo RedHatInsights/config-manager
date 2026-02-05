@@ -22,7 +22,7 @@ require (
 	github.com/project-kessel/inventory-api v0.0.0-20250507142859-a4225659a5b2
 	github.com/project-kessel/inventory-client-go v0.0.0-20250507151904-9921f1bf1e8e
 	github.com/prometheus/client_golang v1.22.0
-	github.com/redhatinsights/app-common-go v1.6.8
+	github.com/redhatinsights/app-common-go v1.6.9
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
