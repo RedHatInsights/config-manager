@@ -2,7 +2,7 @@ module config-manager
 
 go 1.23.6
 
-toolchain go1.23.8
+toolchain go1.26.0
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
