@@ -8,7 +8,7 @@ require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/deepmap/oapi-codegen v1.11.0
-	github.com/fergusstrange/embedded-postgres v1.30.0
+	github.com/fergusstrange/embedded-postgres v1.33.0
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/httplog v0.2.5
