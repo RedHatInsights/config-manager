@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/peterbourgon/ff/v3 v3.1.2
+	github.com/peterbourgon/ff/v3 v3.4.0
 	github.com/project-kessel/inventory-api v0.0.0-20250507142859-a4225659a5b2
 	github.com/project-kessel/inventory-client-go v0.0.0-20250507151904-9921f1bf1e8e
 	github.com/prometheus/client_golang v1.22.0
