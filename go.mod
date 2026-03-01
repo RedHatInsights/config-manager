@@ -25,7 +25,7 @@ require (
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
 	github.com/rs/zerolog v1.27.0
-	github.com/segmentio/kafka-go v0.4.47
+	github.com/segmentio/kafka-go v0.4.50
 	github.com/sgreben/flagvar v1.10.1
 	google.golang.org/grpc v1.72.0
 )
