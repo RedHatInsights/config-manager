@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.30.0
-	github.com/getkin/kin-openapi v0.131.0
+	github.com/getkin/kin-openapi v0.133.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
@@ -79,6 +79,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.2.0 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
