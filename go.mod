@@ -6,11 +6,11 @@ toolchain go1.23.8
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
-	github.com/aws/aws-sdk-go v1.55.6
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/getkin/kin-openapi v0.131.0
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
@@ -23,7 +23,7 @@ require (
 	github.com/project-kessel/inventory-client-go v0.0.0-20250507151904-9921f1bf1e8e
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redhatinsights/app-common-go v1.6.8
-	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
+	github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0
 	github.com/rs/zerolog v1.27.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
