@@ -42,7 +42,7 @@ type response struct {
 // - configurable timeout
 func (a *rbacClient) GetDefaultWorkspaceID(context context.Context, orgID string) (string, error) {
 
-	url := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default", a.baseURL)
+	url := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default&with_ancestry=true", a.baseURL)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
