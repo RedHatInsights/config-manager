@@ -11,7 +11,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-chi/chi/v5 v5.2.2
-	github.com/go-chi/httplog v0.2.5
+	github.com/go-chi/httplog v0.3.2
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/go-cmp v0.7.0
@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.29.1
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sgreben/flagvar v1.10.1
 	google.golang.org/grpc v1.72.0
