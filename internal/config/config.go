@@ -60,6 +60,7 @@ type Config struct {
 	MetricsPath            string
 	MetricsPort            int
 	Modules                flagvar.EnumSetCSV
+	RbacCACert             string
 	RbacURL                string
 	ServiceConfig          string
 	StaleEventDuration     time.Duration
@@ -188,12 +189,34 @@ func init() {
 		// 		}
 		// }
 
+		rbacURL, rbacCACert := resolveRbacURL()
+		if rbacURL != "" {
+			DefaultConfig.RbacURL = rbacURL
+			DefaultConfig.RbacCACert = rbacCACert
+		}
+	}
+}
+
+// resolveRbacURL resolves the RBAC service URL and optional CA certificate path.
+// It tries V2 dependency endpoints first, then falls back to V1 flat endpoints.
+func resolveRbacURL() (rbacURL string, caCert string) {
+	if endpoint, ok := clowder.GetV2DependencyEndpoint("rbac", "service"); ok && endpoint.Uri != "" {
+		rbacURL = endpoint.Uri
+		if endpoint.CaCertificate != nil && *endpoint.CaCertificate != "" {
+			caCert = *endpoint.CaCertificate
+		}
+		return
+	}
+	// V1 fallback during rollout
+	if clowder.LoadedConfig != nil {
 		for _, e := range clowder.LoadedConfig.Endpoints {
 			if e.App == "rbac" {
-				DefaultConfig.RbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
+				rbacURL = fmt.Sprintf("http://%s:%d", e.Hostname, e.Port)
+				return
 			}
 		}
 	}
+	return
 }
 
 // FlagSet creates a new FlagSet, defined with flags for each struct field in
@@ -245,6 +268,7 @@ func FlagSet(name string, errorHandling flag.ErrorHandling) *flag.FlagSet {
 	fs.StringVar(&DefaultConfig.MetricsPath, "metrics-path", DefaultConfig.MetricsPath, "base path on which metrics HTTP server responds")
 	fs.IntVar(&DefaultConfig.MetricsPort, "metrics-port", DefaultConfig.MetricsPort, "port on which metrics HTTP server listens")
 	fs.Var(&DefaultConfig.Modules, "module", fmt.Sprintf("config-manager modules to execute (%v)", DefaultConfig.Modules.Help()))
+	fs.StringVar(&DefaultConfig.RbacCACert, "rbac-ca-cert", DefaultConfig.RbacCACert, "path to CA certificate for RBAC TLS connections")
 	fs.StringVar(&DefaultConfig.RbacURL, "rbac-url", DefaultConfig.RbacURL, "RBAC API base URL")
 	fs.StringVar(&DefaultConfig.ServiceConfig, "service-config", DefaultConfig.ServiceConfig, "default state configuration")
 	fs.DurationVar(&DefaultConfig.StaleEventDuration, "stale-event-duration", DefaultConfig.StaleEventDuration, "duration of time after which inventory events are discarded")
