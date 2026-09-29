@@ -39,7 +39,7 @@ func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
 	return &kesselMiddlewareBuilderImpl{
 		client:     client,
 		config:     config,
-		rbacClient: newRbacClient(config.RbacURL, tokenClient),
+		rbacClient: newRbacClient(config.RbacURL, tokenClient, config.RbacCACert),
 	}
 }
 

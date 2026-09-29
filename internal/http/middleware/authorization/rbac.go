@@ -2,12 +2,16 @@ package authorization
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/rs/zerolog/log"
 )
 
 type RbacClient interface {
@@ -20,10 +24,28 @@ type rbacClient struct {
 	tokenClient *common.TokenClient
 }
 
-func newRbacClient(baseURL string, tokenClient *common.TokenClient) RbacClient {
+func newRbacClient(baseURL string, tokenClient *common.TokenClient, caCertPath string) RbacClient {
+	client := http.Client{}
+	if caCertPath != "" {
+		caCert, err := os.ReadFile(caCertPath)
+		if err != nil {
+			log.Error().Err(err).Str("path", caCertPath).Msg("failed to read RBAC CA certificate, falling back to system trust")
+		} else {
+			caCertPool := x509.NewCertPool()
+			if caCertPool.AppendCertsFromPEM(caCert) {
+				client.Transport = &http.Transport{
+					TLSClientConfig: &tls.Config{
+						RootCAs: caCertPool,
+					},
+				}
+			} else {
+				log.Error().Str("path", caCertPath).Msg("failed to parse RBAC CA certificate, falling back to system trust")
+			}
+		}
+	}
 	return &rbacClient{
 		baseURL:     baseURL,
-		client:      http.Client{},
+		client:      client,
 		tokenClient: tokenClient,
 	}
 }
