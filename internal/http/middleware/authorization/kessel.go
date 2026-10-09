@@ -8,38 +8,40 @@ import (
 	"fmt"
 	"net/http"
 
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
-	"github.com/project-kessel/inventory-client-go/common"
-	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"google.golang.org/grpc"
 )
 
-func NewKesselClient(config config.Config) KesselMiddlewareBuilder {
-	options := []func(*common.Config){
-		common.WithgRPCUrl(config.KesselURL),
-		common.WithTLSInsecure(config.KesselInsecure),
+func NewKesselClient(cfg config.Config) KesselMiddlewareBuilder {
+	builder := kesselv2.NewClientBuilder(cfg.KesselURL)
+
+	var oauthCreds *auth.OAuth2ClientCredentials
+
+	if cfg.KesselAuthEnabled {
+		discovery, err := auth.FetchOIDCDiscovery(context.Background(), cfg.KesselAuthOIDCIssuer, auth.FetchOIDCDiscoveryOptions{})
+		if err != nil {
+			panic(fmt.Errorf("failed to discover OIDC endpoint: %w", err))
+		}
+		creds := auth.NewOAuth2ClientCredentials(cfg.KesselAuthClientID, cfg.KesselAuthClientSecret, discovery.TokenEndpoint)
+		oauthCreds = &creds
+		builder.OAuth2ClientAuthenticated(oauthCreds, nil)
+	} else if cfg.KesselInsecure {
+		builder.Insecure()
+	} else {
+		builder.Unauthenticated(nil)
 	}
 
-	if config.KesselAuthEnabled {
-		options = append(options, common.WithAuthEnabled(config.KesselAuthClientID, config.KesselAuthClientSecret, config.KesselAuthOIDCIssuer))
-	}
-
-	kesselConfig := common.NewConfig(options...)
-	client, err := v1beta2.New(kesselConfig)
+	client, _, err := builder.Build()
 	if err != nil {
 		panic(fmt.Errorf("failed to configure Kessel client: %w", err))
 	}
 
-	var tokenClient *common.TokenClient
-	if config.KesselAuthEnabled {
-		tokenClient = common.NewTokenClient(kesselConfig)
-	}
-
 	return &kesselMiddlewareBuilderImpl{
 		client:     client,
-		config:     config,
-		rbacClient: newRbacClient(config.RbacURL, tokenClient),
+		config:     cfg,
+		rbacClient: newRbacClient(cfg.RbacURL, oauthCreds),
 	}
 }
 
@@ -49,7 +51,7 @@ type KesselMiddlewareBuilder interface {
 }
 
 type kesselMiddlewareBuilderImpl struct {
-	client     *v1beta2.InventoryClient
+	client     kesselv2.KesselInventoryServiceClient
 	config     config.Config
 	rbacClient RbacClient
 }
@@ -69,7 +71,7 @@ func (a *kesselMiddlewareBuilderImpl) callCheck(ctx context.Context, object *kes
 		Subject:  subject,
 	}
 
-	return a.client.KesselInventoryService.Check(ctx, request, opts...)
+	return a.client.Check(ctx, request, opts...)
 }
 
 func (a *kesselMiddlewareBuilderImpl) callCheckForUpdate(ctx context.Context, object *kesselv2.ResourceReference, relation string, subject *kesselv2.SubjectReference, opts ...grpc.CallOption) (AllowedResponse, error) {
@@ -79,7 +81,7 @@ func (a *kesselMiddlewareBuilderImpl) callCheckForUpdate(ctx context.Context, ob
 		Subject:  subject,
 	}
 
-	return a.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
+	return a.client.CheckForUpdate(ctx, request, opts...)
 }
 
 func (a *kesselMiddlewareBuilderImpl) EnforceDefaultWorkspacePermission(permission string) func(http.Handler) http.Handler {
@@ -134,17 +136,7 @@ func (a *kesselMiddlewareBuilderImpl) enforceOrgPermission(permission string, ch
 				},
 			}
 
-			var opts []grpc.CallOption
-			if a.config.KesselAuthEnabled {
-				opts, err = a.client.GetTokenCallOption()
-				if err != nil {
-					instrumentation.AuthorizationCheckError(err)
-					http.Error(w, "Error performing authorization check", http.StatusInternalServerError)
-					return
-				}
-			}
-
-			res, err := checkFn(r.Context(), object, permission, subject, opts...)
+			res, err := checkFn(r.Context(), object, permission, subject)
 			if err != nil {
 				instrumentation.AuthorizationCheckError(err)
 				http.Error(w, "Error performing authorization check", http.StatusInternalServerError)

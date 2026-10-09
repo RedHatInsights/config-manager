@@ -7,8 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
-	v1beta1 "github.com/project-kessel/inventory-client-go/v1beta2"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"google.golang.org/grpc"
 )
@@ -40,7 +39,27 @@ func (m *mockKesselInventoryServiceClient) ReportResource(ctx context.Context, i
 	panic("unimplemented")
 }
 
+func (m *mockKesselInventoryServiceClient) CheckSelf(ctx context.Context, in *kesselv2.CheckSelfRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfResponse, error) {
+	panic("unimplemented")
+}
+
+func (m *mockKesselInventoryServiceClient) CheckForUpdateBulk(ctx context.Context, in *kesselv2.CheckForUpdateBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateBulkResponse, error) {
+	panic("unimplemented")
+}
+
+func (m *mockKesselInventoryServiceClient) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
+	panic("unimplemented")
+}
+
+func (m *mockKesselInventoryServiceClient) CheckSelfBulk(ctx context.Context, in *kesselv2.CheckSelfBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfBulkResponse, error) {
+	panic("unimplemented")
+}
+
 func (m *mockKesselInventoryServiceClient) StreamedListObjects(ctx context.Context, in *kesselv2.StreamedListObjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListObjectsResponse], error) {
+	panic("unimplemented")
+}
+
+func (m *mockKesselInventoryServiceClient) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
 	panic("unimplemented")
 }
 
@@ -236,9 +255,7 @@ func TestKesselMiddleware(t *testing.T) {
 
 			middlewareBuilder := &kesselMiddlewareBuilderImpl{
 				config: test.config,
-				client: &v1beta1.InventoryClient{
-					KesselInventoryService: client,
-				},
+				client: client,
 				rbacClient: test.rbacClient,
 			}
 
@@ -274,9 +291,7 @@ func TestKesselMiddleware(t *testing.T) {
 
 			middlewareBuilder := &kesselMiddlewareBuilderImpl{
 				config: test.config,
-				client: &v1beta1.InventoryClient{
-					KesselInventoryService: client,
-				},
+				client: client,
 				rbacClient: test.rbacClient,
 			}
 

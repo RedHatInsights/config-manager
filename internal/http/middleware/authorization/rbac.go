@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
 )
 
 type RbacClient interface {
@@ -17,10 +17,10 @@ type RbacClient interface {
 type rbacClient struct {
 	baseURL     string
 	client      http.Client
-	tokenClient *common.TokenClient
+	tokenClient *auth.OAuth2ClientCredentials
 }
 
-func newRbacClient(baseURL string, tokenClient *common.TokenClient) RbacClient {
+func newRbacClient(baseURL string, tokenClient *auth.OAuth2ClientCredentials) RbacClient {
 	return &rbacClient{
 		baseURL:     baseURL,
 		client:      http.Client{},
@@ -52,7 +52,7 @@ func (a *rbacClient) GetDefaultWorkspaceID(context context.Context, orgID string
 	req.Header.Add("x-rh-rbac-org-id", orgID)
 
 	if a.tokenClient != nil {
-		token, err := a.tokenClient.GetToken()
+		token, err := a.tokenClient.GetToken(context, auth.GetTokenOptions{})
 		if err != nil {
 			return "", fmt.Errorf("error obtaining authentication token: %v", err)
 		}
