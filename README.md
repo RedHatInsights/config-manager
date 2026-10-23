@@ -3,6 +3,7 @@
 ## Decommissioned
 The RHC Manager (a.k.a config-manager) service has been decommissioned, see [https://redhat.atlassian.net/browse/RHINENG-22545](https://redhat.atlassian.net/browse/RHINENG-22545). This repository has been archived.
 
+## Details
 Config Manager is a backend service used by the Service Enablement dashboard to enable or disable various Red Hat services on hosts connected through RHC.
 
 Config Manager handles the following actions:
