@@ -1,8 +1,6 @@
 module config-manager
 
-go 1.23.6
-
-toolchain go1.23.8
+go 1.26
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
@@ -43,7 +41,7 @@ require (
 	github.com/go-kratos/kratos/v2 v2.8.4 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-playground/form/v4 v4.2.1 // indirect
+	github.com/go-playground/form/v4 v4.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
